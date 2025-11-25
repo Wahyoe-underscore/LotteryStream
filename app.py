@@ -388,23 +388,33 @@ else:
                 results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
             excel_data = excel_buffer.getvalue()
             
-            st.download_button(
+            def mark_downloaded():
+                st.session_state["results_downloaded"] = True
+            
+            downloaded = st.download_button(
                 label="📥 DOWNLOAD SEMUA HASIL UNDIAN (EXCEL)",
                 data=excel_data,
                 file_name="hasil_undian_move_groove.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
-                type="primary"
+                type="primary",
+                on_click=mark_downloaded
             )
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🔄 UNDIAN BARU", use_container_width=True):
-                st.session_state["lottery_done"] = False
-                st.session_state["results_df"] = None
-                st.session_state["selected_prize"] = None
-                st.rerun()
+        if st.session_state.get("results_downloaded", False):
+            st.markdown("<br>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.success("✅ Hasil undian sudah di-download!")
+                if st.button("🔄 UNDIAN BARU", use_container_width=True):
+                    st.session_state["lottery_done"] = False
+                    st.session_state["results_df"] = None
+                    st.session_state["selected_prize"] = None
+                    st.session_state["results_downloaded"] = False
+                    st.rerun()
+        else:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; color:#ffeb3b; font-size:1rem;'>⚠️ Download hasil undian terlebih dahulu sebelum memulai undian baru</p>", unsafe_allow_html=True)
     
     else:
         uploaded_file = st.file_uploader(
