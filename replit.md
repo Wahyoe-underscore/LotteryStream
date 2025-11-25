@@ -6,11 +6,11 @@ A Streamlit-based lottery system for selecting 900 winners from participant data
 ## Features
 - CSV file upload for participant data (requires "Nomor Undian" column)
 - Secure randomization using Python's `secrets` module (cryptographically secure)
-- 9 prize tiers with varying winners (total 775 winners)
+- 9 prize tiers with varying winners (total 800 winners)
 - Prize summary and detailed winners table
 - CSV download functionality for results
 
-## Prize Tiers (Total 775 Winners)
+## Prize Tiers (Total 800 Winners)
 | Rank | Prize | Winners |
 |------|-------|---------|
 | 1-75 | Bensin Rp.100.000,- | 75 |
@@ -18,10 +18,10 @@ A Streamlit-based lottery system for selecting 900 winners from participant data
 | 176-250 | SNL Rp.100.000,- | 75 |
 | 251-325 | Bensin Rp.150.000,- | 75 |
 | 326-400 | Top100 Rp.150.000,- | 75 |
-| 401-475 | SNL Rp.150.000,- | 75 |
-| 476-575 | Bensin Rp.200.000,- | 100 |
-| 576-675 | Top100 Rp.200.000,- | 100 |
-| 676-775 | SNL Rp.200.000,- | 100 |
+| 401-500 | SNL Rp.150.000,- | 100 |
+| 501-600 | Bensin Rp.200.000,- | 100 |
+| 601-700 | Top100 Rp.200.000,- | 100 |
+| 701-800 | SNL Rp.200.000,- | 100 |
 
 ## Project Structure
 - `app.py` - Main Streamlit application

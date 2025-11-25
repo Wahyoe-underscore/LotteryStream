@@ -203,13 +203,13 @@ PRIZE_TIERS = [
     {"name": "SNL Rp.100.000,-", "start": 176, "end": 250, "icon": "🎁", "color": "#45B7D1", "count": 75},
     {"name": "Bensin Rp.150.000,-", "start": 251, "end": 325, "icon": "⛽", "color": "#96CEB4", "count": 75},
     {"name": "Top100 Rp.150.000,-", "start": 326, "end": 400, "icon": "💳", "color": "#FFEAA7", "count": 75},
-    {"name": "SNL Rp.150.000,-", "start": 401, "end": 475, "icon": "🎁", "color": "#DDA0DD", "count": 75},
-    {"name": "Bensin Rp.200.000,-", "start": 476, "end": 575, "icon": "⛽", "color": "#98D8C8", "count": 100},
-    {"name": "Top100 Rp.200.000,-", "start": 576, "end": 675, "icon": "💳", "color": "#F7DC6F", "count": 100},
-    {"name": "SNL Rp.200.000,-", "start": 676, "end": 775, "icon": "🎁", "color": "#BB8FCE", "count": 100},
+    {"name": "SNL Rp.150.000,-", "start": 401, "end": 500, "icon": "🎁", "color": "#DDA0DD", "count": 100},
+    {"name": "Bensin Rp.200.000,-", "start": 501, "end": 600, "icon": "⛽", "color": "#98D8C8", "count": 100},
+    {"name": "Top100 Rp.200.000,-", "start": 601, "end": 700, "icon": "💳", "color": "#F7DC6F", "count": 100},
+    {"name": "SNL Rp.200.000,-", "start": 701, "end": 800, "icon": "🎁", "color": "#BB8FCE", "count": 100},
 ]
 
-TOTAL_WINNERS = 775
+TOTAL_WINNERS = 800
 
 def get_prize(rank):
     for tier in PRIZE_TIERS:
