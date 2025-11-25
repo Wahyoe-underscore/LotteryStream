@@ -393,7 +393,11 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     
     num_winners = len(tier_winners)
     num_cols = 10 if num_winners >= 10 else num_winners
-    grid_height = ((num_winners + num_cols - 1) // num_cols) * 85 + 40
+    has_phone_data = "No HP" in tier_winners.columns and tier_winners["No HP"].notna().any()
+    cell_height = 100 if has_phone_data else 85
+    grid_height = ((num_winners + num_cols - 1) // num_cols) * cell_height + 40
+    
+    has_phone = "No HP" in tier_winners.columns
     
     winners_html = f'''
     <html>
@@ -431,16 +435,28 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
                 color: #333;
                 margin-top: 0.2rem;
             }}
+            .winner-phone {{
+                font-size: 0.7rem;
+                color: #666;
+                margin-top: 0.2rem;
+            }}
         </style>
     </head>
     <body>
         <div class="winner-grid">
     '''
     for _, row in tier_winners.iterrows():
+        phone = row.get("No HP", "") if has_phone else ""
+        if phone and len(str(phone)) >= 4:
+            masked_phone = "****" + str(phone)[-4:]
+        else:
+            masked_phone = phone
+        phone_html = f'<div class="winner-phone">📱 {masked_phone}</div>' if masked_phone else ""
         winners_html += f'''
             <div class="winner-cell">
                 <div class="winner-rank">#{row["Peringkat"]}</div>
                 <div class="winner-number">{row["Nomor Undian"]}</div>
+                {phone_html}
             </div>
         '''
     winners_html += '''
@@ -586,9 +602,9 @@ else:
     
     else:
         uploaded_file = st.file_uploader(
-            "📁 Upload File CSV (harus memiliki kolom 'Nomor Undian')",
+            "📁 Upload File CSV (harus memiliki kolom 'Nomor Undian' dan 'No HP')",
             type=["csv"],
-            help="File CSV harus berisi kolom dengan nama 'Nomor Undian'"
+            help="File CSV harus berisi kolom 'Nomor Undian' dan 'No HP'"
         )
         
         if uploaded_file is not None:
@@ -604,9 +620,20 @@ else:
                 if "Nomor Undian" not in df.columns:
                     st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
                     st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
+                elif "No HP" not in df.columns:
+                    st.error("❌ Error: File CSV harus memiliki kolom 'No HP'")
+                    st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
+                    st.info("💡 Tip: Pastikan kolom nomor HP bernama 'No HP' (dengan spasi)")
                 else:
-                    participants = df["Nomor Undian"].dropna().tolist()
-                    participants = [str(p).zfill(4) for p in participants]
+                    df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4) if pd.notna(x) else x)
+                    df = df.dropna(subset=["Nomor Undian", "No HP"])
+                    
+                    participant_data = df[["Nomor Undian", "No HP"]].copy()
+                    participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
+                    
+                    st.session_state["participant_data"] = participant_data
+                    
+                    participants = participant_data["Nomor Undian"].tolist()
                     total_participants = len(participants)
                     
                     st.session_state["total_participants"] = total_participants
@@ -666,11 +693,18 @@ else:
                         num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
                         winners = shuffled_participants[:num_winners]
                         
+                        participant_data = st.session_state.get("participant_data")
+                        if participant_data is not None:
+                            phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"]))
+                        else:
+                            phone_lookup = {}
+                        
                         results = []
                         for i, winner in enumerate(winners, 1):
                             results.append({
                                 "Peringkat": i,
                                 "Nomor Undian": winner,
+                                "No HP": phone_lookup.get(winner, ""),
                                 "Hadiah": get_prize(i)
                             })
                         
