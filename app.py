@@ -619,38 +619,51 @@ else:
             
             try:
                 uploaded_file.seek(0)
-                first_line = uploaded_file.readline().decode('utf-8')
+                content = uploaded_file.read()
                 uploaded_file.seek(0)
                 
-                if ';' in first_line and ',' not in first_line:
-                    df = pd.read_csv(uploaded_file, dtype=str, sep=';')
-                else:
-                    df = pd.read_csv(uploaded_file, dtype=str)
+                try:
+                    first_line = content.decode('utf-8-sig').split('\n')[0]
+                except:
+                    first_line = content.decode('utf-8').split('\n')[0]
                 
-                df.columns = df.columns.str.strip()
+                uploaded_file.seek(0)
+                
+                if ';' in first_line:
+                    df = pd.read_csv(uploaded_file, dtype=str, sep=';', encoding='utf-8-sig')
+                else:
+                    df = pd.read_csv(uploaded_file, dtype=str, encoding='utf-8-sig')
+                
+                df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+                
+                undian_col = None
+                for col in df.columns:
+                    if "undian" in col.lower():
+                        undian_col = col
+                        break
                 
                 phone_col = None
-                if "No HP" in df.columns:
-                    phone_col = "No HP"
-                elif "Nomor HP" in df.columns:
-                    phone_col = "Nomor HP"
-                elif "NoHP" in df.columns:
-                    phone_col = "NoHP"
-                elif "HP" in df.columns:
-                    phone_col = "HP"
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
+                        phone_col = col
+                        break
                 
-                if "Nomor Undian" not in df.columns:
+                if undian_col is None:
                     st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
                     st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
                 elif phone_col is None:
                     st.error("❌ Error: File CSV harus memiliki kolom nomor HP")
                     st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                    st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'NoHP', atau 'HP'")
+                    st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'HP', 'Phone', 'Telp'")
                 else:
-                    df["No HP"] = df[phone_col]
+                    df["Nomor Undian"] = df[undian_col].astype(str).str.strip()
+                    df["No HP"] = df[phone_col].astype(str).str.strip()
                     
-                    df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4) if pd.notna(x) else x)
-                    df = df.dropna(subset=["Nomor Undian", "No HP"])
+                    df = df[df["Nomor Undian"].notna() & (df["Nomor Undian"] != "") & (df["Nomor Undian"] != "nan")]
+                    df = df[df["No HP"].notna() & (df["No HP"] != "") & (df["No HP"] != "nan")]
+                    
+                    df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4))
                     
                     participant_data = df[["Nomor Undian", "No HP"]].copy()
                     participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
