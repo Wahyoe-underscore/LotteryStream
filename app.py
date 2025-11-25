@@ -426,24 +426,6 @@ else:
             st.error(f"❌ Error membaca file: {str(e)}")
     
     else:
-        st.markdown("""
-        <div class="info-box">
-            <h3 style="color: #667eea; margin-bottom: 1rem;">📝 Cara Penggunaan</h3>
-            <ol style="font-size: 1.1rem; line-height: 2;">
-                <li>Upload file CSV yang berisi kolom <strong>'Nomor Undian'</strong></li>
-                <li>Klik tombol <strong>'MULAI UNDIAN'</strong></li>
-                <li>Pilih kategori hadiah untuk melihat <strong>100 pemenang</strong> dalam satu layar</li>
-                <li>Download hasil undian dalam format <strong>Excel</strong></li>
-            </ol>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("### 📄 Contoh Format CSV")
-        example_df = pd.DataFrame({
-            "Nomor Undian": ["0001", "0002", "0003", "0004", "0005"]
-        })
-        st.dataframe(example_df, use_container_width=False, hide_index=True)
-        
         st.markdown("### 🎁 Daftar Hadiah")
         cols = st.columns(3)
         for idx, tier in enumerate(PRIZE_TIERS):
