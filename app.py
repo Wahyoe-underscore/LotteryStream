@@ -35,6 +35,7 @@ def secure_shuffle(data_list):
         shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
     return shuffled
 
+st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
 st.title("🎉 Sistem Undian Move & Groove")
 st.markdown("---")
 
