@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import secrets
+from io import BytesIO
 
 st.set_page_config(
     page_title="Sistem Undian Move & Groove",
@@ -51,13 +52,14 @@ if uploaded_file is not None:
         st.session_state["results_df"] = None
     
     try:
-        df = pd.read_csv(uploaded_file)
+        df = pd.read_csv(uploaded_file, dtype=str)
         
         if "Nomor Undian" not in df.columns:
             st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
             st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
         else:
-            participants = df["Nomor Undian"].dropna().astype(str).tolist()
+            participants = df["Nomor Undian"].dropna().tolist()
+            participants = [str(p).zfill(4) for p in participants]
             total_participants = len(participants)
             
             st.success(f"✅ File berhasil dimuat! Total peserta: **{total_participants:,}**")
@@ -111,16 +113,19 @@ if uploaded_file is not None:
                 st.markdown("### 📋 Daftar Lengkap Pemenang")
                 st.dataframe(results_df, use_container_width=True, hide_index=True, height=500)
                 
-                csv_data = results_df.to_csv(index=False).encode("utf-8")
+                excel_buffer = BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
+                excel_data = excel_buffer.getvalue()
                 
                 st.markdown("---")
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
                     st.download_button(
-                        label="📥 Download Hasil Undian",
-                        data=csv_data,
-                        file_name="hasil_undian_move_groove.csv",
-                        mime="text/csv",
+                        label="📥 Download Hasil Undian (Excel)",
+                        data=excel_data,
+                        file_name="hasil_undian_move_groove.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         use_container_width=True,
                         type="primary"
                     )
@@ -139,6 +144,6 @@ else:
     """)
     
     example_df = pd.DataFrame({
-        "Nomor Undian": ["001", "002", "003", "004", "005"]
+        "Nomor Undian": ["0001", "0002", "0003", "0004", "0005"]
     })
     st.dataframe(example_df, use_container_width=False, hide_index=True)

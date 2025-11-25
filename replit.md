@@ -33,14 +33,17 @@ streamlit run app.py --server.port 5000
 ```
 
 ## CSV Format
-The uploaded CSV file must contain a column named "Nomor Undian":
+The uploaded CSV file must contain a column named "Nomor Undian" (4-digit format with leading zeros preserved):
 ```csv
 Nomor Undian
-001
-002
-003
+0001
+0002
+0003
 ...
 ```
+
+## Output Format
+Results are exported as Excel file (.xlsx) with properly separated columns.
 
 ## Dependencies
 - streamlit
