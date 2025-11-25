@@ -648,17 +648,6 @@ else:
                     st.error(f"❌ Error membaca file: {str(e)}")
         
         with tab2:
-            st.markdown("""
-            <div class="info-box">
-                <p><strong>Cara menggunakan Google Sheets:</strong></p>
-                <ol>
-                    <li>Buka Google Sheets Anda</li>
-                    <li>Klik "Share" → "Anyone with the link" → "Viewer"</li>
-                    <li>Copy link dan paste di bawah</li>
-                </ol>
-            </div>
-            """, unsafe_allow_html=True)
-            
             sheets_url = st.text_input(
                 "Paste Google Sheets URL",
                 placeholder="https://docs.google.com/spreadsheets/d/...",
