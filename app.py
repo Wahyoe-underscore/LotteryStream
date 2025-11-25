@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import secrets
 from io import BytesIO
@@ -249,17 +250,65 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     </div>
     """, unsafe_allow_html=True)
     
-    winners_html = '<div class="slide-container"><div class="winner-grid">'
+    num_winners = len(tier_winners)
+    num_cols = 10 if num_winners >= 10 else num_winners
+    grid_height = ((num_winners + num_cols - 1) // num_cols) * 85 + 40
+    
+    winners_html = f'''
+    <html>
+    <head>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+            body {{
+                margin: 0;
+                padding: 0;
+                font-family: 'Poppins', sans-serif;
+                background: transparent;
+            }}
+            .winner-grid {{
+                display: grid;
+                grid-template-columns: repeat({num_cols}, 1fr);
+                gap: 8px;
+                padding: 1rem;
+            }}
+            .winner-cell {{
+                background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+                border-radius: 10px;
+                padding: 0.8rem 0.5rem;
+                text-align: center;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                border-left: 4px solid #f5576c;
+            }}
+            .winner-rank {{
+                font-size: 0.75rem;
+                color: #888;
+                font-weight: 600;
+            }}
+            .winner-number {{
+                font-size: 1.4rem;
+                font-weight: 800;
+                color: #333;
+                margin-top: 0.2rem;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="winner-grid">
+    '''
     for _, row in tier_winners.iterrows():
         winners_html += f'''
-        <div class="winner-cell">
-            <div class="winner-rank">#{row["Peringkat"]}</div>
-            <div class="winner-number">{row["Nomor Undian"]}</div>
-        </div>
+            <div class="winner-cell">
+                <div class="winner-rank">#{row["Peringkat"]}</div>
+                <div class="winner-number">{row["Nomor Undian"]}</div>
+            </div>
         '''
-    winners_html += '</div></div>'
+    winners_html += '''
+        </div>
+    </body>
+    </html>
+    '''
     
-    st.markdown(winners_html, unsafe_allow_html=True)
+    components.html(winners_html, height=grid_height, scrolling=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
