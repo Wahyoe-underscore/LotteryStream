@@ -4,7 +4,9 @@
 A Streamlit-based lottery system for selecting 800 winners from participant data. The application securely randomizes participants and assigns prizes across 9 tiers. Optimized for large screen presentation at events.
 
 ## Features
+- Two data input options: CSV file upload or Google Sheets URL
 - CSV file upload for participant data (requires "Nomor Undian" and "No HP" columns)
+- Google Sheets integration: Paste public sheet URL to import participant data
 - Secure randomization using Python's `secrets` module (cryptographically secure)
 - 9 prize tiers with varying winners (total 800 winners)
 - Winner display in 10-column grid format (optimized for large screens)
