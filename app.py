@@ -618,16 +618,37 @@ else:
                 st.session_state["results_df"] = None
             
             try:
-                df = pd.read_csv(uploaded_file, dtype=str)
+                uploaded_file.seek(0)
+                first_line = uploaded_file.readline().decode('utf-8')
+                uploaded_file.seek(0)
+                
+                if ';' in first_line and ',' not in first_line:
+                    df = pd.read_csv(uploaded_file, dtype=str, sep=';')
+                else:
+                    df = pd.read_csv(uploaded_file, dtype=str)
+                
+                df.columns = df.columns.str.strip()
+                
+                phone_col = None
+                if "No HP" in df.columns:
+                    phone_col = "No HP"
+                elif "Nomor HP" in df.columns:
+                    phone_col = "Nomor HP"
+                elif "NoHP" in df.columns:
+                    phone_col = "NoHP"
+                elif "HP" in df.columns:
+                    phone_col = "HP"
                 
                 if "Nomor Undian" not in df.columns:
                     st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
                     st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                elif "No HP" not in df.columns:
-                    st.error("❌ Error: File CSV harus memiliki kolom 'No HP'")
+                elif phone_col is None:
+                    st.error("❌ Error: File CSV harus memiliki kolom nomor HP")
                     st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                    st.info("💡 Tip: Pastikan kolom nomor HP bernama 'No HP' (dengan spasi)")
+                    st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'NoHP', atau 'HP'")
                 else:
+                    df["No HP"] = df[phone_col]
+                    
                     df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4) if pd.notna(x) else x)
                     df = df.dropna(subset=["Nomor Undian", "No HP"])
                     
