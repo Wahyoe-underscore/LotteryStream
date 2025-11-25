@@ -2,8 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import secrets
-from io import BytesIO
+from io import BytesIO, StringIO
 import time
+import re
+import requests
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -604,162 +606,221 @@ else:
             st.markdown("<p style='text-align:center; color:#ffeb3b; font-size:1rem;'>⚠️ Download Excel dan PowerPoint terlebih dahulu sebelum memulai undian baru</p>", unsafe_allow_html=True)
     
     else:
-        uploaded_file = st.file_uploader(
-            "📁 Upload File CSV (harus memiliki kolom 'Nomor Undian' dan 'No HP')",
-            type=["csv"],
-            help="File CSV harus berisi kolom 'Nomor Undian' dan 'No HP'"
-        )
+        tab1, tab2 = st.tabs(["📁 Upload File CSV", "🔗 Google Sheets URL"])
         
-        if uploaded_file is not None:
-            current_file_name = uploaded_file.name
-            if st.session_state.get("last_uploaded_file") != current_file_name:
-                st.session_state["last_uploaded_file"] = current_file_name
-                st.session_state["lottery_done"] = False
-                st.session_state["results_df"] = None
+        df = None
+        data_source = None
+        
+        with tab1:
+            uploaded_file = st.file_uploader(
+                "Upload File CSV (harus memiliki kolom 'Nomor Undian' dan 'No HP')",
+                type=["csv"],
+                help="File CSV harus berisi kolom 'Nomor Undian' dan 'No HP'"
+            )
             
-            try:
-                uploaded_file.seek(0)
-                content = uploaded_file.read()
-                uploaded_file.seek(0)
+            if uploaded_file is not None:
+                current_file_name = uploaded_file.name
+                if st.session_state.get("last_uploaded_file") != current_file_name:
+                    st.session_state["last_uploaded_file"] = current_file_name
+                    st.session_state["lottery_done"] = False
+                    st.session_state["results_df"] = None
                 
                 try:
-                    first_line = content.decode('utf-8-sig').split('\n')[0]
-                except:
-                    first_line = content.decode('utf-8').split('\n')[0]
-                
-                uploaded_file.seek(0)
-                
-                if ';' in first_line:
-                    df = pd.read_csv(uploaded_file, dtype=str, sep=';', encoding='utf-8-sig')
-                else:
-                    df = pd.read_csv(uploaded_file, dtype=str, encoding='utf-8-sig')
-                
-                df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-                
-                undian_col = None
-                for col in df.columns:
-                    if "undian" in col.lower():
-                        undian_col = col
-                        break
-                
-                phone_col = None
-                for col in df.columns:
-                    col_lower = col.lower()
-                    if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
-                        phone_col = col
-                        break
-                
-                if undian_col is None:
-                    st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
-                    st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                elif phone_col is None:
-                    st.error("❌ Error: File CSV harus memiliki kolom nomor HP")
-                    st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                    st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'HP', 'Phone', 'Telp'")
-                else:
-                    df["Nomor Undian"] = df[undian_col].astype(str).str.strip()
-                    df["No HP"] = df[phone_col].astype(str).str.strip()
+                    uploaded_file.seek(0)
+                    content = uploaded_file.read()
+                    uploaded_file.seek(0)
                     
-                    df = df[df["Nomor Undian"].notna() & (df["Nomor Undian"] != "") & (df["Nomor Undian"] != "nan")]
-                    df = df[df["No HP"].notna() & (df["No HP"] != "") & (df["No HP"] != "nan")]
+                    try:
+                        first_line = content.decode('utf-8-sig').split('\n')[0]
+                    except:
+                        first_line = content.decode('utf-8').split('\n')[0]
                     
-                    df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4))
+                    uploaded_file.seek(0)
                     
-                    participant_data = df[["Nomor Undian", "No HP"]].copy()
-                    participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
+                    if ';' in first_line:
+                        df = pd.read_csv(uploaded_file, dtype=str, sep=';', encoding='utf-8-sig')
+                    else:
+                        df = pd.read_csv(uploaded_file, dtype=str, encoding='utf-8-sig')
                     
-                    st.session_state["participant_data"] = participant_data
-                    
-                    participants = participant_data["Nomor Undian"].tolist()
-                    total_participants = len(participants)
-                    
-                    st.session_state["total_participants"] = total_participants
-                    
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.markdown(f"""
-                        <div class="stats-card">
-                            <div class="stats-number">{total_participants:,}</div>
-                            <div class="stats-label">👥 Total Peserta</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col2:
-                        st.markdown(f"""
-                        <div class="stats-card">
-                            <div class="stats-number">{TOTAL_WINNERS}</div>
-                            <div class="stats-label">🏆 Total Pemenang</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col3:
-                        st.markdown(f"""
-                        <div class="stats-card">
-                            <div class="stats-number">9</div>
-                            <div class="stats-label">🎁 Kategori Hadiah</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    if total_participants < TOTAL_WINNERS:
-                        st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        start_lottery = st.button(
-                            "🎲 MULAI UNDIAN 🎲",
-                            use_container_width=True,
-                            type="primary"
-                        )
-                    
-                    if start_lottery:
-                        progress_bar = st.progress(0)
-                        status_text = st.empty()
-                        
-                        for i in range(100):
-                            progress_bar.progress(i + 1)
-                            if i < 30:
-                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data peserta... {i+1}%</p>", unsafe_allow_html=True)
-                            elif i < 70:
-                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta secara acak... {i+1}%</p>", unsafe_allow_html=True)
-                            else:
-                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
-                            time.sleep(0.03)
-                        
-                        shuffled_participants = secure_shuffle(participants)
-                        
-                        num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
-                        winners = shuffled_participants[:num_winners]
-                        
-                        participant_data = st.session_state.get("participant_data")
-                        if participant_data is not None:
-                            phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"]))
-                        else:
-                            phone_lookup = {}
-                        
-                        results = []
-                        for i, winner in enumerate(winners, 1):
-                            results.append({
-                                "Peringkat": i,
-                                "Nomor Undian": winner,
-                                "No HP": phone_lookup.get(winner, ""),
-                                "Hadiah": get_prize(i)
-                            })
-                        
-                        results_df = pd.DataFrame(results)
-                        
-                        st.session_state["results_df"] = results_df
-                        st.session_state["lottery_done"] = True
-                        
-                        progress_bar.empty()
-                        status_text.empty()
-                        
-                        st.balloons()
-                        st.rerun()
-                    
-            except Exception as e:
-                st.error(f"❌ Error membaca file: {str(e)}")
+                    df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+                    data_source = "csv"
+                except Exception as e:
+                    st.error(f"❌ Error membaca file: {str(e)}")
         
-        else:
+        with tab2:
+            st.markdown("""
+            <div class="info-box">
+                <p><strong>Cara menggunakan Google Sheets:</strong></p>
+                <ol>
+                    <li>Buka Google Sheets Anda</li>
+                    <li>Klik "Share" → "Anyone with the link" → "Viewer"</li>
+                    <li>Copy link dan paste di bawah</li>
+                </ol>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            sheets_url = st.text_input(
+                "Paste Google Sheets URL",
+                placeholder="https://docs.google.com/spreadsheets/d/...",
+                help="Pastikan Google Sheets sudah di-share sebagai 'Anyone with the link can view'"
+            )
+            
+            if sheets_url and st.button("📥 Ambil Data dari Google Sheets", use_container_width=True):
+                try:
+                    sheet_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheets_url)
+                    if sheet_id_match:
+                        sheet_id = sheet_id_match.group(1)
+                        csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+                        
+                        with st.spinner("Mengambil data dari Google Sheets..."):
+                            response = requests.get(csv_url, timeout=30)
+                            response.raise_for_status()
+                            
+                            csv_content = response.content.decode('utf-8-sig')
+                            
+                            if ';' in csv_content.split('\n')[0]:
+                                df = pd.read_csv(StringIO(csv_content), dtype=str, sep=';')
+                            else:
+                                df = pd.read_csv(StringIO(csv_content), dtype=str)
+                            
+                            df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+                            data_source = "sheets"
+                            st.session_state["sheets_df"] = df
+                            st.session_state["last_uploaded_file"] = sheets_url
+                            st.success(f"✅ Berhasil mengambil {len(df)} baris data!")
+                    else:
+                        st.error("❌ URL tidak valid. Pastikan URL dari Google Sheets.")
+                except requests.exceptions.RequestException as e:
+                    st.error("❌ Gagal mengambil data. Pastikan Google Sheets sudah di-share sebagai 'Anyone with the link'")
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+            
+            if "sheets_df" in st.session_state and st.session_state.get("last_uploaded_file") == sheets_url:
+                df = st.session_state["sheets_df"]
+                data_source = "sheets"
+        
+        if df is not None:
+            undian_col = None
+            for col in df.columns:
+                if "undian" in col.lower():
+                    undian_col = col
+                    break
+            
+            phone_col = None
+            for col in df.columns:
+                col_lower = col.lower()
+                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
+                    phone_col = col
+                    break
+            
+            if undian_col is None:
+                st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
+                st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
+            elif phone_col is None:
+                st.error("❌ Error: File harus memiliki kolom nomor HP")
+                st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
+                st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'HP', 'Phone', 'Telp'")
+            else:
+                df["Nomor Undian"] = df[undian_col].astype(str).str.strip()
+                df["No HP"] = df[phone_col].astype(str).str.strip()
+                
+                df = df[df["Nomor Undian"].notna() & (df["Nomor Undian"] != "") & (df["Nomor Undian"] != "nan")]
+                df = df[df["No HP"].notna() & (df["No HP"] != "") & (df["No HP"] != "nan")]
+                
+                df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4))
+                
+                participant_data = df[["Nomor Undian", "No HP"]].copy()
+                participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
+                
+                st.session_state["participant_data"] = participant_data
+                
+                participants = participant_data["Nomor Undian"].tolist()
+                total_participants = len(participants)
+                
+                st.session_state["total_participants"] = total_participants
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.markdown(f"""
+                    <div class="stats-card">
+                        <div class="stats-number">{total_participants:,}</div>
+                        <div class="stats-label">👥 Total Peserta</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                    <div class="stats-card">
+                        <div class="stats-number">{TOTAL_WINNERS}</div>
+                        <div class="stats-label">🏆 Total Pemenang</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f"""
+                    <div class="stats-card">
+                        <div class="stats-number">9</div>
+                        <div class="stats-label">🎁 Kategori Hadiah</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                if total_participants < TOTAL_WINNERS:
+                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    start_lottery = st.button(
+                        "🎲 MULAI UNDIAN 🎲",
+                        use_container_width=True,
+                        type="primary"
+                    )
+                
+                if start_lottery:
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    for i in range(100):
+                        progress_bar.progress(i + 1)
+                        if i < 30:
+                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data peserta... {i+1}%</p>", unsafe_allow_html=True)
+                        elif i < 70:
+                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta secara acak... {i+1}%</p>", unsafe_allow_html=True)
+                        else:
+                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
+                        time.sleep(0.03)
+                    
+                    shuffled_participants = secure_shuffle(participants)
+                    
+                    num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
+                    winners = shuffled_participants[:num_winners]
+                    
+                    participant_data = st.session_state.get("participant_data")
+                    if participant_data is not None:
+                        phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"]))
+                    else:
+                        phone_lookup = {}
+                    
+                    results = []
+                    for i, winner in enumerate(winners, 1):
+                        results.append({
+                            "Peringkat": i,
+                            "Nomor Undian": winner,
+                            "No HP": phone_lookup.get(winner, ""),
+                            "Hadiah": get_prize(i)
+                        })
+                    
+                    results_df = pd.DataFrame(results)
+                    
+                    st.session_state["results_df"] = results_df
+                    st.session_state["lottery_done"] = True
+                    
+                    progress_bar.empty()
+                    status_text.empty()
+                    
+                    st.balloons()
+                    st.rerun()
+        
+        if df is None:
             st.markdown("### 🎁 Daftar Hadiah")
             cols = st.columns(3)
             for idx, tier in enumerate(PRIZE_TIERS):
