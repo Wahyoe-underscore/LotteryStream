@@ -350,14 +350,15 @@ def generate_pptx(results_df):
     prs.slide_height = Inches(7.5)
     
     for tier in PRIZE_TIERS:
-        tier_winners = results_df[results_df["Hadiah"] == tier["name"]]
+        tier_winners = results_df[results_df["Hadiah"] == tier["name"]].copy()
+        tier_winners = tier_winners.drop_duplicates(subset=["Nomor Undian"])
+        tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
         
         if len(tier_winners) <= 50:
             create_winners_slide(prs, tier, tier_winners)
         else:
-            winners_list = tier_winners.reset_index(drop=True)
-            first_half = winners_list.iloc[:50]
-            second_half = winners_list.iloc[50:]
+            first_half = tier_winners.iloc[:50]
+            second_half = tier_winners.iloc[50:]
             
             create_winners_slide(prs, tier, first_half, 1, 2)
             create_winners_slide(prs, tier, second_half, 2, 2)
@@ -374,7 +375,9 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     selected_tier = st.session_state["selected_prize"]
     results_df = st.session_state["results_df"]
     
-    tier_winners = results_df[results_df["Hadiah"] == selected_tier["name"]]
+    tier_winners = results_df[results_df["Hadiah"] == selected_tier["name"]].copy()
+    tier_winners = tier_winners.drop_duplicates(subset=["Nomor Undian"])
+    tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
     
     col1, col2, col3 = st.columns([1, 6, 1])
     with col1:
