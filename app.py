@@ -335,156 +335,192 @@ else:
     
     st.markdown("---")
     
-    uploaded_file = st.file_uploader(
-        "📁 Upload File CSV (harus memiliki kolom 'Nomor Undian')",
-        type=["csv"],
-        help="File CSV harus berisi kolom dengan nama 'Nomor Undian'"
-    )
-    
-    if uploaded_file is not None:
-        current_file_name = uploaded_file.name
-        if st.session_state.get("last_uploaded_file") != current_file_name:
-            st.session_state["last_uploaded_file"] = current_file_name
-            st.session_state["lottery_done"] = False
-            st.session_state["results_df"] = None
+    if st.session_state.get("lottery_done", False) and st.session_state.get("results_df") is not None:
+        results_df = st.session_state["results_df"]
+        total_winners = len(results_df)
         
-        try:
-            df = pd.read_csv(uploaded_file, dtype=str)
-            
-            if "Nomor Undian" not in df.columns:
-                st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
-                st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-            else:
-                participants = df["Nomor Undian"].dropna().tolist()
-                participants = [str(p).zfill(4) for p in participants]
-                total_participants = len(participants)
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.markdown(f"""
-                    <div class="stats-card">
-                        <div class="stats-number">{total_participants:,}</div>
-                        <div class="stats-label">👥 Total Peserta</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"""
-                    <div class="stats-card">
-                        <div class="stats-number">{TOTAL_WINNERS}</div>
-                        <div class="stats-label">🏆 Total Pemenang</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col3:
-                    st.markdown(f"""
-                    <div class="stats-card">
-                        <div class="stats-number">9</div>
-                        <div class="stats-label">🎁 Kategori Hadiah</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                if total_participants < TOTAL_WINNERS:
-                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    start_lottery = st.button(
-                        "🎲 MULAI UNDIAN 🎲",
-                        use_container_width=True,
-                        type="primary"
-                    )
-                
-                if start_lottery:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for i in range(100):
-                        progress_bar.progress(i + 1)
-                        if i < 30:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data peserta... {i+1}%</p>", unsafe_allow_html=True)
-                        elif i < 70:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta secara acak... {i+1}%</p>", unsafe_allow_html=True)
-                        else:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
-                        time.sleep(0.03)
-                    
-                    shuffled_participants = secure_shuffle(participants)
-                    
-                    num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
-                    winners = shuffled_participants[:num_winners]
-                    
-                    results = []
-                    for i, winner in enumerate(winners, 1):
-                        results.append({
-                            "Peringkat": i,
-                            "Nomor Undian": winner,
-                            "Hadiah": get_prize(i)
-                        })
-                    
-                    results_df = pd.DataFrame(results)
-                    
-                    st.session_state["results_df"] = results_df
-                    st.session_state["lottery_done"] = True
-                    
-                    progress_bar.empty()
-                    status_text.empty()
-                    
-                    st.balloons()
-                    st.rerun()
-                
-                if st.session_state.get("lottery_done", False):
-                    results_df = st.session_state["results_df"]
-                    
-                    st.markdown('<div class="section-header">🏆 PILIH KATEGORI HADIAH 🏆</div>', unsafe_allow_html=True)
-                    st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat pemenang dalam satu layar</p>", unsafe_allow_html=True)
-                    
-                    cols = st.columns(3)
-                    for idx, tier in enumerate(PRIZE_TIERS):
-                        col_idx = idx % 3
-                        with cols[col_idx]:
-                            count = len(results_df[results_df["Hadiah"] == tier["name"]])
-                            if st.button(
-                                f"{tier['icon']} {tier['name']}\n({count} Pemenang)",
-                                key=f"prize_{idx}",
-                                use_container_width=True
-                            ):
-                                st.session_state["selected_prize"] = tier
-                                st.rerun()
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    st.markdown("---")
-                    
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        excel_buffer = BytesIO()
-                        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                            results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
-                        excel_data = excel_buffer.getvalue()
-                        
-                        st.download_button(
-                            label="📥 DOWNLOAD SEMUA HASIL UNDIAN (EXCEL)",
-                            data=excel_data,
-                            file_name="hasil_undian_move_groove.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True,
-                            type="primary"
-                        )
-                    
-        except Exception as e:
-            st.error(f"❌ Error membaca file: {str(e)}")
-    
-    else:
-        st.markdown("### 🎁 Daftar Hadiah")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div class="stats-card">
+                <div class="stats-number">{st.session_state.get('total_participants', total_winners):,}</div>
+                <div class="stats-label">👥 Total Peserta</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+            <div class="stats-card">
+                <div class="stats-number">{total_winners}</div>
+                <div class="stats-label">🏆 Total Pemenang</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+            <div class="stats-card">
+                <div class="stats-number">9</div>
+                <div class="stats-label">🎁 Kategori Hadiah</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('<div class="section-header">🏆 PILIH KATEGORI HADIAH 🏆</div>', unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat pemenang dalam satu layar</p>", unsafe_allow_html=True)
+        
         cols = st.columns(3)
         for idx, tier in enumerate(PRIZE_TIERS):
             col_idx = idx % 3
             with cols[col_idx]:
-                st.markdown(f"""
-                <div class="prize-card-clickable">
-                    <div style="font-size: 2.5rem;">{tier["icon"]}</div>
-                    <div style="font-weight: 700; color: #333; font-size: 1.1rem; margin-top: 0.5rem;">{tier["name"]}</div>
-                    <div style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">Peringkat {tier["start"]}-{tier["end"]}</div>
-                    <div style="font-size: 1rem; color: #f5576c; font-weight: 600; margin-top: 0.5rem;">{tier["count"]} Pemenang</div>
-                </div>
-                """, unsafe_allow_html=True)
+                count = len(results_df[results_df["Hadiah"] == tier["name"]])
+                if st.button(
+                    f"{tier['icon']} {tier['name']}\n({count} Pemenang)",
+                    key=f"prize_main_{idx}",
+                    use_container_width=True
+                ):
+                    st.session_state["selected_prize"] = tier
+                    st.rerun()
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
+            excel_data = excel_buffer.getvalue()
+            
+            st.download_button(
+                label="📥 DOWNLOAD SEMUA HASIL UNDIAN (EXCEL)",
+                data=excel_data,
+                file_name="hasil_undian_move_groove.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                type="primary"
+            )
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🔄 UNDIAN BARU", use_container_width=True):
+                st.session_state["lottery_done"] = False
+                st.session_state["results_df"] = None
+                st.session_state["selected_prize"] = None
+                st.rerun()
+    
+    else:
+        uploaded_file = st.file_uploader(
+            "📁 Upload File CSV (harus memiliki kolom 'Nomor Undian')",
+            type=["csv"],
+            help="File CSV harus berisi kolom dengan nama 'Nomor Undian'"
+        )
+        
+        if uploaded_file is not None:
+            current_file_name = uploaded_file.name
+            if st.session_state.get("last_uploaded_file") != current_file_name:
+                st.session_state["last_uploaded_file"] = current_file_name
+                st.session_state["lottery_done"] = False
+                st.session_state["results_df"] = None
+            
+            try:
+                df = pd.read_csv(uploaded_file, dtype=str)
+                
+                if "Nomor Undian" not in df.columns:
+                    st.error("❌ Error: File CSV harus memiliki kolom 'Nomor Undian'")
+                    st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
+                else:
+                    participants = df["Nomor Undian"].dropna().tolist()
+                    participants = [str(p).zfill(4) for p in participants]
+                    total_participants = len(participants)
+                    
+                    st.session_state["total_participants"] = total_participants
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.markdown(f"""
+                        <div class="stats-card">
+                            <div class="stats-number">{total_participants:,}</div>
+                            <div class="stats-label">👥 Total Peserta</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        st.markdown(f"""
+                        <div class="stats-card">
+                            <div class="stats-number">{TOTAL_WINNERS}</div>
+                            <div class="stats-label">🏆 Total Pemenang</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col3:
+                        st.markdown(f"""
+                        <div class="stats-card">
+                            <div class="stats-number">9</div>
+                            <div class="stats-label">🎁 Kategori Hadiah</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    if total_participants < TOTAL_WINNERS:
+                        st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        start_lottery = st.button(
+                            "🎲 MULAI UNDIAN 🎲",
+                            use_container_width=True,
+                            type="primary"
+                        )
+                    
+                    if start_lottery:
+                        progress_bar = st.progress(0)
+                        status_text = st.empty()
+                        
+                        for i in range(100):
+                            progress_bar.progress(i + 1)
+                            if i < 30:
+                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data peserta... {i+1}%</p>", unsafe_allow_html=True)
+                            elif i < 70:
+                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta secara acak... {i+1}%</p>", unsafe_allow_html=True)
+                            else:
+                                status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
+                            time.sleep(0.03)
+                        
+                        shuffled_participants = secure_shuffle(participants)
+                        
+                        num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
+                        winners = shuffled_participants[:num_winners]
+                        
+                        results = []
+                        for i, winner in enumerate(winners, 1):
+                            results.append({
+                                "Peringkat": i,
+                                "Nomor Undian": winner,
+                                "Hadiah": get_prize(i)
+                            })
+                        
+                        results_df = pd.DataFrame(results)
+                        
+                        st.session_state["results_df"] = results_df
+                        st.session_state["lottery_done"] = True
+                        
+                        progress_bar.empty()
+                        status_text.empty()
+                        
+                        st.balloons()
+                        st.rerun()
+                    
+            except Exception as e:
+                st.error(f"❌ Error membaca file: {str(e)}")
+        
+        else:
+            st.markdown("### 🎁 Daftar Hadiah")
+            cols = st.columns(3)
+            for idx, tier in enumerate(PRIZE_TIERS):
+                col_idx = idx % 3
+                with cols[col_idx]:
+                    st.markdown(f"""
+                    <div class="prize-card-clickable">
+                        <div style="font-size: 2.5rem;">{tier["icon"]}</div>
+                        <div style="font-weight: 700; color: #333; font-size: 1.1rem; margin-top: 0.5rem;">{tier["name"]}</div>
+                        <div style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">Peringkat {tier["start"]}-{tier["end"]}</div>
+                        <div style="font-size: 1rem; color: #f5576c; font-weight: 600; margin-top: 0.5rem;">{tier["count"]} Pemenang</div>
+                    </div>
+                    """, unsafe_allow_html=True)
