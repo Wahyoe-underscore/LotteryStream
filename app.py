@@ -198,16 +198,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 PRIZE_TIERS = [
-    {"name": "Bensin Rp.100.000,-", "start": 1, "end": 100, "icon": "⛽", "color": "#FF6B6B"},
-    {"name": "Top100 Rp.100.000,-", "start": 101, "end": 200, "icon": "💳", "color": "#4ECDC4"},
-    {"name": "SNL Rp.100.000,-", "start": 201, "end": 300, "icon": "🎁", "color": "#45B7D1"},
-    {"name": "Bensin Rp.150.000,-", "start": 301, "end": 400, "icon": "⛽", "color": "#96CEB4"},
-    {"name": "Top100 Rp.150.000,-", "start": 401, "end": 500, "icon": "💳", "color": "#FFEAA7"},
-    {"name": "SNL Rp.150.000,-", "start": 501, "end": 600, "icon": "🎁", "color": "#DDA0DD"},
-    {"name": "Bensin Rp.200.000,-", "start": 601, "end": 700, "icon": "⛽", "color": "#98D8C8"},
-    {"name": "Top100 Rp.200.000,-", "start": 701, "end": 800, "icon": "💳", "color": "#F7DC6F"},
-    {"name": "SNL Rp.200.000,-", "start": 801, "end": 900, "icon": "🎁", "color": "#BB8FCE"},
+    {"name": "Bensin Rp.100.000,-", "start": 1, "end": 75, "icon": "⛽", "color": "#FF6B6B", "count": 75},
+    {"name": "Top100 Rp.100.000,-", "start": 76, "end": 175, "icon": "💳", "color": "#4ECDC4", "count": 100},
+    {"name": "SNL Rp.100.000,-", "start": 176, "end": 250, "icon": "🎁", "color": "#45B7D1", "count": 75},
+    {"name": "Bensin Rp.150.000,-", "start": 251, "end": 325, "icon": "⛽", "color": "#96CEB4", "count": 75},
+    {"name": "Top100 Rp.150.000,-", "start": 326, "end": 400, "icon": "💳", "color": "#FFEAA7", "count": 75},
+    {"name": "SNL Rp.150.000,-", "start": 401, "end": 475, "icon": "🎁", "color": "#DDA0DD", "count": 75},
+    {"name": "Bensin Rp.200.000,-", "start": 476, "end": 575, "icon": "⛽", "color": "#98D8C8", "count": 100},
+    {"name": "Top100 Rp.200.000,-", "start": 576, "end": 675, "icon": "💳", "color": "#F7DC6F", "count": 100},
+    {"name": "SNL Rp.200.000,-", "start": 676, "end": 775, "icon": "🎁", "color": "#BB8FCE", "count": 100},
 ]
+
+TOTAL_WINNERS = 775
 
 def get_prize(rank):
     for tier in PRIZE_TIERS:
@@ -238,11 +240,12 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
             st.session_state["selected_prize"] = None
             st.rerun()
     
+    winner_count = selected_tier["end"] - selected_tier["start"] + 1
     st.markdown(f"""
     <div class="prize-header">
         <div style="font-size: 4rem;">{selected_tier["icon"]}</div>
         <div class="prize-header-title">{selected_tier["name"]}</div>
-        <div class="prize-header-subtitle">Peringkat {selected_tier["start"]} - {selected_tier["end"]} | 100 Pemenang</div>
+        <div class="prize-header-subtitle">Peringkat {selected_tier["start"]} - {selected_tier["end"]} | {winner_count} Pemenang</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -321,7 +324,7 @@ else:
                 with col2:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">900</div>
+                        <div class="stats-number">{TOTAL_WINNERS}</div>
                         <div class="stats-label">🏆 Total Pemenang</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -333,8 +336,8 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if total_participants < 900:
-                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari 900. Semua peserta akan menjadi pemenang.")
+                if total_participants < TOTAL_WINNERS:
+                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
@@ -362,7 +365,7 @@ else:
                     
                     shuffled_participants = secure_shuffle(participants)
                     
-                    num_winners = min(900, len(shuffled_participants))
+                    num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
                     winners = shuffled_participants[:num_winners]
                     
                     results = []
@@ -388,7 +391,7 @@ else:
                     results_df = st.session_state["results_df"]
                     
                     st.markdown('<div class="section-header">🏆 PILIH KATEGORI HADIAH 🏆</div>', unsafe_allow_html=True)
-                    st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat 100 pemenang dalam satu layar</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat pemenang dalam satu layar</p>", unsafe_allow_html=True)
                     
                     cols = st.columns(3)
                     for idx, tier in enumerate(PRIZE_TIERS):
@@ -436,6 +439,6 @@ else:
                     <div style="font-size: 2.5rem;">{tier["icon"]}</div>
                     <div style="font-weight: 700; color: #333; font-size: 1.1rem; margin-top: 0.5rem;">{tier["name"]}</div>
                     <div style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">Peringkat {tier["start"]}-{tier["end"]}</div>
-                    <div style="font-size: 1rem; color: #f5576c; font-weight: 600; margin-top: 0.5rem;">100 Pemenang</div>
+                    <div style="font-size: 1rem; color: #f5576c; font-weight: 600; margin-top: 0.5rem;">{tier["count"]} Pemenang</div>
                 </div>
                 """, unsafe_allow_html=True)
