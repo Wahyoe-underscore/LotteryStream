@@ -642,11 +642,15 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pandas" },
     { name = "streamlit" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "streamlit", specifier = ">=1.51.0" }]
+requires-dist = [
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "streamlit", specifier = ">=1.51.0" },
+]
 
 [[package]]
 name = "requests"
