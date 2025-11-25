@@ -9,15 +9,15 @@ st.set_page_config(
 )
 
 PRIZE_TIERS = [
-    {"name": "Hadiah 1 (Kulkas)", "start": 1, "end": 100},
-    {"name": "Hadiah 2 (TV)", "start": 101, "end": 200},
-    {"name": "Hadiah 3 (Mesin Cuci)", "start": 201, "end": 300},
-    {"name": "Hadiah 4 (Microwave)", "start": 301, "end": 400},
-    {"name": "Hadiah 5 (Blender)", "start": 401, "end": 500},
-    {"name": "Hadiah 6 (Rice Cooker)", "start": 501, "end": 600},
-    {"name": "Hadiah 7 (Setrika)", "start": 601, "end": 700},
-    {"name": "Hadiah 8 (Kipas Angin)", "start": 701, "end": 800},
-    {"name": "Hadiah 9 (Voucher Belanja)", "start": 801, "end": 900},
+    {"name": "Bensin Rp.100.000,-", "start": 1, "end": 100},
+    {"name": "Top100 Rp.100.000,-", "start": 101, "end": 200},
+    {"name": "SNL Rp.100.000,-", "start": 201, "end": 300},
+    {"name": "Bensin Rp.150.000,-", "start": 301, "end": 400},
+    {"name": "Top100 Rp.150.000,-", "start": 401, "end": 500},
+    {"name": "SNL Rp.150.000,-", "start": 501, "end": 600},
+    {"name": "Bensin Rp.200.000,-", "start": 601, "end": 700},
+    {"name": "Top100 Rp.200.000,-", "start": 701, "end": 800},
+    {"name": "SNL Rp.200.000,-", "start": 801, "end": 900},
 ]
 
 def get_prize(rank):

@@ -13,15 +13,15 @@ A Streamlit-based lottery system for selecting 900 winners from participant data
 ## Prize Tiers
 | Rank | Prize |
 |------|-------|
-| 1-100 | Hadiah 1 (Kulkas) |
-| 101-200 | Hadiah 2 (TV) |
-| 201-300 | Hadiah 3 (Mesin Cuci) |
-| 301-400 | Hadiah 4 (Microwave) |
-| 401-500 | Hadiah 5 (Blender) |
-| 501-600 | Hadiah 6 (Rice Cooker) |
-| 601-700 | Hadiah 7 (Setrika) |
-| 701-800 | Hadiah 8 (Kipas Angin) |
-| 801-900 | Hadiah 9 (Voucher Belanja) |
+| 1-100 | Bensin Rp.100.000,- |
+| 101-200 | Top100 Rp.100.000,- |
+| 201-300 | SNL Rp.100.000,- |
+| 301-400 | Bensin Rp.150.000,- |
+| 401-500 | Top100 Rp.150.000,- |
+| 501-600 | SNL Rp.150.000,- |
+| 601-700 | Bensin Rp.200.000,- |
+| 701-800 | Top100 Rp.200.000,- |
+| 801-900 | SNL Rp.200.000,- |
 
 ## Project Structure
 - `app.py` - Main Streamlit application
