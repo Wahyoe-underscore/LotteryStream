@@ -4,6 +4,10 @@ import pandas as pd
 import secrets
 from io import BytesIO
 import time
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 st.set_page_config(
     page_title="Sistem Undian Move & Groove",
@@ -226,6 +230,143 @@ def secure_shuffle(data_list):
         shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
     return shuffled
 
+def create_gradient_background(slide, prs):
+    background = slide.shapes.add_shape(
+        1, Inches(0), Inches(0), prs.slide_width, prs.slide_height
+    )
+    background.shadow.inherit = False
+    fill = background.fill
+    fill.gradient()
+    fill.gradient_angle = 135
+    fill.gradient_stops[0].color.rgb = RGBColor(102, 126, 234)
+    fill.gradient_stops[1].color.rgb = RGBColor(240, 147, 251)
+    background.line.fill.background()
+    
+    spTree = slide.shapes._spTree
+    sp = background._element
+    spTree.remove(sp)
+    spTree.insert(2, sp)
+
+def add_winner_cell(slide, left, top, width, height, rank, number):
+    shape = slide.shapes.add_shape(1, left, top, width, height)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+    shape.line.color.rgb = RGBColor(245, 87, 108)
+    shape.line.width = Pt(2)
+    
+    tf = shape.text_frame
+    tf.word_wrap = True
+    tf.auto_size = None
+    
+    p1 = tf.paragraphs[0]
+    p1.alignment = PP_ALIGN.CENTER
+    run1 = p1.add_run()
+    run1.text = f"#{rank}"
+    run1.font.size = Pt(9)
+    run1.font.color.rgb = RGBColor(136, 136, 136)
+    run1.font.bold = True
+    
+    p2 = tf.add_paragraph()
+    p2.alignment = PP_ALIGN.CENTER
+    run2 = p2.add_run()
+    run2.text = str(number)
+    run2.font.size = Pt(18)
+    run2.font.color.rgb = RGBColor(51, 51, 51)
+    run2.font.bold = True
+
+def add_header(slide, tier, page_num=None, total_pages=None):
+    header = slide.shapes.add_shape(
+        1, Inches(0.5), Inches(0.3), Inches(12.33), Inches(1.5)
+    )
+    header.fill.solid()
+    header.fill.fore_color.rgb = RGBColor(245, 87, 108)
+    header.line.fill.background()
+    
+    icon_box = slide.shapes.add_textbox(Inches(5.5), Inches(0.35), Inches(2), Inches(0.5))
+    tf_icon = icon_box.text_frame
+    p_icon = tf_icon.paragraphs[0]
+    p_icon.alignment = PP_ALIGN.CENTER
+    run_icon = p_icon.add_run()
+    run_icon.text = tier["icon"]
+    run_icon.font.size = Pt(36)
+    
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.85), Inches(12.33), Inches(0.6))
+    tf_title = title_box.text_frame
+    p_title = tf_title.paragraphs[0]
+    p_title.alignment = PP_ALIGN.CENTER
+    run_title = p_title.add_run()
+    run_title.text = tier["name"]
+    run_title.font.size = Pt(32)
+    run_title.font.bold = True
+    run_title.font.color.rgb = RGBColor(255, 255, 255)
+    
+    subtitle_text = f"Peringkat {tier['start']} - {tier['end']} | {tier['count']} Pemenang"
+    if page_num and total_pages:
+        subtitle_text += f" (Slide {page_num}/{total_pages})"
+    
+    subtitle_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.4), Inches(12.33), Inches(0.4))
+    tf_sub = subtitle_box.text_frame
+    p_sub = tf_sub.paragraphs[0]
+    p_sub.alignment = PP_ALIGN.CENTER
+    run_sub = p_sub.add_run()
+    run_sub.text = subtitle_text
+    run_sub.font.size = Pt(16)
+    run_sub.font.color.rgb = RGBColor(255, 255, 255)
+
+def create_winners_slide(prs, tier, winners_data, page_num=None, total_pages=None):
+    slide_layout = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(slide_layout)
+    
+    create_gradient_background(slide, prs)
+    add_header(slide, tier, page_num, total_pages)
+    
+    num_winners = len(winners_data)
+    cols = 10
+    rows = (num_winners + cols - 1) // cols
+    
+    cell_width = Inches(1.15)
+    cell_height = Inches(0.7)
+    gap_x = Inches(0.08)
+    gap_y = Inches(0.08)
+    
+    total_grid_width = cols * cell_width + (cols - 1) * gap_x
+    start_x = (prs.slide_width - total_grid_width) / 2
+    start_y = Inches(2.0)
+    
+    for idx, (_, row) in enumerate(winners_data.iterrows()):
+        row_num = idx // cols
+        col_num = idx % cols
+        
+        left = start_x + col_num * (cell_width + gap_x)
+        top = start_y + row_num * (cell_height + gap_y)
+        
+        add_winner_cell(slide, left, top, cell_width, cell_height, row["Peringkat"], row["Nomor Undian"])
+    
+    return slide
+
+def generate_pptx(results_df):
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
+    
+    for tier in PRIZE_TIERS:
+        tier_winners = results_df[results_df["Hadiah"] == tier["name"]]
+        
+        if len(tier_winners) <= 50:
+            create_winners_slide(prs, tier, tier_winners)
+        else:
+            winners_list = tier_winners.reset_index(drop=True)
+            first_half = winners_list.iloc[:50]
+            second_half = winners_list.iloc[50:]
+            
+            create_winners_slide(prs, tier, first_half, 1, 2)
+            create_winners_slide(prs, tier, second_half, 2, 2)
+    
+    pptx_buffer = BytesIO()
+    prs.save(pptx_buffer)
+    pptx_buffer.seek(0)
+    return pptx_buffer.getvalue()
+
 if "selected_prize" not in st.session_state:
     st.session_state["selected_prize"] = None
 
@@ -381,40 +522,67 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("---")
         
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
+        st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📥 Download Hasil Undian</p>", unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                 results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
             excel_data = excel_buffer.getvalue()
             
-            def mark_downloaded():
-                st.session_state["results_downloaded"] = True
+            def mark_excel_downloaded():
+                st.session_state["excel_downloaded"] = True
             
-            downloaded = st.download_button(
-                label="📥 DOWNLOAD SEMUA HASIL UNDIAN (EXCEL)",
+            st.download_button(
+                label="📊 Download Excel (.xlsx)",
                 data=excel_data,
                 file_name="hasil_undian_move_groove.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True,
-                type="primary",
-                on_click=mark_downloaded
+                on_click=mark_excel_downloaded
             )
         
-        if st.session_state.get("results_downloaded", False):
+        with col2:
+            def mark_pptx_downloaded():
+                st.session_state["pptx_downloaded"] = True
+            
+            pptx_data = generate_pptx(results_df)
+            
+            st.download_button(
+                label="📽️ Download PowerPoint (.pptx)",
+                data=pptx_data,
+                file_name="hasil_undian_move_groove.pptx",
+                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                use_container_width=True,
+                on_click=mark_pptx_downloaded
+            )
+        
+        excel_done = st.session_state.get("excel_downloaded", False)
+        pptx_done = st.session_state.get("pptx_downloaded", False)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if excel_done:
+            st.markdown("<p style='text-align:center; color:#90EE90;'>✅ Excel sudah di-download</p>", unsafe_allow_html=True)
+        if pptx_done:
+            st.markdown("<p style='text-align:center; color:#90EE90;'>✅ PowerPoint sudah di-download</p>", unsafe_allow_html=True)
+        
+        if excel_done and pptx_done:
             st.markdown("<br>", unsafe_allow_html=True)
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                st.success("✅ Hasil undian sudah di-download!")
+                st.success("✅ Semua hasil undian sudah di-download!")
                 if st.button("🔄 UNDIAN BARU", use_container_width=True):
                     st.session_state["lottery_done"] = False
                     st.session_state["results_df"] = None
                     st.session_state["selected_prize"] = None
-                    st.session_state["results_downloaded"] = False
+                    st.session_state["excel_downloaded"] = False
+                    st.session_state["pptx_downloaded"] = False
                     st.rerun()
-        else:
+        elif not excel_done or not pptx_done:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align:center; color:#ffeb3b; font-size:1rem;'>⚠️ Download hasil undian terlebih dahulu sebelum memulai undian baru</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; color:#ffeb3b; font-size:1rem;'>⚠️ Download Excel dan PowerPoint terlebih dahulu sebelum memulai undian baru</p>", unsafe_allow_html=True)
     
     else:
         uploaded_file = st.file_uploader(
