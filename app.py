@@ -249,9 +249,7 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown('<div class="slide-container">', unsafe_allow_html=True)
-    
-    winners_html = '<div class="winner-grid">'
+    winners_html = '<div class="slide-container"><div class="winner-grid">'
     for _, row in tier_winners.iterrows():
         winners_html += f'''
         <div class="winner-cell">
@@ -259,10 +257,9 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
             <div class="winner-number">{row["Nomor Undian"]}</div>
         </div>
         '''
-    winners_html += '</div>'
+    winners_html += '</div></div>'
     
     st.markdown(winners_html, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
