@@ -36,9 +36,9 @@ streamlit run app.py --server.port 5000
 The uploaded CSV file must contain a column named "Nomor Undian":
 ```csv
 Nomor Undian
-UND001
-UND002
-UND003
+001
+002
+003
 ...
 ```
 

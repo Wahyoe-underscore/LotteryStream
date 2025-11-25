@@ -139,6 +139,6 @@ else:
     """)
     
     example_df = pd.DataFrame({
-        "Nomor Undian": ["UND001", "UND002", "UND003", "UND004", "UND005"]
+        "Nomor Undian": ["001", "002", "003", "004", "005"]
     })
     st.dataframe(example_df, use_container_width=False, hide_index=True)
