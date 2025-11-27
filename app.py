@@ -564,11 +564,11 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
         name_html = f'<div class="winner-name">{name}</div>' if name and str(name) != "nan" else ""
         
         phone = row.get("No HP", "") if has_phone else ""
-        if phone and str(phone) != "nan" and len(str(phone)) >= 4:
-            masked_phone = "****" + str(phone)[-4:]
+        if phone and str(phone) != "nan" and str(phone).strip():
+            phone_display = str(phone).strip()
         else:
-            masked_phone = ""
-        phone_html = f'<div class="winner-phone">📱 {masked_phone}</div>' if masked_phone else ""
+            phone_display = ""
+        phone_html = f'<div class="winner-phone">📱 {phone_display}</div>' if phone_display else ""
         
         winners_html += f'''
             <div class="winner-cell">
