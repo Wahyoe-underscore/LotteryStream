@@ -224,6 +224,15 @@ def get_prize(rank):
             return tier["name"]
     return "Tidak Ada Hadiah"
 
+def get_prize_dynamic(rank, prize_tiers):
+    for tier in prize_tiers:
+        if tier["start"] <= rank <= tier["end"]:
+            return tier["name"]
+    return "Tidak Ada Hadiah"
+
+def calculate_total_winners(prize_tiers):
+    return sum(tier["count"] for tier in prize_tiers)
+
 def secure_shuffle(data_list):
     shuffled = data_list.copy()
     n = len(shuffled)
@@ -346,12 +355,15 @@ def create_winners_slide(prs, tier, winners_data, page_num=None, total_pages=Non
     
     return slide
 
-def generate_pptx(results_df):
+def generate_pptx(results_df, prize_tiers=None):
+    if prize_tiers is None:
+        prize_tiers = PRIZE_TIERS
+    
     prs = Presentation()
     prs.slide_width = Inches(13.33)
     prs.slide_height = Inches(7.5)
     
-    for tier in PRIZE_TIERS:
+    for tier in prize_tiers:
         tier_winners = results_df[results_df["Hadiah"] == tier["name"]].copy()
         tier_winners = tier_winners.drop_duplicates(subset=["Nomor Undian"])
         tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
@@ -372,6 +384,92 @@ def generate_pptx(results_df):
 
 if "selected_prize" not in st.session_state:
     st.session_state["selected_prize"] = None
+
+if "prize_tiers" not in st.session_state:
+    st.session_state["prize_tiers"] = PRIZE_TIERS.copy()
+
+DEFAULT_ICONS = ["🎁", "⛽", "💳", "🏆", "💰", "🎯", "⭐", "🎊", "🎉", "💎"]
+
+with st.sidebar:
+    st.markdown("### ⚙️ Pengaturan Hadiah")
+    
+    if not st.session_state.get("lottery_done", False):
+        st.markdown("---")
+        
+        if "new_prizes" not in st.session_state:
+            st.session_state["new_prizes"] = []
+            for tier in st.session_state["prize_tiers"]:
+                st.session_state["new_prizes"].append({
+                    "name": tier["name"],
+                    "count": tier["count"],
+                    "icon": tier["icon"]
+                })
+        
+        st.markdown("**Daftar Hadiah:**")
+        
+        prizes_to_remove = []
+        for idx, prize in enumerate(st.session_state["new_prizes"]):
+            col1, col2, col3 = st.columns([3, 2, 1])
+            with col1:
+                new_name = st.text_input(
+                    "Nama",
+                    value=prize["name"],
+                    key=f"prize_name_{idx}",
+                    label_visibility="collapsed"
+                )
+                st.session_state["new_prizes"][idx]["name"] = new_name
+            with col2:
+                new_count = st.number_input(
+                    "Jumlah",
+                    min_value=1,
+                    value=prize["count"],
+                    key=f"prize_count_{idx}",
+                    label_visibility="collapsed"
+                )
+                st.session_state["new_prizes"][idx]["count"] = new_count
+            with col3:
+                if st.button("🗑️", key=f"remove_{idx}"):
+                    prizes_to_remove.append(idx)
+        
+        for idx in sorted(prizes_to_remove, reverse=True):
+            st.session_state["new_prizes"].pop(idx)
+            st.rerun()
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Tambah Hadiah"):
+                icon = DEFAULT_ICONS[len(st.session_state["new_prizes"]) % len(DEFAULT_ICONS)]
+                st.session_state["new_prizes"].append({
+                    "name": "Hadiah Baru",
+                    "count": 10,
+                    "icon": icon
+                })
+                st.rerun()
+        
+        with col2:
+            if st.button("💾 Simpan"):
+                new_tiers = []
+                current_start = 1
+                for idx, prize in enumerate(st.session_state["new_prizes"]):
+                    icon = DEFAULT_ICONS[idx % len(DEFAULT_ICONS)]
+                    new_tiers.append({
+                        "name": prize["name"],
+                        "start": current_start,
+                        "end": current_start + prize["count"] - 1,
+                        "icon": prize["icon"] if "icon" in prize else icon,
+                        "color": "#FF6B6B",
+                        "count": prize["count"]
+                    })
+                    current_start += prize["count"]
+                
+                st.session_state["prize_tiers"] = new_tiers
+                st.success("✅ Hadiah tersimpan!")
+                st.rerun()
+        
+        total = sum(p["count"] for p in st.session_state["new_prizes"])
+        st.markdown(f"**Total Pemenang: {total}**")
+    else:
+        st.info("Undian sudah selesai. Reset untuk mengubah hadiah.")
 
 if st.session_state.get("selected_prize") is not None and st.session_state.get("lottery_done", False):
     selected_tier = st.session_state["selected_prize"]
@@ -516,10 +614,13 @@ else:
                 <div class="stats-label">🏆 Total Pemenang</div>
             </div>
             """, unsafe_allow_html=True)
+        prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+        num_categories = len(prize_tiers)
+        
         with col3:
             st.markdown(f"""
             <div class="stats-card">
-                <div class="stats-number">9</div>
+                <div class="stats-number">{num_categories}</div>
                 <div class="stats-label">🎁 Kategori Hadiah</div>
             </div>
             """, unsafe_allow_html=True)
@@ -528,7 +629,7 @@ else:
         st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat pemenang dalam satu layar</p>", unsafe_allow_html=True)
         
         cols = st.columns(3)
-        for idx, tier in enumerate(PRIZE_TIERS):
+        for idx, tier in enumerate(prize_tiers):
             col_idx = idx % 3
             with cols[col_idx]:
                 count = len(results_df[results_df["Hadiah"] == tier["name"]])
@@ -568,7 +669,8 @@ else:
             def mark_pptx_downloaded():
                 st.session_state["pptx_downloaded"] = True
             
-            pptx_data = generate_pptx(results_df)
+            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+            pptx_data = generate_pptx(results_df, prize_tiers)
             
             st.download_button(
                 label="📽️ Download PowerPoint (.pptx)",
@@ -695,6 +797,13 @@ else:
                     undian_col = col
                     break
             
+            name_col = None
+            for col in df.columns:
+                col_lower = col.lower()
+                if "nama" in col_lower or "name" in col_lower:
+                    name_col = col
+                    break
+            
             phone_col = None
             for col in df.columns:
                 col_lower = col.lower()
@@ -705,20 +814,24 @@ else:
             if undian_col is None:
                 st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
                 st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-            elif phone_col is None:
-                st.error("❌ Error: File harus memiliki kolom nomor HP")
-                st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-                st.info("💡 Tip: Nama kolom yang diterima: 'No HP', 'Nomor HP', 'HP', 'Phone', 'Telp'")
             else:
                 df["Nomor Undian"] = df[undian_col].astype(str).str.strip()
-                df["No HP"] = df[phone_col].astype(str).str.strip()
+                
+                if name_col:
+                    df["Nama"] = df[name_col].astype(str).str.strip()
+                else:
+                    df["Nama"] = ""
+                
+                if phone_col:
+                    df["No HP"] = df[phone_col].astype(str).str.strip()
+                else:
+                    df["No HP"] = ""
                 
                 df = df[df["Nomor Undian"].notna() & (df["Nomor Undian"] != "") & (df["Nomor Undian"] != "nan")]
-                df = df[df["No HP"].notna() & (df["No HP"] != "") & (df["No HP"] != "nan")]
                 
                 df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4))
                 
-                participant_data = df[["Nomor Undian", "No HP"]].copy()
+                participant_data = df[["Nomor Undian", "Nama", "No HP"]].copy()
                 participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
                 
                 st.session_state["participant_data"] = participant_data
@@ -727,6 +840,10 @@ else:
                 total_participants = len(participants)
                 
                 st.session_state["total_participants"] = total_participants
+                
+                prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+                total_winners = calculate_total_winners(prize_tiers)
+                num_categories = len(prize_tiers)
                 
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -739,20 +856,20 @@ else:
                 with col2:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{TOTAL_WINNERS}</div>
+                        <div class="stats-number">{total_winners}</div>
                         <div class="stats-label">🏆 Total Pemenang</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col3:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">9</div>
+                        <div class="stats-number">{num_categories}</div>
                         <div class="stats-label">🎁 Kategori Hadiah</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if total_participants < TOTAL_WINNERS:
-                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {TOTAL_WINNERS}. Semua peserta akan menjadi pemenang.")
+                if total_participants < total_winners:
+                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {total_winners}. Semua peserta akan menjadi pemenang.")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
@@ -780,22 +897,29 @@ else:
                     
                     shuffled_participants = secure_shuffle(participants)
                     
-                    num_winners = min(TOTAL_WINNERS, len(shuffled_participants))
+                    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+                    total_winners_needed = calculate_total_winners(prize_tiers)
+                    num_winners = min(total_winners_needed, len(shuffled_participants))
                     winners = shuffled_participants[:num_winners]
                     
                     participant_data = st.session_state.get("participant_data")
                     if participant_data is not None:
+                        name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"]))
                         phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"]))
                     else:
+                        name_lookup = {}
                         phone_lookup = {}
+                    
+                    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
                     
                     results = []
                     for i, winner in enumerate(winners, 1):
                         results.append({
                             "Peringkat": i,
                             "Nomor Undian": winner,
+                            "Nama": name_lookup.get(winner, ""),
                             "No HP": phone_lookup.get(winner, ""),
-                            "Hadiah": get_prize(i)
+                            "Hadiah": get_prize_dynamic(i, prize_tiers)
                         })
                     
                     results_df = pd.DataFrame(results)
@@ -811,8 +935,9 @@ else:
         
         if df is None:
             st.markdown("### 🎁 Daftar Hadiah")
+            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
             cols = st.columns(3)
-            for idx, tier in enumerate(PRIZE_TIERS):
+            for idx, tier in enumerate(prize_tiers):
                 col_idx = idx % 3
                 with cols[col_idx]:
                     st.markdown(f"""
