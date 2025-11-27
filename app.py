@@ -807,9 +807,16 @@ else:
             phone_col = None
             for col in df.columns:
                 col_lower = col.lower()
-                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
+                if "nomor wa" in col_lower or col_lower == "wa":
                     phone_col = col
                     break
+            
+            if phone_col is None:
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
+                        phone_col = col
+                        break
             
             if undian_col is None:
                 st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
