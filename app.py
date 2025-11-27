@@ -497,10 +497,12 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     num_winners = len(tier_winners)
     num_cols = 10 if num_winners >= 10 else num_winners
     has_phone_data = "No HP" in tier_winners.columns and tier_winners["No HP"].notna().any()
-    cell_height = 100 if has_phone_data else 85
+    has_name_data = "Nama" in tier_winners.columns and tier_winners["Nama"].notna().any()
+    cell_height = 120 if (has_phone_data or has_name_data) else 85
     grid_height = ((num_winners + num_cols - 1) // num_cols) * cell_height + 40
     
     has_phone = "No HP" in tier_winners.columns
+    has_name = "Nama" in tier_winners.columns
     
     winners_html = f'''
     <html>
@@ -533,10 +535,19 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
                 font-weight: 600;
             }}
             .winner-number {{
-                font-size: 1.4rem;
+                font-size: 1.3rem;
                 font-weight: 800;
                 color: #333;
                 margin-top: 0.2rem;
+            }}
+            .winner-name {{
+                font-size: 0.75rem;
+                color: #555;
+                margin-top: 0.2rem;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }}
             .winner-phone {{
                 font-size: 0.7rem;
@@ -549,16 +560,21 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
         <div class="winner-grid">
     '''
     for _, row in tier_winners.iterrows():
+        name = row.get("Nama", "") if has_name else ""
+        name_html = f'<div class="winner-name">{name}</div>' if name and str(name) != "nan" else ""
+        
         phone = row.get("No HP", "") if has_phone else ""
-        if phone and len(str(phone)) >= 4:
+        if phone and str(phone) != "nan" and len(str(phone)) >= 4:
             masked_phone = "****" + str(phone)[-4:]
         else:
-            masked_phone = phone
+            masked_phone = ""
         phone_html = f'<div class="winner-phone">📱 {masked_phone}</div>' if masked_phone else ""
+        
         winners_html += f'''
             <div class="winner-cell">
                 <div class="winner-rank">#{row["Peringkat"]}</div>
                 <div class="winner-number">{row["Nomor Undian"]}</div>
+                {name_html}
                 {phone_html}
             </div>
         '''
