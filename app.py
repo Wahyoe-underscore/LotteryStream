@@ -417,16 +417,18 @@ with st.sidebar:
                     key=f"prize_name_{idx}",
                     label_visibility="collapsed"
                 )
-                st.session_state["new_prizes"][idx]["name"] = new_name
+                if new_name != prize["name"]:
+                    st.session_state["new_prizes"][idx]["name"] = new_name
             with col2:
                 new_count = st.number_input(
                     "Jumlah",
                     min_value=1,
-                    value=prize["count"],
+                    value=int(prize["count"]),
                     key=f"prize_count_{idx}",
                     label_visibility="collapsed"
                 )
-                st.session_state["new_prizes"][idx]["count"] = new_count
+                if new_count != prize["count"]:
+                    st.session_state["new_prizes"][idx]["count"] = int(new_count)
             with col3:
                 if st.button("🗑️", key=f"remove_{idx}"):
                     prizes_to_remove.append(idx)
@@ -447,27 +449,36 @@ with st.sidebar:
                 st.rerun()
         
         with col2:
-            if st.button("💾 Simpan"):
+            if st.button("💾 Simpan Hadiah", type="primary"):
                 new_tiers = []
                 current_start = 1
-                for idx, prize in enumerate(st.session_state["new_prizes"]):
-                    icon = DEFAULT_ICONS[idx % len(DEFAULT_ICONS)]
+                for idx in range(len(st.session_state["new_prizes"])):
+                    name_key = f"prize_name_{idx}"
+                    count_key = f"prize_count_{idx}"
+                    name = st.session_state.get(name_key, st.session_state["new_prizes"][idx]["name"])
+                    count = int(st.session_state.get(count_key, st.session_state["new_prizes"][idx]["count"]))
+                    icon = st.session_state["new_prizes"][idx].get("icon", DEFAULT_ICONS[idx % len(DEFAULT_ICONS)])
+                    
                     new_tiers.append({
-                        "name": prize["name"],
+                        "name": name,
                         "start": current_start,
-                        "end": current_start + prize["count"] - 1,
-                        "icon": prize["icon"] if "icon" in prize else icon,
+                        "end": current_start + count - 1,
+                        "icon": icon,
                         "color": "#FF6B6B",
-                        "count": prize["count"]
+                        "count": count
                     })
-                    current_start += prize["count"]
+                    current_start += count
                 
                 st.session_state["prize_tiers"] = new_tiers
+                del st.session_state["new_prizes"]
                 st.success("✅ Hadiah tersimpan!")
                 st.rerun()
         
-        total = sum(p["count"] for p in st.session_state["new_prizes"])
+        total = sum(int(st.session_state.get(f"prize_count_{idx}", p["count"])) for idx, p in enumerate(st.session_state["new_prizes"]))
         st.markdown(f"**Total Pemenang: {total}**")
+        
+        st.markdown("---")
+        st.caption("⚠️ Klik 'Simpan Hadiah' untuk menerapkan perubahan")
     else:
         st.info("Undian sudah selesai. Reset untuk mengubah hadiah.")
 
