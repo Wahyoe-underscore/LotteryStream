@@ -6,10 +6,34 @@ from io import BytesIO, StringIO
 import time
 import re
 import requests
+import json
+import os
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+
+PRIZE_CONFIG_FILE = "prize_config.json"
+
+def save_prize_config(prize_tiers):
+    """Save prize configuration to JSON file"""
+    try:
+        with open(PRIZE_CONFIG_FILE, 'w') as f:
+            json.dump(prize_tiers, f, indent=2)
+        return True
+    except Exception as e:
+        st.error(f"Gagal menyimpan konfigurasi: {e}")
+        return False
+
+def load_prize_config():
+    """Load prize configuration from JSON file"""
+    try:
+        if os.path.exists(PRIZE_CONFIG_FILE):
+            with open(PRIZE_CONFIG_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        st.warning(f"Menggunakan konfigurasi default: {e}")
+    return None
 
 st.set_page_config(
     page_title="Sistem Undian Move & Groove",
@@ -386,7 +410,11 @@ if "selected_prize" not in st.session_state:
     st.session_state["selected_prize"] = None
 
 if "prize_tiers" not in st.session_state:
-    st.session_state["prize_tiers"] = PRIZE_TIERS.copy()
+    saved_config = load_prize_config()
+    if saved_config:
+        st.session_state["prize_tiers"] = saved_config
+    else:
+        st.session_state["prize_tiers"] = PRIZE_TIERS.copy()
 
 DEFAULT_ICONS = ["🎁", "⛽", "💳", "🏆", "💰", "🎯", "⭐", "🎊", "🎉", "💎"]
 
@@ -470,8 +498,9 @@ with st.sidebar:
                     current_start += count
                 
                 st.session_state["prize_tiers"] = new_tiers
+                save_prize_config(new_tiers)
                 del st.session_state["new_prizes"]
-                st.success("✅ Hadiah tersimpan!")
+                st.success("✅ Hadiah tersimpan secara permanen!")
                 st.rerun()
         
         total = sum(int(st.session_state.get(f"prize_count_{idx}", p["count"])) for idx, p in enumerate(st.session_state["new_prizes"]))
