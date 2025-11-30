@@ -953,8 +953,8 @@ else:
                 with col1:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{total_eligible:,}</div>
-                        <div class="stats-label">👥 Total Peserta</div>
+                        <div class="stats-number">{total_participants:,}</div>
+                        <div class="stats-label">🎟️ Total Undian</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col2:
