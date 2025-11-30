@@ -257,6 +257,29 @@ def get_prize_dynamic(rank, prize_tiers):
 def calculate_total_winners(prize_tiers):
     return sum(tier["count"] for tier in prize_tiers)
 
+def is_eligible_for_prize(name, phone):
+    """Check if participant is eligible for prize (not marked as VIP or F)"""
+    name_str = str(name).strip().upper() if name and str(name) != "nan" else ""
+    phone_str = str(phone).strip().upper() if phone and str(phone) != "nan" else ""
+    
+    excluded_codes = ["VIP", "F"]
+    
+    for code in excluded_codes:
+        if name_str == code or phone_str == code:
+            return False
+        if code in name_str or code in phone_str:
+            if name_str == code or phone_str == code:
+                return False
+            if name_str.startswith(code + " ") or name_str.endswith(" " + code) or (" " + code + " ") in name_str:
+                return False
+            if phone_str.startswith(code + " ") or phone_str.endswith(" " + code) or (" " + code + " ") in phone_str:
+                return False
+    
+    if name_str == "VIP" or name_str == "F" or phone_str == "VIP" or phone_str == "F":
+        return False
+    
+    return True
+
 def secure_shuffle(data_list):
     shuffled = data_list.copy()
     n = len(shuffled)
@@ -897,18 +920,30 @@ else:
                 participant_data = df[["Nomor Undian", "Nama", "No HP"]].copy()
                 participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
                 
+                participant_data["Eligible"] = participant_data.apply(
+                    lambda row: is_eligible_for_prize(row["Nama"], row["No HP"]), 
+                    axis=1
+                )
+                
                 st.session_state["participant_data"] = participant_data
                 
-                participants = participant_data["Nomor Undian"].tolist()
-                total_participants = len(participants)
+                all_participants = participant_data["Nomor Undian"].tolist()
+                total_participants = len(all_participants)
+                
+                eligible_data = participant_data[participant_data["Eligible"] == True]
+                eligible_participants = eligible_data["Nomor Undian"].tolist()
+                total_eligible = len(eligible_participants)
+                total_excluded = total_participants - total_eligible
                 
                 st.session_state["total_participants"] = total_participants
+                st.session_state["eligible_participants"] = eligible_participants
+                st.session_state["total_eligible"] = total_eligible
                 
                 prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
                 total_winners = calculate_total_winners(prize_tiers)
                 num_categories = len(prize_tiers)
                 
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.markdown(f"""
                     <div class="stats-card">
@@ -919,20 +954,30 @@ else:
                 with col2:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{total_winners}</div>
-                        <div class="stats-label">🏆 Total Pemenang</div>
+                        <div class="stats-number" style="color: #27ae60;">{total_eligible:,}</div>
+                        <div class="stats-label">✅ Berhak Hadiah</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col3:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{num_categories}</div>
-                        <div class="stats-label">🎁 Kategori Hadiah</div>
+                        <div class="stats-number">{total_winners}</div>
+                        <div class="stats-label">🏆 Total Pemenang</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col4:
+                    st.markdown(f"""
+                    <div class="stats-card">
+                        <div class="stats-number" style="color: #e74c3c;">{total_excluded}</div>
+                        <div class="stats-label">🚫 VIP/F (Dikecualikan)</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if total_participants < total_winners:
-                    st.warning(f"⚠️ Peringatan: Jumlah peserta ({total_participants}) kurang dari {total_winners}. Semua peserta akan menjadi pemenang.")
+                if total_excluded > 0:
+                    st.info(f"ℹ️ {total_excluded} peserta ditandai VIP/F dan tidak akan ikut undian hadiah.")
+                
+                if total_eligible < total_winners:
+                    st.warning(f"⚠️ Peringatan: Jumlah peserta eligible ({total_eligible}) kurang dari {total_winners}. Semua peserta eligible akan menjadi pemenang.")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
@@ -958,7 +1003,8 @@ else:
                             status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
                         time.sleep(0.03)
                     
-                    shuffled_participants = secure_shuffle(participants)
+                    eligible_participants = st.session_state.get("eligible_participants", eligible_participants)
+                    shuffled_participants = secure_shuffle(eligible_participants)
                     
                     prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
                     total_winners_needed = calculate_total_winners(prize_tiers)
