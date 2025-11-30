@@ -949,38 +949,31 @@ else:
                 total_winners = calculate_total_winners(prize_tiers)
                 num_categories = len(prize_tiers)
                 
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3 = st.columns(3)
                 with col1:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{total_participants:,}</div>
+                        <div class="stats-number">{total_eligible:,}</div>
                         <div class="stats-label">👥 Total Peserta</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col2:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number" style="color: #27ae60;">{total_eligible:,}</div>
-                        <div class="stats-label">✅ Berhak Hadiah</div>
+                        <div class="stats-number">{total_winners}</div>
+                        <div class="stats-label">🏆 Total Pemenang</div>
                     </div>
                     """, unsafe_allow_html=True)
                 with col3:
                     st.markdown(f"""
                     <div class="stats-card">
-                        <div class="stats-number">{total_winners}</div>
-                        <div class="stats-label">🏆 Total Pemenang</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col4:
-                    st.markdown(f"""
-                    <div class="stats-card">
-                        <div class="stats-number" style="color: #e74c3c;">{total_excluded}</div>
-                        <div class="stats-label">🚫 VIP/F (Dikecualikan)</div>
+                        <div class="stats-number">{num_categories}</div>
+                        <div class="stats-label">🎁 Kategori Hadiah</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if total_excluded > 0:
-                    st.info(f"ℹ️ {total_excluded} peserta ditandai VIP/F dan tidak akan ikut undian hadiah.")
+                with st.expander("ℹ️ Info Data", expanded=False):
+                    st.caption(f"Data: {total_participants:,} total | {total_eligible:,} eligible | {total_excluded:,} dikecualikan (VIP/F)")
                 
                 if total_eligible < total_winners:
                     st.warning(f"⚠️ Peringatan: Jumlah peserta eligible ({total_eligible}) kurang dari {total_winners}. Semua peserta eligible akan menjadi pemenang.")
