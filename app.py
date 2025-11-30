@@ -884,18 +884,16 @@ else:
                     break
             
             phone_col = None
+            phone_candidates = []
             for col in df.columns:
                 col_lower = col.lower()
-                if "nomor wa" in col_lower or col_lower == "wa":
-                    phone_col = col
-                    break
+                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower or "wa" in col_lower:
+                    non_empty_count = df[col].notna().sum() - (df[col].astype(str).str.strip() == "").sum() - (df[col].astype(str).str.lower() == "nan").sum()
+                    phone_candidates.append((col, non_empty_count))
             
-            if phone_col is None:
-                for col in df.columns:
-                    col_lower = col.lower()
-                    if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower:
-                        phone_col = col
-                        break
+            if phone_candidates:
+                phone_candidates.sort(key=lambda x: x[1], reverse=True)
+                phone_col = phone_candidates[0][0]
             
             if undian_col is None:
                 st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
