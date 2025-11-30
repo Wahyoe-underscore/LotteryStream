@@ -775,38 +775,50 @@ else:
             st.markdown("---")
             st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>🔄 Opsi Setelah Undian</p>", unsafe_allow_html=True)
             
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                if st.button("🔄 UNDIAN BARU (Reset Semua)", use_container_width=True):
-                    st.session_state["lottery_done"] = False
-                    st.session_state["results_df"] = None
-                    st.session_state["selected_prize"] = None
-                    st.session_state["excel_downloaded"] = False
-                    st.session_state["pptx_downloaded"] = False
-                    st.rerun()
-            
-            with col2:
-                if st.button("🗑️ HAPUS PEMENANG & LANJUT UNDIAN", use_container_width=True, type="primary"):
-                    participant_data = st.session_state.get("participant_data")
-                    if participant_data is not None:
-                        winner_numbers = results_df["Nomor Undian"].tolist()
-                        remaining_data = participant_data[~participant_data["Nomor Undian"].isin(winner_numbers)].copy()
-                        
+            participant_data = st.session_state.get("participant_data")
+            if participant_data is not None:
+                winner_numbers = results_df["Nomor Undian"].tolist()
+                remaining_data = participant_data[~participant_data["Nomor Undian"].isin(winner_numbers)].copy()
+                remaining_eligible = remaining_data[remaining_data["Eligible"] == True]
+                
+                st.markdown(f"""
+                <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0;">
+                    <p style="color: white; text-align: center; margin: 0;">
+                        📊 <strong>Pemenang:</strong> {len(winner_numbers)} | 
+                        <strong>Sisa Peserta:</strong> {len(remaining_data)} | 
+                        <strong>Sisa Eligible:</strong> {len(remaining_eligible)}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                remaining_csv = remaining_data[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.download_button(
+                        label="📥 Download Sisa Peserta (CSV)",
+                        data=remaining_csv,
+                        file_name="sisa_peserta_belum_menang.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                
+                with col2:
+                    if st.button("🔄 UNDIAN BARU (Reset)", use_container_width=True):
+                        st.session_state["lottery_done"] = False
+                        st.session_state["results_df"] = None
+                        st.session_state["selected_prize"] = None
+                        st.session_state["excel_downloaded"] = False
+                        st.session_state["pptx_downloaded"] = False
+                        st.rerun()
+                
+                with col3:
+                    if st.button("➡️ LANJUT UNDIAN SISA", use_container_width=True, type="primary"):
                         st.session_state["participant_data"] = remaining_data
-                        
-                        eligible_remaining = remaining_data[remaining_data["Eligible"] == True]
-                        st.session_state["eligible_participants"] = eligible_remaining["Nomor Undian"].tolist()
+                        st.session_state["eligible_participants"] = remaining_eligible["Nomor Undian"].tolist()
                         st.session_state["total_participants"] = len(remaining_data)
-                        st.session_state["total_eligible"] = len(eligible_remaining)
-                        
-                        remaining_csv = remaining_data[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
-                        with open("remaining_participants.csv", "w") as f:
-                            f.write(remaining_csv)
-                        
-                        st.session_state["winners_removed"] = True
-                        st.session_state["removed_count"] = len(winner_numbers)
-                        st.session_state["remaining_count"] = len(remaining_data)
+                        st.session_state["total_eligible"] = len(remaining_eligible)
                         
                         st.session_state["lottery_done"] = False
                         st.session_state["results_df"] = None
@@ -814,23 +826,8 @@ else:
                         st.session_state["excel_downloaded"] = False
                         st.session_state["pptx_downloaded"] = False
                         st.rerun()
-            
-            if st.session_state.get("winners_removed"):
-                removed = st.session_state.get("removed_count", 0)
-                remaining = st.session_state.get("remaining_count", 0)
-                st.success(f"✅ {removed} pemenang dihapus. Sisa peserta: {remaining}")
                 
-                if os.path.exists("remaining_participants.csv"):
-                    with open("remaining_participants.csv", "r") as f:
-                        csv_data = f.read()
-                    st.download_button(
-                        label="📥 Download Data Sisa Peserta (CSV)",
-                        data=csv_data,
-                        file_name="sisa_peserta_undian.csv",
-                        mime="text/csv",
-                        use_container_width=True
-                    )
-                st.session_state["winners_removed"] = False
+                st.caption("💡 'Download Sisa Peserta' = file baru berisi nomor yang belum menang. Data awal tetap utuh.")
                 
         elif not excel_done or not pptx_done:
             st.markdown("<br>", unsafe_allow_html=True)
