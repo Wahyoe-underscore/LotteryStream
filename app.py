@@ -884,16 +884,24 @@ else:
                     break
             
             phone_col = None
-            phone_candidates = []
+            phone_candidates_priority = []
+            phone_candidates_secondary = []
+            
             for col in df.columns:
                 col_lower = col.lower()
-                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower or "wa" in col_lower:
-                    non_empty_count = df[col].notna().sum() - (df[col].astype(str).str.strip() == "").sum() - (df[col].astype(str).str.lower() == "nan").sum()
-                    phone_candidates.append((col, non_empty_count))
+                non_empty_count = df[col].notna().sum() - (df[col].astype(str).str.strip() == "").sum() - (df[col].astype(str).str.lower() == "nan").sum()
+                
+                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower or "telepon" in col_lower:
+                    phone_candidates_priority.append((col, non_empty_count))
+                elif col_lower == "wa" or col_lower.endswith(" wa") or "nomor wa" in col_lower or "(wa)" in col_lower:
+                    phone_candidates_secondary.append((col, non_empty_count))
             
-            if phone_candidates:
-                phone_candidates.sort(key=lambda x: x[1], reverse=True)
-                phone_col = phone_candidates[0][0]
+            if phone_candidates_priority:
+                phone_candidates_priority.sort(key=lambda x: x[1], reverse=True)
+                phone_col = phone_candidates_priority[0][0]
+            elif phone_candidates_secondary:
+                phone_candidates_secondary.sort(key=lambda x: x[1], reverse=True)
+                phone_col = phone_candidates_secondary[0][0]
             
             if undian_col is None:
                 st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
