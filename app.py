@@ -2332,17 +2332,5 @@ else:
                     st.rerun()
         
         if df is None:
-            st.markdown("### 🎁 Daftar Hadiah")
-            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-            cols = st.columns(3)
-            for idx, tier in enumerate(prize_tiers):
-                col_idx = idx % 3
-                with cols[col_idx]:
-                    st.markdown(f"""
-                    <div class="prize-card-clickable">
-                        <div style="font-size: 2.5rem;">{tier["icon"]}</div>
-                        <div style="font-weight: 700; color: #333; font-size: 1.1rem; margin-top: 0.5rem;">{tier["name"]}</div>
-                        <div style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">Peringkat {tier["start"]}-{tier["end"]}</div>
-                        <div style="font-size: 1rem; color: #f5576c; font-weight: 600; margin-top: 0.5rem;">{tier["count"]} Pemenang</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("📁 Silakan upload file CSV atau paste URL Google Sheets untuk memulai undian.")
