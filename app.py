@@ -1656,6 +1656,15 @@ else:
             st.rerun()
     
     elif st.session_state.get("lottery_done", False) and st.session_state.get("results_df") is not None:
+        st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
+            <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎉 UNDIAN SELESAI! 🎉</p>
+            <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">Klik kategori hadiah untuk melihat pemenang</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         results_df = st.session_state["results_df"]
         total_winners = len(results_df)
         
