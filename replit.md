@@ -9,12 +9,20 @@ A Streamlit-based lottery system for selecting 800 winners from participant data
 - Google Sheets integration: Paste public sheet URL to import participant data
 - Secure randomization using Python's `secrets` module (cryptographically secure)
 - **Customizable prize tiers**: Configure prize names and winner counts via sidebar
+- **VIP/F Eligibility Filter**: Automatically excludes participants marked as VIP or "F" in Nama/No HP columns
 - Winner display in 10-column grid format (optimized for large screens)
 - Phone numbers and names matched to winners automatically
 - Privacy: Phone numbers are masked on display (shows ****1234 format)
 - Full phone numbers and names available in Excel export for admin use
 - Excel and PowerPoint export functionality
 - Must download both Excel and PowerPoint before starting new lottery
+- **Multi-session lottery**: Download remaining participants CSV, reset, or continue with remaining eligible participants
+
+## Display Modes (NEW)
+Three display modes available when viewing winners by category:
+1. **Grid Mode** (Default): Shows all winners in a 10-column grid
+2. **Shuffle Mode**: Animated shuffle & reveal for batch winners - dramatic effect for events
+3. **Wheel Mode**: Spinning wheel animation for individual winner reveals - best for grand prizes
 
 ## Prize Tiers (Total 800 Winners)
 | Rank | Prize | Winners |
