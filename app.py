@@ -1273,6 +1273,115 @@ else:
                         st.rerun()
                 
                 st.caption("💡 'Download Sisa Peserta' = file baru berisi nomor yang belum menang. Data awal tetap utuh.")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("---")
+            st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>🎡 Undian Sisa Peserta dengan Spinning Wheel</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; color:#fff9c4; font-size:1rem;'>Pilih berapa pemenang yang ingin diundi dengan efek dramatis</p>", unsafe_allow_html=True)
+            
+            col_wheel1, col_wheel2 = st.columns([1, 1])
+            with col_wheel1:
+                num_wheel_winners = st.number_input(
+                    "Jumlah pemenang",
+                    min_value=1,
+                    max_value=len(remaining_eligible),
+                    value=min(10, len(remaining_eligible)),
+                    key="wheel_winner_count"
+                )
+            with col_wheel2:
+                wheel_prize_name = st.text_input(
+                    "Nama hadiah",
+                    value="Hadiah Spesial",
+                    key="wheel_prize_name"
+                )
+            
+            col_w1, col_w2 = st.columns(2)
+            with col_w1:
+                if st.button("🎡 MULAI SPINNING WHEEL", use_container_width=True, type="primary"):
+                    remaining_numbers = remaining_eligible["Nomor Undian"].tolist()
+                    wheel_winners = []
+                    temp_pool = remaining_numbers.copy()
+                    for _ in range(min(num_wheel_winners, len(temp_pool))):
+                        idx = secrets.randbelow(len(temp_pool))
+                        wheel_winners.append(temp_pool.pop(idx))
+                    
+                    st.session_state["wheel_mode_active"] = True
+                    st.session_state["wheel_winners"] = wheel_winners
+                    st.session_state["wheel_current_index"] = 0
+                    st.session_state["wheel_prize_display"] = wheel_prize_name
+                    st.rerun()
+            
+            with col_w2:
+                if st.button("🎲 MULAI SHUFFLE MODE", use_container_width=True):
+                    remaining_numbers = remaining_eligible["Nomor Undian"].tolist()
+                    shuffle_winners = []
+                    temp_pool = remaining_numbers.copy()
+                    for _ in range(min(num_wheel_winners, len(temp_pool))):
+                        idx = secrets.randbelow(len(temp_pool))
+                        shuffle_winners.append(temp_pool.pop(idx))
+                    
+                    st.session_state["shuffle_mode_active"] = True
+                    st.session_state["shuffle_winners"] = shuffle_winners
+                    st.session_state["shuffle_prize_display"] = wheel_prize_name
+                    st.rerun()
+            
+            if st.session_state.get("wheel_mode_active"):
+                wheel_winners = st.session_state.get("wheel_winners", [])
+                wheel_idx = st.session_state.get("wheel_current_index", 0)
+                prize_display = st.session_state.get("wheel_prize_display", "Hadiah")
+                
+                if wheel_idx < len(wheel_winners):
+                    current_winner = wheel_winners[wheel_idx]
+                    
+                    st.markdown(f"""
+                    <div style="text-align:center; color:white; font-size:1.5rem; margin: 1rem 0;">
+                        🎯 {prize_display} - Pemenang ke-{wheel_idx + 1} dari {len(wheel_winners)}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    wheel_html = create_spinning_wheel_html(wheel_winners, current_winner, wheel_size=450)
+                    components.html(wheel_html, height=650)
+                    
+                    col_nav1, col_nav2, col_nav3 = st.columns(3)
+                    with col_nav1:
+                        if wheel_idx > 0:
+                            if st.button("⬅️ Sebelumnya", key="wheel_prev", use_container_width=True):
+                                st.session_state["wheel_current_index"] = wheel_idx - 1
+                                st.rerun()
+                    with col_nav2:
+                        if st.button("❌ Tutup Wheel", key="wheel_close", use_container_width=True):
+                            st.session_state["wheel_mode_active"] = False
+                            st.rerun()
+                    with col_nav3:
+                        if wheel_idx < len(wheel_winners) - 1:
+                            if st.button("➡️ Selanjutnya", key="wheel_next", use_container_width=True):
+                                st.session_state["wheel_current_index"] = wheel_idx + 1
+                                st.rerun()
+                else:
+                    st.success(f"✅ Semua {len(wheel_winners)} pemenang sudah ditampilkan!")
+                    st.markdown("**Daftar Pemenang:**")
+                    for i, w in enumerate(wheel_winners, 1):
+                        st.write(f"{i}. {w}")
+                    if st.button("🔄 Tutup", use_container_width=True):
+                        st.session_state["wheel_mode_active"] = False
+                        st.rerun()
+            
+            if st.session_state.get("shuffle_mode_active"):
+                shuffle_winners = st.session_state.get("shuffle_winners", [])
+                prize_display = st.session_state.get("shuffle_prize_display", "Hadiah")
+                
+                st.markdown(f"""
+                <div style="text-align:center; color:white; font-size:1.5rem; margin: 1rem 0;">
+                    🎲 {prize_display} - {len(shuffle_winners)} Pemenang
+                </div>
+                """, unsafe_allow_html=True)
+                
+                shuffle_html = create_shuffle_reveal_html(shuffle_winners, prize_display)
+                components.html(shuffle_html, height=500)
+                
+                if st.button("❌ Tutup Shuffle", use_container_width=True):
+                    st.session_state["shuffle_mode_active"] = False
+                    st.rerun()
                 
         elif not excel_done or not pptx_done:
             st.markdown("<br>", unsafe_allow_html=True)
