@@ -2015,12 +2015,49 @@ else:
                     """, unsafe_allow_html=True)
                     
                     st.markdown("<br>", unsafe_allow_html=True)
-                    start_lottery = st.button(
-                        "🎲 MULAI UNDIAN E-VOUCHER",
-                        key="start_evoucher",
+                    if st.button(
+                        "🎲 LIHAT KATEGORI E-VOUCHER",
+                        key="show_evoucher_categories",
                         use_container_width=True,
                         type="primary"
-                    )
+                    ):
+                        st.session_state["show_evoucher_preview"] = True
+                        st.rerun()
+                
+                start_lottery = False
+                
+                if st.session_state.get("show_evoucher_preview"):
+                    st.markdown("---")
+                    st.markdown("<p style='text-align:center; color:white; font-size:1.8rem; font-weight:bold;'>🎁 KATEGORI HADIAH E-VOUCHER</p>", unsafe_allow_html=True)
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    
+                    prize_cols = st.columns(3)
+                    for idx, tier in enumerate(prize_tiers):
+                        col_idx = idx % 3
+                        with prize_cols[col_idx]:
+                            st.markdown(f"""
+                            <div style="background: white; border-radius: 20px; padding: 1.5rem; text-align: center; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{tier['icon']}</div>
+                                <p style="color: #333; font-size: 1.1rem; font-weight: bold; margin: 0;">{tier['name']}</p>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0.3rem 0;">Peringkat {tier['start']}-{tier['end']}</p>
+                                <p style="color: #FF6B6B; font-size: 1.1rem; font-weight: bold; margin: 0;">{tier['count']} Pemenang</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    
+                    col_back, col_start = st.columns(2)
+                    with col_back:
+                        if st.button("⬅️ KEMBALI", key="back_from_preview", use_container_width=True):
+                            st.session_state["show_evoucher_preview"] = False
+                            st.rerun()
+                    with col_start:
+                        start_lottery = st.button(
+                            "🎲 MULAI UNDIAN SEKARANG",
+                            key="start_evoucher_now",
+                            use_container_width=True,
+                            type="primary"
+                        )
                 
                 with col2:
                     st.markdown(f"""
