@@ -2334,3 +2334,58 @@ else:
         if df is None:
             st.markdown("<br>", unsafe_allow_html=True)
             st.info("📁 Silakan upload file CSV atau paste URL Google Sheets untuk memulai undian.")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:bold;'>🎯 3 MODE UNDIAN TERSEDIA</p>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+            total_winners = calculate_total_winners(prize_tiers)
+            num_categories = len(prize_tiers)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown(f"""
+                <div style="background: rgba(76,175,80,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #4CAF50; min-height: 280px;">
+                    <p style="color: #4CAF50; font-size: 1.5rem; font-weight: bold; margin: 0;">🎁 Undian E-Voucher</p>
+                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">{total_winners} hadiah, {num_categories} kategori</p>
+                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
+                    • Data awal 5000 nomor<br>
+                    • VIP & F tidak diundi<br>
+                    • Animasi saat undian<br>
+                    • Download PPT, XLS, Sisa
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("""
+                <div style="background: rgba(255,152,0,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #FF9800; min-height: 280px;">
+                    <p style="color: #FF9800; font-size: 1.5rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
+                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Luckydraw Sesi 1, 2, 3</p>
+                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
+                    • Data dari undian sebelumnya<br>
+                    • Nomor yang belum diundi<br>
+                    • Undian 3x per sesi<br>
+                    • Update data otomatis
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown("""
+                <div style="background: rgba(233,30,99,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #E91E63; min-height: 280px;">
+                    <p style="color: #E91E63; font-size: 1.5rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
+                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Hadiah Utama (10)</p>
+                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
+                    • Data dari undian sebelumnya<br>
+                    • Nomor yang belum diundi<br>
+                    • Diputar per hadiah<br>
+                    • Efek dramatis
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.caption("💡 Upload data terlebih dahulu untuk mengaktifkan tombol undian")
