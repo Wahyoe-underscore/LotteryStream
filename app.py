@@ -15,6 +15,383 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 PRIZE_CONFIG_FILE = "prize_config.json"
 
+def create_spinning_wheel_html(participants, winner, wheel_size=400):
+    """Create HTML/JS for spinning wheel animation"""
+    num_segments = min(len(participants), 20)
+    display_participants = participants[:num_segments]
+    
+    if winner not in display_participants:
+        display_participants[-1] = winner
+    
+    winner_index = display_participants.index(winner)
+    
+    colors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+        '#F8B500', '#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9',
+        '#92A8D1', '#955251', '#B565A7', '#009B77', '#DD4124'
+    ]
+    
+    segments_js = []
+    for i, p in enumerate(display_participants):
+        segments_js.append(f'{{"label": "{p}", "color": "{colors[i % len(colors)]}"}}')
+    
+    rotation_per_segment = 360 / num_segments
+    target_rotation = 360 * 8 + (360 - (winner_index * rotation_per_segment + rotation_per_segment / 2))
+    
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background: transparent;
+                font-family: 'Poppins', sans-serif;
+            }}
+            .wheel-container {{
+                position: relative;
+                width: {wheel_size}px;
+                height: {wheel_size}px;
+            }}
+            .wheel {{
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 0 30px rgba(0,0,0,0.3);
+                transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            }}
+            .pointer {{
+                position: absolute;
+                top: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 20px solid transparent;
+                border-right: 20px solid transparent;
+                border-top: 40px solid #f5576c;
+                z-index: 100;
+                filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+            }}
+            .center-circle {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(145deg, #fff, #f0f0f0);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                z-index: 50;
+                cursor: pointer;
+            }}
+            .spin-btn {{
+                background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+                color: white;
+                border: none;
+                padding: 15px 40px;
+                font-size: 1.3rem;
+                font-weight: 700;
+                border-radius: 50px;
+                cursor: pointer;
+                margin-top: 30px;
+                box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+                transition: transform 0.2s;
+            }}
+            .spin-btn:hover {{ transform: scale(1.05); }}
+            .spin-btn:disabled {{ 
+                opacity: 0.6; 
+                cursor: not-allowed;
+                transform: none;
+            }}
+            .winner-display {{
+                margin-top: 20px;
+                padding: 20px 40px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 15px;
+                color: white;
+                font-size: 1.5rem;
+                font-weight: 700;
+                display: none;
+                animation: popIn 0.5s ease;
+            }}
+            @keyframes popIn {{
+                0% {{ transform: scale(0); opacity: 0; }}
+                100% {{ transform: scale(1); opacity: 1; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="{wheel_size}" height="{wheel_size}"></canvas>
+            <div class="center-circle">🎯</div>
+        </div>
+        <button class="spin-btn" id="spinBtn" onclick="spin()">🎡 PUTAR!</button>
+        <div class="winner-display" id="winnerDisplay"></div>
+        
+        <script>
+            const segments = [{','.join(segments_js)}];
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 5;
+            
+            let currentRotation = 0;
+            let isSpinning = false;
+            
+            function drawWheel() {{
+                const numSegments = segments.length;
+                const arc = (2 * Math.PI) / numSegments;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(currentRotation * Math.PI / 180);
+                ctx.translate(-centerX, -centerY);
+                
+                for (let i = 0; i < numSegments; i++) {{
+                    const startAngle = i * arc - Math.PI / 2;
+                    const endAngle = startAngle + arc;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = segments[i].color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(startAngle + arc / 2 + Math.PI / 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 14px Poppins, sans-serif';
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 3;
+                    ctx.fillText(segments[i].label, 0, -radius + 40);
+                    ctx.restore();
+                }}
+                
+                ctx.restore();
+            }}
+            
+            function spin() {{
+                if (isSpinning) return;
+                isSpinning = true;
+                document.getElementById('spinBtn').disabled = true;
+                
+                const targetRotation = {target_rotation};
+                const duration = 5000;
+                const startTime = performance.now();
+                const startRotation = currentRotation;
+                
+                function animate(currentTime) {{
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    const easeOut = 1 - Math.pow(1 - progress, 4);
+                    currentRotation = startRotation + (targetRotation - startRotation) * easeOut;
+                    
+                    drawWheel();
+                    
+                    if (progress < 1) {{
+                        requestAnimationFrame(animate);
+                    }} else {{
+                        isSpinning = false;
+                        const winnerDisplay = document.getElementById('winnerDisplay');
+                        winnerDisplay.innerHTML = '🎉 PEMENANG: <strong>{winner}</strong> 🎉';
+                        winnerDisplay.style.display = 'block';
+                    }}
+                }}
+                
+                requestAnimationFrame(animate);
+            }}
+            
+            drawWheel();
+        </script>
+    </body>
+    </html>
+    '''
+    return html
+
+def create_shuffle_reveal_html(winners, prize_name):
+    """Create HTML/JS for shuffle and reveal animation for multiple winners"""
+    winners_js = ','.join([f'"{w}"' for w in winners])
+    num_winners = len(winners)
+    
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{
+                font-family: 'Poppins', sans-serif;
+                background: transparent;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+            }}
+            .title {{
+                color: white;
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 20px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            }}
+            .shuffle-container {{
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                max-width: 900px;
+                margin-bottom: 20px;
+            }}
+            .number-card {{
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(145deg, #fff, #f0f0f0);
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                font-weight: 800;
+                color: #333;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                transition: all 0.3s ease;
+                opacity: 0;
+                transform: scale(0);
+            }}
+            .number-card.shuffling {{
+                animation: shuffle 0.1s infinite;
+                opacity: 1;
+                transform: scale(1);
+            }}
+            .number-card.revealed {{
+                opacity: 1;
+                transform: scale(1);
+                background: linear-gradient(145deg, #f5576c, #f093fb);
+                color: white;
+                animation: popIn 0.4s ease;
+            }}
+            @keyframes shuffle {{
+                0%, 100% {{ transform: scale(1); }}
+                50% {{ transform: scale(0.95); }}
+            }}
+            @keyframes popIn {{
+                0% {{ transform: scale(0) rotate(-10deg); opacity: 0; }}
+                50% {{ transform: scale(1.1) rotate(5deg); }}
+                100% {{ transform: scale(1) rotate(0); opacity: 1; }}
+            }}
+            .shuffle-btn {{
+                background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+                color: white;
+                border: none;
+                padding: 15px 50px;
+                font-size: 1.3rem;
+                font-weight: 700;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+                transition: transform 0.2s;
+            }}
+            .shuffle-btn:hover {{ transform: scale(1.05); }}
+            .shuffle-btn:disabled {{ opacity: 0.6; cursor: not-allowed; }}
+            .status {{
+                color: white;
+                font-size: 1.2rem;
+                margin-top: 15px;
+                font-weight: 600;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="title">🎁 {prize_name} - {num_winners} Pemenang</div>
+        <div class="shuffle-container" id="container"></div>
+        <button class="shuffle-btn" id="shuffleBtn" onclick="startShuffle()">🎲 ACAK & TAMPILKAN!</button>
+        <div class="status" id="status"></div>
+        
+        <script>
+            const winners = [{winners_js}];
+            const container = document.getElementById('container');
+            const statusEl = document.getElementById('status');
+            let cards = [];
+            
+            // Create cards
+            for (let i = 0; i < winners.length; i++) {{
+                const card = document.createElement('div');
+                card.className = 'number-card';
+                card.textContent = '????';
+                container.appendChild(card);
+                cards.push(card);
+            }}
+            
+            async function startShuffle() {{
+                document.getElementById('shuffleBtn').disabled = true;
+                
+                // Start shuffling animation
+                const randomNums = [];
+                for (let i = 0; i < winners.length; i++) {{
+                    randomNums.push(String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0'));
+                }}
+                
+                cards.forEach((card, i) => {{
+                    card.classList.add('shuffling');
+                    card.textContent = randomNums[i];
+                }});
+                
+                statusEl.textContent = '🔄 Mengacak nomor...';
+                
+                // Shuffle for 2 seconds
+                const shuffleInterval = setInterval(() => {{
+                    cards.forEach(card => {{
+                        card.textContent = String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0');
+                    }});
+                }}, 50);
+                
+                await new Promise(r => setTimeout(r, 2000));
+                clearInterval(shuffleInterval);
+                
+                statusEl.textContent = '🎉 Menampilkan pemenang...';
+                
+                // Reveal one by one
+                for (let i = 0; i < winners.length; i++) {{
+                    await new Promise(r => setTimeout(r, 100));
+                    cards[i].classList.remove('shuffling');
+                    cards[i].classList.add('revealed');
+                    cards[i].textContent = winners[i];
+                }}
+                
+                statusEl.textContent = '✅ Selesai! ' + winners.length + ' pemenang terpilih!';
+            }}
+        </script>
+    </body>
+    </html>
+    '''
+    return html
+
 def save_prize_config(prize_tiers):
     """Save prize configuration to JSON file"""
     try:
@@ -558,96 +935,164 @@ if st.session_state.get("selected_prize") is not None and st.session_state.get("
     """, unsafe_allow_html=True)
     
     num_winners = len(tier_winners)
-    num_cols = 10 if num_winners >= 10 else num_winners
-    has_phone_data = "No HP" in tier_winners.columns and tier_winners["No HP"].notna().any()
-    has_name_data = "Nama" in tier_winners.columns and tier_winners["Nama"].notna().any()
-    cell_height = 120 if (has_phone_data or has_name_data) else 85
-    grid_height = ((num_winners + num_cols - 1) // num_cols) * cell_height + 40
     
-    has_phone = "No HP" in tier_winners.columns
-    has_name = "Nama" in tier_winners.columns
+    col_mode1, col_mode2, col_mode3 = st.columns(3)
+    with col_mode1:
+        grid_mode = st.button("📊 Mode Grid", use_container_width=True, 
+                              type="primary" if st.session_state.get("display_mode", "grid") == "grid" else "secondary")
+        if grid_mode:
+            st.session_state["display_mode"] = "grid"
+            st.session_state["wheel_index"] = 0
+            st.rerun()
+    with col_mode2:
+        shuffle_mode = st.button("🎲 Mode Shuffle", use_container_width=True,
+                                type="primary" if st.session_state.get("display_mode") == "shuffle" else "secondary")
+        if shuffle_mode:
+            st.session_state["display_mode"] = "shuffle"
+            st.rerun()
+    with col_mode3:
+        wheel_mode = st.button("🎡 Mode Wheel", use_container_width=True,
+                              type="primary" if st.session_state.get("display_mode") == "wheel" else "secondary")
+        if wheel_mode:
+            st.session_state["display_mode"] = "wheel"
+            st.session_state["wheel_index"] = 0
+            st.rerun()
     
-    winners_html = f'''
-    <html>
-    <head>
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-            body {{
-                margin: 0;
-                padding: 0;
-                font-family: 'Poppins', sans-serif;
-                background: transparent;
-            }}
-            .winner-grid {{
-                display: grid;
-                grid-template-columns: repeat({num_cols}, 1fr);
-                gap: 8px;
-                padding: 1rem;
-            }}
-            .winner-cell {{
-                background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-                border-radius: 10px;
-                padding: 0.8rem 0.5rem;
-                text-align: center;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-                border-left: 4px solid #f5576c;
-            }}
-            .winner-rank {{
-                font-size: 0.75rem;
-                color: #888;
-                font-weight: 600;
-            }}
-            .winner-number {{
-                font-size: 1.3rem;
-                font-weight: 800;
-                color: #333;
-                margin-top: 0.2rem;
-            }}
-            .winner-name {{
-                font-size: 0.75rem;
-                color: #555;
-                margin-top: 0.2rem;
-                font-weight: 600;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }}
-            .winner-phone {{
-                font-size: 0.7rem;
-                color: #666;
-                margin-top: 0.2rem;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="winner-grid">
-    '''
-    for _, row in tier_winners.iterrows():
-        name = row.get("Nama", "") if has_name else ""
-        name_html = f'<div class="winner-name">{name}</div>' if name and str(name) != "nan" else ""
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    current_mode = st.session_state.get("display_mode", "grid")
+    
+    if current_mode == "wheel":
+        wheel_index = st.session_state.get("wheel_index", 0)
         
-        phone = row.get("No HP", "") if has_phone else ""
-        if phone and str(phone) != "nan" and str(phone).strip():
-            phone_display = str(phone).strip()
-        else:
-            phone_display = ""
-        phone_html = f'<div class="winner-phone">📱 {phone_display}</div>' if phone_display else ""
-        
-        winners_html += f'''
-            <div class="winner-cell">
-                <div class="winner-rank">#{row["Peringkat"]}</div>
-                <div class="winner-number">{row["Nomor Undian"]}</div>
-                {name_html}
-                {phone_html}
+        if wheel_index < num_winners:
+            current_winner = tier_winners.iloc[wheel_index]
+            winner_number = current_winner["Nomor Undian"]
+            
+            all_numbers = tier_winners["Nomor Undian"].tolist()
+            
+            st.markdown(f"""
+            <div style="text-align:center; color:white; font-size:1.3rem; margin-bottom:1rem;">
+                🎯 Pemenang ke-{wheel_index + 1} dari {num_winners}
             </div>
+            """, unsafe_allow_html=True)
+            
+            wheel_html = create_spinning_wheel_html(all_numbers, winner_number, wheel_size=450)
+            components.html(wheel_html, height=650)
+            
+            col_prev, col_next = st.columns(2)
+            with col_prev:
+                if wheel_index > 0:
+                    if st.button("⬅️ Pemenang Sebelumnya", use_container_width=True):
+                        st.session_state["wheel_index"] = wheel_index - 1
+                        st.rerun()
+            with col_next:
+                if wheel_index < num_winners - 1:
+                    if st.button("➡️ Pemenang Selanjutnya", use_container_width=True):
+                        st.session_state["wheel_index"] = wheel_index + 1
+                        st.rerun()
+        else:
+            st.success("✅ Semua pemenang sudah ditampilkan!")
+            if st.button("🔄 Mulai Ulang", use_container_width=True):
+                st.session_state["wheel_index"] = 0
+                st.rerun()
+                
+    elif current_mode == "shuffle":
+        winner_numbers = tier_winners["Nomor Undian"].tolist()
+        shuffle_html = create_shuffle_reveal_html(winner_numbers, selected_tier["name"])
+        components.html(shuffle_html, height=600)
+        
+    else:
+        num_cols = 10 if num_winners >= 10 else num_winners
+        has_phone_data = "No HP" in tier_winners.columns and tier_winners["No HP"].notna().any()
+        has_name_data = "Nama" in tier_winners.columns and tier_winners["Nama"].notna().any()
+        cell_height = 120 if (has_phone_data or has_name_data) else 85
+        grid_height = ((num_winners + num_cols - 1) // num_cols) * cell_height + 40
+        
+        has_phone = "No HP" in tier_winners.columns
+        has_name = "Nama" in tier_winners.columns
+        
+        winners_html = f'''
+        <html>
+        <head>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Poppins', sans-serif;
+                    background: transparent;
+                }}
+                .winner-grid {{
+                    display: grid;
+                    grid-template-columns: repeat({num_cols}, 1fr);
+                    gap: 8px;
+                    padding: 1rem;
+                }}
+                .winner-cell {{
+                    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+                    border-radius: 10px;
+                    padding: 0.8rem 0.5rem;
+                    text-align: center;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                    border-left: 4px solid #f5576c;
+                }}
+                .winner-rank {{
+                    font-size: 0.75rem;
+                    color: #888;
+                    font-weight: 600;
+                }}
+                .winner-number {{
+                    font-size: 1.3rem;
+                    font-weight: 800;
+                    color: #333;
+                    margin-top: 0.2rem;
+                }}
+                .winner-name {{
+                    font-size: 0.75rem;
+                    color: #555;
+                    margin-top: 0.2rem;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }}
+                .winner-phone {{
+                    font-size: 0.7rem;
+                    color: #666;
+                    margin-top: 0.2rem;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="winner-grid">
         '''
-    winners_html += '''
-        </div>
-    </body>
-    </html>
-    '''
-    
-    components.html(winners_html, height=grid_height, scrolling=True)
+        for _, row in tier_winners.iterrows():
+            name = row.get("Nama", "") if has_name else ""
+            name_html = f'<div class="winner-name">{name}</div>' if name and str(name) != "nan" else ""
+            
+            phone = row.get("No HP", "") if has_phone else ""
+            if phone and str(phone) != "nan" and str(phone).strip():
+                phone_display = str(phone).strip()
+            else:
+                phone_display = ""
+            phone_html = f'<div class="winner-phone">📱 {phone_display}</div>' if phone_display else ""
+            
+            winners_html += f'''
+                <div class="winner-cell">
+                    <div class="winner-rank">#{row["Peringkat"]}</div>
+                    <div class="winner-number">{row["Nomor Undian"]}</div>
+                    {name_html}
+                    {phone_html}
+                </div>
+            '''
+        winners_html += '''
+            </div>
+        </body>
+        </html>
+        '''
+        
+        components.html(winners_html, height=grid_height, scrolling=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
