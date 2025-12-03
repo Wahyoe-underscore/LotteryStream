@@ -561,7 +561,7 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     return html
 
 def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
-    """Create a transparent lottery animation showing ALL participants are being randomized"""
+    """Create a clean, focused lottery animation"""
     total_pool = len(all_participants)
     all_nums_js = json.dumps(all_participants)
     
@@ -573,115 +573,62 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{
                 display: flex;
-                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 min-height: 100vh;
                 background: transparent;
                 font-family: 'Segoe UI', sans-serif;
-                padding: 10px;
             }}
             .container {{
                 text-align: center;
                 width: 100%;
-                max-width: 500px;
+                max-width: 400px;
             }}
-            .pool-info {{
+            .pool-badge {{
                 background: linear-gradient(135deg, #667eea, #764ba2);
-                padding: 10px 20px;
-                border-radius: 10px;
+                padding: 8px 20px;
+                border-radius: 20px;
+                display: inline-block;
                 margin-bottom: 15px;
             }}
-            .pool-info p {{
+            .pool-badge p {{
                 color: white;
                 margin: 0;
-                font-size: 1rem;
+                font-size: 0.9rem;
             }}
-            .pool-info .total {{
-                font-size: 1.8rem;
+            .pool-badge .total {{
                 font-weight: bold;
             }}
             .number-display {{
                 background: linear-gradient(145deg, #1a1a2e, #16213e);
-                border-radius: 15px;
-                padding: 30px;
-                margin: 15px 0;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                border-radius: 20px;
+                padding: 40px 30px;
+                box-shadow: 0 15px 40px rgba(0,0,0,0.4);
             }}
             .spinning-number {{
-                font-size: 4rem;
+                font-size: 5rem;
                 font-weight: 900;
                 color: #00ff88;
-                text-shadow: 0 0 20px rgba(0,255,136,0.5);
+                text-shadow: 0 0 30px rgba(0,255,136,0.6);
                 font-family: 'Courier New', monospace;
-                letter-spacing: 5px;
+                letter-spacing: 8px;
             }}
             .status-text {{
                 color: #aaa;
-                font-size: 0.9rem;
-                margin-top: 10px;
-            }}
-            .number-scroll {{
-                display: flex;
-                justify-content: center;
-                gap: 8px;
-                margin: 15px 0;
-                flex-wrap: wrap;
-                max-height: 80px;
-                overflow: hidden;
-            }}
-            .scroll-num {{
-                background: rgba(255,255,255,0.1);
-                color: #888;
-                padding: 5px 10px;
-                border-radius: 5px;
-                font-size: 0.8rem;
-                font-family: monospace;
-            }}
-            .scroll-num.active {{
-                background: #E91E63;
-                color: white;
-                animation: pulse 0.1s;
-            }}
-            @keyframes pulse {{
-                0% {{ transform: scale(1); }}
-                50% {{ transform: scale(1.2); }}
-                100% {{ transform: scale(1); }}
-            }}
-            .winner-reveal {{
-                background: linear-gradient(135deg, #E91E63, #9C27B0);
-                padding: 20px;
-                border-radius: 15px;
+                font-size: 1rem;
                 margin-top: 15px;
-                display: none;
-                animation: popIn 0.5s ease;
-            }}
-            .winner-reveal h2 {{
-                color: white;
-                margin: 0;
-                font-size: 1.2rem;
-            }}
-            .winner-reveal .winner-num {{
-                color: #fff;
-                font-size: 3rem;
-                font-weight: 900;
-                margin: 10px 0;
-            }}
-            @keyframes popIn {{
-                0% {{ transform: scale(0); opacity: 0; }}
-                100% {{ transform: scale(1); opacity: 1; }}
             }}
             .progress {{
-                width: 100%;
-                height: 6px;
+                width: 80%;
+                height: 8px;
                 background: #333;
-                border-radius: 3px;
-                margin-top: 15px;
+                border-radius: 4px;
+                margin: 20px auto 0;
                 overflow: hidden;
             }}
             .progress-bar {{
                 height: 100%;
-                background: linear-gradient(90deg, #00ff88, #00ccff);
+                background: linear-gradient(90deg, #00ff88, #00ccff, #E91E63);
                 width: 0%;
                 transition: width 0.1s;
             }}
@@ -689,23 +636,14 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
     </head>
     <body>
         <div class="container">
-            <div class="pool-info">
+            <div class="pool-badge">
                 <p>Mengundi dari <span class="total">{total_pool}</span> peserta</p>
-                <p>Semua nomor memiliki kesempatan yang sama</p>
             </div>
-            
-            <div class="number-scroll" id="numberScroll"></div>
             
             <div class="number-display">
                 <div class="spinning-number" id="spinNumber">----</div>
-                <div class="status-text" id="statusText">Mengacak nomor...</div>
-            </div>
-            
-            <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-            
-            <div class="winner-reveal" id="winnerReveal">
-                <h2>🎉 PEMENANG TERPILIH!</h2>
-                <div class="winner-num" id="winnerNum">{winner}</div>
+                <div class="status-text" id="statusText">Mengacak...</div>
+                <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
             </div>
         </div>
         
@@ -716,22 +654,9 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             const spinNumber = document.getElementById('spinNumber');
             const statusText = document.getElementById('statusText');
             const progressBar = document.getElementById('progressBar');
-            const winnerReveal = document.getElementById('winnerReveal');
-            const numberScroll = document.getElementById('numberScroll');
             
-            // Show sample of all numbers being randomized
-            const sampleSize = Math.min(20, totalPool);
-            for (let i = 0; i < sampleSize; i++) {{
-                const span = document.createElement('span');
-                span.className = 'scroll-num';
-                span.id = 'scrollNum' + i;
-                span.textContent = allNums[Math.floor(Math.random() * totalPool)];
-                numberScroll.appendChild(span);
-            }}
-            
-            const duration = 5000;
+            const duration = 4000;
             const startTime = Date.now();
-            let lastHighlight = -1;
             
             function getRandomNum() {{
                 return allNums[Math.floor(Math.random() * totalPool)];
@@ -742,38 +667,23 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
                 const progress = Math.min(elapsed / duration, 1);
                 progressBar.style.width = (progress * 100) + '%';
                 
-                // Update spinning number
-                if (progress < 0.9) {{
+                if (progress < 0.85) {{
                     spinNumber.textContent = getRandomNum();
-                    statusText.textContent = 'Mengacak ' + totalPool + ' nomor...';
-                    
-                    // Highlight random scroll numbers
-                    const newHighlight = Math.floor(Math.random() * sampleSize);
-                    if (lastHighlight >= 0) {{
-                        document.getElementById('scrollNum' + lastHighlight).classList.remove('active');
-                        document.getElementById('scrollNum' + lastHighlight).textContent = getRandomNum();
-                    }}
-                    document.getElementById('scrollNum' + newHighlight).classList.add('active');
-                    lastHighlight = newHighlight;
-                    
-                    // Slow down as we approach the end
-                    const delay = progress < 0.7 ? 30 : 50 + (progress - 0.7) * 500;
+                    const delay = progress < 0.6 ? 40 : 60 + (progress - 0.6) * 400;
                     setTimeout(animate, delay);
                 }} else if (progress < 1) {{
-                    // Final slowdown
                     spinNumber.textContent = getRandomNum();
                     statusText.textContent = 'Hampir selesai...';
-                    setTimeout(animate, 150);
+                    setTimeout(animate, 120);
                 }} else {{
-                    // Reveal winner
                     spinNumber.textContent = winner;
                     spinNumber.style.color = '#FFD700';
+                    spinNumber.style.textShadow = '0 0 40px rgba(255,215,0,0.8)';
                     statusText.textContent = '✅ Selesai!';
-                    winnerReveal.style.display = 'block';
                 }}
             }}
             
-            setTimeout(animate, 300);
+            setTimeout(animate, 200);
         </script>
     </body>
     </html>
