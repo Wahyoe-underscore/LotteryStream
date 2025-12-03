@@ -1808,15 +1808,28 @@ elif current_page == "shuffle_page":
                 
                 st.markdown(f"**Konfigurasi Hadiah {batch['name']}** (Total: {max_winners} pemenang)")
                 
-                # Default shuffle prizes for this batch
+                # Default shuffle prizes for this batch - different for each session
                 shuffle_prize_key = f"shuffle_prizes_{batch_key}"
                 if shuffle_prize_key not in st.session_state:
-                    st.session_state[shuffle_prize_key] = pd.DataFrame([
-                        {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 10},
-                        {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 5},
-                        {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 5},
-                        {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 10},
-                    ])
+                    if i == 0:  # Sesi 1
+                        st.session_state[shuffle_prize_key] = pd.DataFrame([
+                            {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 10},
+                            {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 5},
+                            {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 5},
+                            {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 10},
+                        ])
+                    elif i == 1:  # Sesi 2
+                        st.session_state[shuffle_prize_key] = pd.DataFrame([
+                            {"Nama Hadiah": "Coffee Maker (HM-80L(W))", "Jumlah": 10},
+                            {"Nama Hadiah": "Blender (EM-151G-GY)", "Jumlah": 10},
+                            {"Nama Hadiah": "Rice Cooker (KS-N18MG-PK)", "Jumlah": 10},
+                        ])
+                    else:  # Sesi 3
+                        st.session_state[shuffle_prize_key] = pd.DataFrame([
+                            {"Nama Hadiah": "Hadiah Sesi 3 A", "Jumlah": 10},
+                            {"Nama Hadiah": "Hadiah Sesi 3 B", "Jumlah": 10},
+                            {"Nama Hadiah": "Hadiah Sesi 3 C", "Jumlah": 10},
+                        ])
                 
                 edited_prizes = st.data_editor(
                     st.session_state[shuffle_prize_key],
