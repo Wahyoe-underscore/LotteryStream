@@ -560,21 +560,39 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     '''
     return html
 
-def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
-    """Create transparent lottery animation - cycles through ALL participants sequentially"""
+def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
+    """Create a REAL spinning wheel (circular) visualization"""
     total_pool = len(all_participants)
     
-    # Shuffle the list but keep all participants - animation will go through ALL of them
-    import random
-    shuffled_list = all_participants.copy()
-    random.shuffle(shuffled_list)
+    # Group participants into segments (max 36 segments for visibility)
+    max_segments = 36
+    if total_pool <= max_segments:
+        segments = [[p] for p in all_participants]
+    else:
+        # Group participants into segments
+        group_size = total_pool // max_segments
+        segments = []
+        for i in range(max_segments):
+            start = i * group_size
+            end = start + group_size if i < max_segments - 1 else total_pool
+            segments.append(all_participants[start:end])
     
-    # Ensure winner is at the end for the final stop
-    if winner in shuffled_list:
-        shuffled_list.remove(winner)
-    shuffled_list.append(winner)
+    # Find which segment contains the winner
+    winner_segment = 0
+    for i, seg in enumerate(segments):
+        if winner in seg:
+            winner_segment = i
+            break
     
-    all_nums_js = json.dumps(shuffled_list)
+    # Color palette for wheel segments
+    colors = [
+        '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4',
+        '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
+        '#FFC107', '#FF9800', '#FF5722', '#795548', '#607D8B', '#F44336'
+    ]
+    
+    segments_js = json.dumps([seg[0] if len(seg) == 1 else f"{seg[0]}..." for seg in segments])
+    num_segments = len(segments)
     
     html = f'''
     <!DOCTYPE html>
@@ -584,133 +602,223 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 min-height: 100vh;
                 background: transparent;
                 font-family: 'Segoe UI', sans-serif;
             }}
-            .container {{
-                text-align: center;
+            .wheel-container {{
+                position: relative;
+                width: {wheel_size}px;
+                height: {wheel_size}px;
+            }}
+            #wheel {{
                 width: 100%;
-                max-width: 450px;
+                height: 100%;
+                border-radius: 50%;
+                box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.2);
             }}
-            .pool-info {{
-                background: linear-gradient(135deg, #E91E63, #9C27B0);
-                padding: 10px 25px;
-                border-radius: 25px;
-                display: inline-block;
-                margin-bottom: 15px;
+            .pointer {{
+                position: absolute;
+                top: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 20px solid transparent;
+                border-right: 20px solid transparent;
+                border-top: 35px solid #FFD700;
+                filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4));
+                z-index: 10;
             }}
-            .pool-info p {{
-                color: white;
-                margin: 0;
-                font-size: 1rem;
-            }}
-            .pool-info .total {{
-                font-size: 1.5rem;
-                font-weight: bold;
-            }}
-            .spin-box {{
-                background: linear-gradient(145deg, #1a1a2e, #16213e);
-                border-radius: 20px;
-                padding: 30px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-            }}
-            .spinning-number {{
-                font-size: 4.5rem;
-                font-weight: 900;
-                color: #00ff88;
-                text-shadow: 0 0 30px rgba(0,255,136,0.6);
-                font-family: 'Courier New', monospace;
-                letter-spacing: 8px;
-                min-height: 80px;
-            }}
-            .counter {{
-                color: #888;
+            .center-circle {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 70px;
+                height: 70px;
+                background: linear-gradient(145deg, #fff, #f0f0f0);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 0.8rem;
-                margin-top: 8px;
+                font-weight: bold;
+                color: #333;
+                box-shadow: 0 0 15px rgba(0,0,0,0.3);
+                z-index: 5;
+            }}
+            .info {{
+                margin-top: 20px;
+                text-align: center;
+            }}
+            .pool-badge {{
+                background: linear-gradient(135deg, #E91E63, #9C27B0);
+                color: white;
+                padding: 8px 20px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+                display: inline-block;
             }}
             .status {{
-                color: #aaa;
-                font-size: 0.95rem;
-                margin-top: 8px;
+                font-size: 1.1rem;
+                color: #666;
+                margin-top: 10px;
             }}
-            .progress {{
-                width: 90%;
-                height: 6px;
-                background: #333;
-                border-radius: 3px;
-                margin: 12px auto 0;
-                overflow: hidden;
+            .winner-display {{
+                display: none;
+                background: linear-gradient(135deg, #4CAF50, #8BC34A);
+                color: white;
+                padding: 15px 30px;
+                border-radius: 15px;
+                margin-top: 15px;
+                font-size: 1.5rem;
+                font-weight: bold;
+                animation: popIn 0.5s ease;
             }}
-            .progress-bar {{
-                height: 100%;
-                background: linear-gradient(90deg, #00ff88, #00ccff, #E91E63);
-                width: 0%;
+            @keyframes popIn {{
+                0% {{ transform: scale(0.5); opacity: 0; }}
+                100% {{ transform: scale(1); opacity: 1; }}
             }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="pool-info">
-                <p>Mengundi dari <span class="total">{total_pool}</span> peserta</p>
-            </div>
-            <div class="spin-box">
-                <div class="spinning-number" id="num">----</div>
-                <div class="counter" id="counter"></div>
-                <div class="status" id="status">Memulai pengundian...</div>
-                <div class="progress"><div class="progress-bar" id="bar"></div></div>
-            </div>
+        <div class="pool-badge">Mengundi dari <strong>{total_pool}</strong> peserta</div>
+        
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="{wheel_size}" height="{wheel_size}"></canvas>
+            <div class="center-circle" id="centerText">SPIN</div>
         </div>
+        
+        <div class="info">
+            <div class="status" id="status">🎡 Roda berputar...</div>
+            <div class="winner-display" id="winnerDisplay"></div>
+        </div>
+        
         <script>
-            const pool = {all_nums_js};
-            const total = {total_pool};
-            const numEl = document.getElementById('num');
-            const counterEl = document.getElementById('counter');
-            const statusEl = document.getElementById('status');
-            const barEl = document.getElementById('bar');
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            const segments = {segments_js};
+            const numSegments = {num_segments};
+            const winnerIdx = {winner_segment};
+            const winner = "{winner}";
+            const colors = {json.dumps(colors[:num_segments] if num_segments <= len(colors) else (colors * ((num_segments // len(colors)) + 1))[:num_segments])};
             
-            let idx = 0;
-            let stopped = false;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 5;
+            const segmentAngle = (2 * Math.PI) / numSegments;
             
-            function spin() {{
-                if (stopped) return;
+            let currentRotation = 0;
+            let spinning = true;
+            let spinSpeed = 0.4; // Initial speed (radians per frame)
+            
+            // Calculate target rotation to land on winner segment
+            // The pointer is at top (270 degrees or -PI/2)
+            // We want winner segment to be at top when stopped
+            const targetSegmentCenter = winnerIdx * segmentAngle + segmentAngle / 2;
+            const pointerAngle = -Math.PI / 2;
+            
+            // Calculate how much to rotate so winner ends up at pointer
+            // Add multiple full rotations for effect (5-8 spins)
+            const fullSpins = 6 + Math.random() * 2;
+            const targetRotation = fullSpins * 2 * Math.PI + (pointerAngle - targetSegmentCenter + 2 * Math.PI) % (2 * Math.PI);
+            
+            function drawWheel() {{
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(currentRotation);
                 
-                numEl.textContent = pool[idx];
-                counterEl.textContent = (idx + 1) + ' / ' + total;
-                barEl.style.width = ((idx + 1) / total * 100) + '%';
-                
-                if (idx < total - 1) {{
-                    const progress = idx / total;
-                    let delay;
+                for (let i = 0; i < numSegments; i++) {{
+                    const startAngle = i * segmentAngle - Math.PI / 2;
+                    const endAngle = startAngle + segmentAngle;
                     
-                    // SUPER FAST for most of the animation
-                    if (progress < 0.85) {{
-                        delay = 2;  // 2ms - very fast
-                        if (idx % 50 === 0) statusEl.textContent = 'Mengacak semua nomor...';
-                    }} else if (progress < 0.95) {{
-                        delay = 5 + (progress - 0.85) * 300;
-                        statusEl.textContent = 'Memperlambat...';
-                    }} else {{
-                        delay = 40 + (progress - 0.95) * 800;
-                        statusEl.textContent = 'Hampir selesai...';
-                    }}
-                    idx++;
-                    setTimeout(spin, delay);
+                    // Draw segment
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Draw text
+                    ctx.save();
+                    ctx.rotate(startAngle + segmentAngle / 2);
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 2;
+                    const text = segments[i].length > 6 ? segments[i].substring(0,5) + '..' : segments[i];
+                    ctx.fillText(text, radius - 10, 4);
+                    ctx.restore();
+                }}
+                
+                ctx.restore();
+            }}
+            
+            function easeOut(t) {{
+                return 1 - Math.pow(1 - t, 3);
+            }}
+            
+            let startTime = null;
+            const duration = 5000; // 5 seconds spin
+            
+            function animate(timestamp) {{
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out the rotation
+                currentRotation = targetRotation * easeOut(progress);
+                
+                drawWheel();
+                
+                // Update status based on progress
+                const statusEl = document.getElementById('status');
+                const centerText = document.getElementById('centerText');
+                
+                if (progress < 0.3) {{
+                    statusEl.textContent = '🎡 Roda berputar cepat...';
+                }} else if (progress < 0.7) {{
+                    statusEl.textContent = '🎡 Masih berputar...';
+                }} else if (progress < 0.95) {{
+                    statusEl.textContent = '🎡 Hampir berhenti...';
+                }}
+                
+                if (progress < 1) {{
+                    requestAnimationFrame(animate);
                 }} else {{
-                    // Final - show winner and STOP
-                    stopped = true;
-                    numEl.style.color = '#FFD700';
-                    numEl.style.textShadow = '0 0 40px rgba(255,215,0,0.8)';
+                    // Spin complete!
+                    spinning = false;
                     statusEl.textContent = '✅ PEMENANG TERPILIH!';
                     statusEl.style.color = '#4CAF50';
                     statusEl.style.fontWeight = 'bold';
-                    counterEl.style.color = '#4CAF50';
+                    centerText.textContent = '🎉';
+                    centerText.style.fontSize = '1.5rem';
+                    
+                    const winnerDisplay = document.getElementById('winnerDisplay');
+                    winnerDisplay.style.display = 'block';
+                    winnerDisplay.textContent = '🏆 ' + winner;
                 }}
             }}
             
-            setTimeout(spin, 200);
+            // Initial draw
+            drawWheel();
+            
+            // Start animation after short delay
+            setTimeout(() => {{
+                requestAnimationFrame(animate);
+            }}, 500);
         </script>
     </body>
     </html>
