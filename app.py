@@ -669,21 +669,6 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
                 color: #666;
                 margin-top: 8px;
             }}
-            .winner-display {{
-                display: none;
-                background: linear-gradient(135deg, #4CAF50, #8BC34A);
-                color: white;
-                padding: 10px 25px;
-                border-radius: 12px;
-                margin-top: 10px;
-                font-size: 1.3rem;
-                font-weight: bold;
-                animation: popIn 0.5s ease;
-            }}
-            @keyframes popIn {{
-                0% {{ transform: scale(0.5); opacity: 0; }}
-                100% {{ transform: scale(1); opacity: 1; }}
-            }}
         </style>
     </head>
     <body>
@@ -697,7 +682,6 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
         
         <div class="info">
             <div class="status" id="status">Roda berputar...</div>
-            <div class="winner-display" id="winnerDisplay"></div>
         </div>
         
         <script>
@@ -800,15 +784,11 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
                 }} else {{
                     // Spin complete!
                     spinning = false;
-                    statusEl.textContent = '✅ PEMENANG TERPILIH!';
+                    statusEl.textContent = '✅ SELESAI';
                     statusEl.style.color = '#4CAF50';
                     statusEl.style.fontWeight = 'bold';
                     centerText.textContent = '🎉';
                     centerText.style.fontSize = '1.5rem';
-                    
-                    const winnerDisplay = document.getElementById('winnerDisplay');
-                    winnerDisplay.style.display = 'block';
-                    winnerDisplay.textContent = '🏆 ' + winner;
                 }}
             }}
             
