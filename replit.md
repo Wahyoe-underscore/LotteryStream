@@ -24,7 +24,9 @@ A Streamlit-based lottery system for the December 7th Move & Groove event with 3
 - "Sisa Nomor" returns to main menu
 
 ### 4. Wheel Mode (`wheel_page`)
-- 10 Grand Prizes, one-by-one reveal
+- 10 Grand Prizes with structured table configuration (like E-Voucher/Shuffle)
+- Editable data table with "No", "Nama Hadiah", "Keterangan" columns
+- Preview cards showing configured prizes
 - Spinning wheel animation for each prize
 - Download results when complete
 
