@@ -251,7 +251,7 @@ def generate_pptx(results_df, prize_tiers):
         
         tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
         
-        cols = 10
+        cols = 5
         rows_per_slide = 5
         winners_per_slide = cols * rows_per_slide
         total_winners = len(tier_winners)
@@ -281,14 +281,14 @@ def generate_pptx(results_df, prize_tiers):
             run.font.bold = True
             run.font.color.rgb = RGBColor(255, 255, 255)
             
-            cell_width = Inches(1.2)
-            cell_height = Inches(0.95)
-            gap_x = Inches(0.05)
-            gap_y = Inches(0.05)
+            cell_width = Inches(2.4)
+            cell_height = Inches(1.1)
+            gap_x = Inches(0.1)
+            gap_y = Inches(0.1)
             
             total_grid_width = cols * cell_width + (cols - 1) * gap_x
             start_x = (prs.slide_width - total_grid_width) / 2
-            start_y = Inches(1.2)
+            start_y = Inches(1.3)
             
             start_idx = slide_num * winners_per_slide
             end_idx = min(start_idx + winners_per_slide, total_winners)
@@ -319,21 +319,21 @@ def generate_pptx(results_df, prize_tiers):
                 tf.word_wrap = False
                 p = tf.paragraphs[0]
                 p.alignment = PP_ALIGN.CENTER
-                p.space_before = Pt(2)
+                p.space_before = Pt(4)
                 p.space_after = Pt(0)
                 run = p.add_run()
                 run.text = nomor
-                run.font.size = Pt(14)
+                run.font.size = Pt(24)
                 run.font.bold = True
                 run.font.color.rgb = RGBColor(51, 51, 51)
                 
                 p2 = tf.add_paragraph()
                 p2.alignment = PP_ALIGN.CENTER
-                p2.space_before = Pt(0)
+                p2.space_before = Pt(2)
                 p2.space_after = Pt(0)
                 run2 = p2.add_run()
                 run2.text = nama
-                run2.font.size = Pt(8)
+                run2.font.size = Pt(12)
                 run2.font.color.rgb = RGBColor(102, 102, 102)
                 
                 p3 = tf.add_paragraph()
@@ -341,7 +341,7 @@ def generate_pptx(results_df, prize_tiers):
                 p3.space_before = Pt(0)
                 run3 = p3.add_run()
                 run3.text = hp
-                run3.font.size = Pt(8)
+                run3.font.size = Pt(11)
                 run3.font.color.rgb = RGBColor(136, 136, 136)
     
     pptx_buffer = BytesIO()
@@ -380,11 +380,11 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
     run.font.bold = True
     run.font.color.rgb = RGBColor(255, 255, 255)
     
-    cols = 10
-    cell_width = Inches(1.2)
-    cell_height = Inches(0.95)
-    gap_x = Inches(0.05)
-    gap_y = Inches(0.05)
+    cols = 5
+    cell_width = Inches(2.4)
+    cell_height = Inches(1.1)
+    gap_x = Inches(0.1)
+    gap_y = Inches(0.1)
     
     total_grid_width = cols * cell_width + (cols - 1) * gap_x
     start_x = (prs.slide_width - total_grid_width) / 2
@@ -415,21 +415,21 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
         tf.word_wrap = False
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
-        p.space_before = Pt(2)
+        p.space_before = Pt(4)
         p.space_after = Pt(0)
         run = p.add_run()
         run.text = nomor
-        run.font.size = Pt(14)
+        run.font.size = Pt(24)
         run.font.bold = True
         run.font.color.rgb = RGBColor(51, 51, 51)
         
         p2 = tf.add_paragraph()
         p2.alignment = PP_ALIGN.CENTER
-        p2.space_before = Pt(0)
+        p2.space_before = Pt(2)
         p2.space_after = Pt(0)
         run2 = p2.add_run()
         run2.text = nama
-        run2.font.size = Pt(8)
+        run2.font.size = Pt(12)
         run2.font.color.rgb = RGBColor(102, 102, 102)
         
         p3 = tf.add_paragraph()
@@ -437,7 +437,7 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
         p3.space_before = Pt(0)
         run3 = p3.add_run()
         run3.text = hp
-        run3.font.size = Pt(8)
+        run3.font.size = Pt(11)
         run3.font.color.rgb = RGBColor(136, 136, 136)
     
     pptx_buffer = BytesIO()
