@@ -41,9 +41,12 @@ A Streamlit-based lottery system for the December 7th Move & Groove event with 3
 - VIP/F participants automatically excluded
 - Secure randomization using `secrets` module
 - Phone numbers masked on display (****1234)
-- Excel export with full details
-- PowerPoint export for presentation
+- Excel export with full details (all pages)
+- PowerPoint export for presentation (all pages)
 - Remaining participants tracked across all lottery stages
+- "Nomor yang Belum Diundi" expander on each result page
+- 8 winner result buttons on main page (4 E-Voucher + 3 Shuffle + 1 Wheel)
+- MD5 hash-based content change detection for reliable data source tracking
 
 ## Project Structure
 - `app.py` - Main Streamlit application with state machine
