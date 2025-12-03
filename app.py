@@ -15,7 +15,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 PRIZE_CONFIG_FILE = "prize_config.json"
-LOTTERY_RESULTS_FILE = "lottery_results.json"
+LOTTERY_RESULTS_DIR = "lottery_backups"
 
 PRIZE_TIERS = [
     {"name": "Tokopedia Rp.100.000,-", "icon": "🛒", "count": 175, "start": 1, "end": 175},
@@ -45,8 +45,22 @@ def save_prize_config(config):
     with open(PRIZE_CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=2)
 
+def get_current_results_file():
+    """Get the current session's results file path with timestamp"""
+    if "current_results_file" not in st.session_state:
+        # Create new timestamped filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        st.session_state["current_results_file"] = f"lottery_{timestamp}.json"
+    
+    # Ensure directory exists
+    if not os.path.exists(LOTTERY_RESULTS_DIR):
+        os.makedirs(LOTTERY_RESULTS_DIR)
+    
+    return os.path.join(LOTTERY_RESULTS_DIR, st.session_state["current_results_file"])
+
 def save_lottery_results():
-    """Auto-save all lottery results to JSON file"""
+    """Auto-save all lottery results to JSON file with timestamp"""
     results = {
         "evoucher_done": st.session_state.get("evoucher_done", False),
         "shuffle_done": st.session_state.get("shuffle_done", False),
@@ -58,6 +72,7 @@ def save_lottery_results():
         "remaining_pool": None,
         "participant_data": None,
         "data_source_hash": st.session_state.get("data_source_hash", ""),
+        "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     
     # Convert DataFrames to JSON-serializable format
@@ -70,23 +85,37 @@ def save_lottery_results():
     if "participant_data" in st.session_state and st.session_state["participant_data"] is not None:
         results["participant_data"] = st.session_state["participant_data"].to_dict('records')
     
-    # Write to temp file first, then rename (atomic write)
-    temp_file = LOTTERY_RESULTS_FILE + ".tmp"
+    results_file = get_current_results_file()
+    temp_file = results_file + ".tmp"
     try:
         with open(temp_file, 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        os.replace(temp_file, LOTTERY_RESULTS_FILE)
+        os.replace(temp_file, results_file)
         return True
     except Exception as e:
         return False
 
+def get_latest_results_file():
+    """Find the most recent lottery results file"""
+    if not os.path.exists(LOTTERY_RESULTS_DIR):
+        return None
+    
+    files = [f for f in os.listdir(LOTTERY_RESULTS_DIR) if f.startswith("lottery_") and f.endswith(".json")]
+    if not files:
+        return None
+    
+    # Sort by filename (which includes timestamp)
+    files.sort(reverse=True)
+    return os.path.join(LOTTERY_RESULTS_DIR, files[0])
+
 def load_lottery_results():
-    """Load lottery results from JSON file"""
-    if not os.path.exists(LOTTERY_RESULTS_FILE):
+    """Load lottery results from the most recent JSON file"""
+    results_file = get_latest_results_file()
+    if not results_file or not os.path.exists(results_file):
         return False
     
     try:
-        with open(LOTTERY_RESULTS_FILE, 'r') as f:
+        with open(results_file, 'r') as f:
             results = json.load(f)
         
         st.session_state["evoucher_done"] = results.get("evoucher_done", False)
@@ -96,6 +125,9 @@ def load_lottery_results():
         st.session_state["wheel_winners"] = results.get("wheel_winners", [])
         st.session_state["wheel_prizes"] = results.get("wheel_prizes", [])
         st.session_state["data_source_hash"] = results.get("data_source_hash", "")
+        
+        # Set the current file to the loaded one (to continue saving to same file)
+        st.session_state["current_results_file"] = os.path.basename(results_file)
         
         # Restore DataFrames
         if results.get("evoucher_results"):
@@ -111,10 +143,27 @@ def load_lottery_results():
     except Exception as e:
         return False
 
-def clear_lottery_results():
-    """Clear saved lottery results file"""
-    if os.path.exists(LOTTERY_RESULTS_FILE):
-        os.remove(LOTTERY_RESULTS_FILE)
+def reset_lottery_session():
+    """Reset all lottery data and start a new session with new timestamp"""
+    # Clear session state
+    keys_to_clear = [
+        "evoucher_done", "evoucher_results", 
+        "shuffle_done", "shuffle_results",
+        "wheel_done", "wheel_winners", "wheel_prizes",
+        "remaining_pool", "participant_data",
+        "current_results_file", "results_loaded",
+        "data_source_hash", "last_content_hash",
+        "sheets_df", "last_sheets_hash"
+    ]
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
+    
+    # Create new timestamp for new session
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    st.session_state["current_results_file"] = f"lottery_{timestamp}.json"
+    st.session_state["results_loaded"] = True
 
 def calculate_total_winners(prize_tiers):
     return sum(tier["count"] for tier in prize_tiers)
@@ -747,13 +796,13 @@ if os.path.exists("attached_assets/Small Banner-01_1764081768006.png"):
 st.markdown('<p class="main-title">🎉 UNDIAN MOVE & GROOVE 🎉</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">7 Desember 2024</p>', unsafe_allow_html=True)
 
-# Show backup status indicator
-has_saved_results = os.path.exists(LOTTERY_RESULTS_FILE)
+# Show backup status indicator and reset button
 evoucher_done = st.session_state.get("evoucher_done", False)
 shuffle_done = st.session_state.get("shuffle_done", False)
 wheel_done = st.session_state.get("wheel_done", False)
+current_file = st.session_state.get("current_results_file", "")
 
-if evoucher_done or shuffle_done or wheel_done or has_saved_results:
+if evoucher_done or shuffle_done or wheel_done or current_file:
     status_parts = []
     if evoucher_done:
         status_parts.append("E-Voucher ✓")
@@ -762,13 +811,23 @@ if evoucher_done or shuffle_done or wheel_done or has_saved_results:
     if st.session_state.get("wheel_winners", []):
         status_parts.append(f"Wheel ({len(st.session_state.get('wheel_winners', []))}/10) ✓")
     
-    if status_parts:
-        status_text = " | ".join(status_parts)
-        st.markdown(f"""
-        <div style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; border-radius: 8px; padding: 0.5rem; margin: 0.5rem 0; text-align: center;">
-            <span style="color: #4CAF50; font-size: 0.9rem;">💾 Auto-Save Aktif: {status_text}</span>
-        </div>
-        """, unsafe_allow_html=True)
+    col_status, col_reset = st.columns([4, 1])
+    
+    with col_status:
+        if status_parts:
+            status_text = " | ".join(status_parts)
+            file_info = f"📁 {current_file}" if current_file else ""
+            st.markdown(f"""
+            <div style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; border-radius: 8px; padding: 0.5rem; text-align: center;">
+                <span style="color: #4CAF50; font-size: 0.9rem;">💾 Auto-Save: {status_text}</span>
+                <br><span style="color: #888; font-size: 0.75rem;">{file_info}</span>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    with col_reset:
+        if st.button("🔄 RESET", key="reset_lottery", use_container_width=True, type="secondary"):
+            reset_lottery_session()
+            st.rerun()
 
 current_page = st.session_state.get("current_page", "home")
 
