@@ -64,9 +64,5 @@ externalPort = 3001
 localPort = 45699
 externalPort = 3003
 
-[[ports]]
-localPort = 45825
-externalPort = 6000
-
 [agent]
 integrations = ["google-drive:1.0.0"]

@@ -1477,8 +1477,8 @@ elif current_page == "shuffle_page":
     """, unsafe_allow_html=True)
     
     st.markdown(f"""
-    <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center;">
-        <p style="color: white; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong>{len(remaining_pool)}</strong></p>
+    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #FF9800;">
+        <p style="color: #333; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong style="color: #FF9800;">{len(remaining_pool)}</strong></p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1746,8 +1746,8 @@ elif current_page == "wheel_page":
     """, unsafe_allow_html=True)
     
     st.markdown(f"""
-    <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center;">
-        <p style="color: white; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong>{len(remaining_pool)}</strong> | Pemenang: <strong>{len(wheel_winners)}/10</strong></p>
+    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #E91E63;">
+        <p style="color: #333; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong style="color: #E91E63;">{len(remaining_pool)}</strong> | Pemenang: <strong style="color: #E91E63;">{len(wheel_winners)}/10</strong></p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1832,26 +1832,26 @@ elif current_page == "wheel_page":
                 prize_name = config.get("Nama Hadiah", f"Grand Prize {i+1}")
                 keterangan = config.get("Keterangan", "")
                 st.markdown(f"""
-                <div style="background: linear-gradient(145deg, #E91E63, #9C27B0); border-radius: 10px; padding: 0.8rem; text-align: center; margin-bottom: 0.5rem;">
-                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.8);">Hadiah #{i+1}</div>
-                    <div style="font-size: 1rem; font-weight: 700; color: white;">{prize_name}</div>
-                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.7);">{keterangan if keterangan else '-'}</div>
+                <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; margin-bottom: 0.5rem; border: 2px solid #E91E63;">
+                    <div style="font-size: 0.8rem; color: #E91E63; font-weight: 600;">Hadiah #{i+1}</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #333;">{prize_name}</div>
+                    <div style="font-size: 0.7rem; color: #666;">{keterangan if keterangan else '-'}</div>
                 </div>
                 """, unsafe_allow_html=True)
     
     current_idx = len(wheel_winners)
     
     if current_idx < 10 and len(remaining_pool) > 0:
-        st.markdown(f"<p style='text-align:center; color:white; font-size:1.5rem;'>🎯 Undian Hadiah ke-{current_idx + 1} dari 10</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center; color:#E91E63; font-size:1.5rem; font-weight: bold;'>🎯 Undian Hadiah ke-{current_idx + 1} dari 10</p>", unsafe_allow_html=True)
         
         wheel_config = st.session_state.get("wheel_config", [])
         prize_name = wheel_config[current_idx].get("Nama Hadiah", f"Grand Prize {current_idx + 1}") if current_idx < len(wheel_config) else f"Grand Prize {current_idx + 1}"
         prize_keterangan = wheel_config[current_idx].get("Keterangan", "") if current_idx < len(wheel_config) else ""
         
         st.markdown(f"""
-        <div style="background: rgba(233,30,99,0.2); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center;">
+        <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #E91E63;">
             <p style="color:#E91E63; font-size:1.5rem; font-weight: bold; margin: 0;">{prize_name}</p>
-            <p style="color: rgba(255,255,255,0.7); font-size:0.9rem; margin: 0.3rem 0 0 0;">{prize_keterangan if prize_keterangan else ''}</p>
+            <p style="color: #666; font-size:0.9rem; margin: 0.3rem 0 0 0;">{prize_keterangan if prize_keterangan else ''}</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1910,7 +1910,7 @@ elif current_page == "wheel_page":
     if len(wheel_winners) > 0:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("---")
-        st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>🏆 Pemenang Wheel</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#E91E63; font-size:1.3rem; font-weight:600;'>🏆 Pemenang Wheel</p>", unsafe_allow_html=True)
         
         participant_data = st.session_state.get("participant_data")
         name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
@@ -1923,9 +1923,9 @@ elif current_page == "wheel_page":
                 nama = "-"
             hp = format_phone(phone_lookup.get(w, ""))
             st.markdown(f"""
-            <div style="background: rgba(233,30,99,0.2); border-radius: 10px; padding: 0.8rem; margin: 0.5rem 0;">
-                <p style='color:white; text-align:center; margin:0;'>
-                    <strong>#{i+1}</strong>: {w} - {nama} ({hp}) | <span style='color:#E91E63;'>{p}</span>
+            <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; margin: 0.5rem 0; border-left: 4px solid #E91E63;">
+                <p style='color:#333; text-align:center; margin:0; font-size: 1rem;'>
+                    <strong style="color:#E91E63;">#{i+1}</strong> | <strong>{w}</strong> - {nama} | <span style='color:#666;'>{hp}</span> | <span style='color:#E91E63; font-weight:600;'>{p}</span>
                 </p>
             </div>
             """, unsafe_allow_html=True)
