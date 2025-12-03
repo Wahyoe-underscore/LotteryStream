@@ -1047,26 +1047,43 @@ elif current_page == "shuffle_page":
                 winners = shuffle_results[batch_key]["winners"]
                 prize_name = shuffle_results[batch_key]["prize_name"]
                 
-                st.success(f"✅ Selesai: {prize_name} - {len(winners)} pemenang")
+                # Header dengan hadiah
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #4CAF50, #45a049); padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: white;">🎁 {prize_name}</div>
+                    <div style="font-size: 1rem; color: rgba(255,255,255,0.9);">{len(winners)} Pemenang</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 participant_data = st.session_state.get("participant_data")
                 name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
                 phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
                 
-                cols = st.columns(10)
-                for idx, w in enumerate(winners):
-                    with cols[idx % 10]:
-                        nama_raw = name_lookup.get(w, "")
-                        nama = str(nama_raw) if pd.notna(nama_raw) else ""
-                        display_nama = nama[:10] if nama and nama.lower() != "nan" else "-"
-                        hp = mask_phone(phone_lookup.get(w, ""))
-                        st.markdown(f"""
-                        <div style='background:#4CAF50;color:white;padding:0.5rem;border-radius:8px;text-align:center;margin:2px;'>
-                            <div style='font-weight:bold;'>{w}</div>
-                            <div style='font-size:0.7rem;'>{display_nama}</div>
-                            <div style='font-size:0.65rem;'>{hp}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                # Sort winners by nomor undian
+                sorted_winners = sorted(winners, key=lambda x: str(x))
+                
+                # Display in 7 columns like E-Voucher
+                num_cols = 7
+                rows = (len(sorted_winners) + num_cols - 1) // num_cols
+                
+                for row in range(rows):
+                    row_cols = st.columns(num_cols)
+                    for col in range(num_cols):
+                        idx = row * num_cols + col
+                        if idx < len(sorted_winners):
+                            w = sorted_winners[idx]
+                            with row_cols[col]:
+                                nama_raw = name_lookup.get(w, "")
+                                nama = str(nama_raw) if pd.notna(nama_raw) else ""
+                                display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
+                                hp = mask_phone(phone_lookup.get(w, ""))
+                                st.markdown(f"""
+                                <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.6rem; text-align: center; border-left: 4px solid #4CAF50; margin-bottom: 0.4rem; height: 75px; display: flex; flex-direction: column; justify-content: center;">
+                                    <div style="font-size: 1.1rem; font-weight: 800; color: #333; line-height: 1.3;">{w}</div>
+                                    <div style="font-size: 0.7rem; color: #666; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
+                                    <div style="font-size: 0.65rem; color: #888; line-height: 1.2;">{hp}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 col1, col2 = st.columns(2)
