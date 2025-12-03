@@ -2245,142 +2245,93 @@ elif current_page == "wheel_page":
             else:
                 st.info("Semua nomor sudah diundi")
         
-        # Validation and Final Download Section (only show when wheel is complete)
+        # Final buttons (only show when wheel is complete)
         if st.session_state.get("wheel_done", False):
             st.markdown("---")
-            st.markdown("""
-            <div style="background: linear-gradient(135deg, #FF9800, #F57C00); padding: 1rem; border-radius: 10px; text-align: center; margin: 1rem 0;">
-                <div style="font-size: 1.3rem; font-weight: bold; color: white;">✅ VALIDASI & DOWNLOAD FINAL</div>
-                <div style="font-size: 0.9rem; color: rgba(255,255,255,0.9);">Cek nomor dobel & unduh semua hasil</div>
-            </div>
-            """, unsafe_allow_html=True)
             
-            # Validation Button
-            if st.button("🔍 CEK VALIDASI NOMOR (Tidak Ada Dobel)", key="validate_all", use_container_width=True):
-                all_winners = []
-                duplicate_info = []
-                
-                # Collect E-Voucher winners
-                evoucher_results = st.session_state.get("evoucher_results")
-                if evoucher_results is not None and len(evoucher_results) > 0:
-                    evoucher_nums = evoucher_results["Nomor Undian"].tolist()
-                    for num in evoucher_nums:
+            # Compact 3-button row
+            val_col, excel_col, ppt_col = st.columns(3)
+            
+            with val_col:
+                if st.button("🔍 CEK VALIDASI", key="validate_all", use_container_width=True):
+                    all_winners = []
+                    duplicate_info = []
+                    
+                    evoucher_results = st.session_state.get("evoucher_results")
+                    if evoucher_results is not None and len(evoucher_results) > 0:
+                        for num in evoucher_results["Nomor Undian"].tolist():
+                            if num in all_winners:
+                                duplicate_info.append(f"E-Voucher: {num}")
+                            all_winners.append(num)
+                    
+                    shuffle_results = st.session_state.get("shuffle_results", {})
+                    for batch_key, batch_data in shuffle_results.items():
+                        for num in batch_data.get("winners", []):
+                            if num in all_winners:
+                                duplicate_info.append(f"Shuffle: {num}")
+                            all_winners.append(num)
+                    
+                    for num in wheel_winners:
                         if num in all_winners:
-                            duplicate_info.append(f"E-Voucher: {num}")
+                            duplicate_info.append(f"Wheel: {num}")
                         all_winners.append(num)
-                
-                # Collect Shuffle winners
-                shuffle_results = st.session_state.get("shuffle_results", {})
-                for batch_key, batch_data in shuffle_results.items():
-                    batch_nums = batch_data.get("winners", [])
-                    batch_name = batch_data.get("prize_name", batch_key)
-                    for num in batch_nums:
-                        if num in all_winners:
-                            duplicate_info.append(f"Shuffle ({batch_name}): {num}")
-                        all_winners.append(num)
-                
-                # Collect Wheel winners
-                for num in wheel_winners:
-                    if num in all_winners:
-                        duplicate_info.append(f"Wheel: {num}")
-                    all_winners.append(num)
-                
-                if len(duplicate_info) > 0:
-                    st.error(f"⚠️ DITEMUKAN {len(duplicate_info)} NOMOR DOBEL:")
-                    for dup in duplicate_info:
-                        st.warning(f"• {dup}")
-                else:
-                    st.success(f"✅ VALIDASI BERHASIL! Tidak ada nomor dobel dari {len(all_winners)} pemenang.")
-                    st.balloons()
+                    
+                    if len(duplicate_info) > 0:
+                        st.error(f"⚠️ {len(duplicate_info)} DOBEL!")
+                    else:
+                        st.success(f"✅ OK! {len(all_winners)} pemenang unik")
+                        st.balloons()
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Final Download Section
-            st.markdown("""
-            <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; border: 2px solid #4CAF50; margin: 1rem 0;">
-                <div style="font-size: 1.1rem; font-weight: bold; color: #333; text-align: center;">📦 DOWNLOAD SEMUA HASIL UNDIAN</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                # Combined Excel with all sheets
+            with excel_col:
                 combined_excel = BytesIO()
                 with pd.ExcelWriter(combined_excel, engine='openpyxl') as writer:
-                    # E-Voucher sheet
                     evoucher_results = st.session_state.get("evoucher_results")
                     if evoucher_results is not None and len(evoucher_results) > 0:
                         evoucher_results.to_excel(writer, sheet_name="E-Voucher", index=False)
                     
-                    # Shuffle sheets
                     shuffle_results = st.session_state.get("shuffle_results", {})
                     for batch_key, batch_data in shuffle_results.items():
                         batch_winners = batch_data.get("winners", [])
-                        batch_name = batch_data.get("prize_name", batch_key)
                         if len(batch_winners) > 0:
                             df_batch = pd.DataFrame({
                                 "No": range(1, len(batch_winners) + 1),
                                 "Nomor Undian": batch_winners,
                                 "Nama": [name_lookup.get(w, "") for w in batch_winners],
                                 "No HP": [phone_lookup.get(w, "") for w in batch_winners],
-                                "Hadiah": [batch_name] * len(batch_winners)
+                                "Hadiah": [batch_data.get("prize_name", "")] * len(batch_winners)
                             })
-                            sheet_name = f"Shuffle_{batch_key.split('_')[-1]}"
-                            df_batch.to_excel(writer, sheet_name=sheet_name, index=False)
+                            df_batch.to_excel(writer, sheet_name=f"Shuffle_{batch_key.split('_')[-1]}", index=False)
                     
-                    # Wheel sheet
                     if len(wheel_winners) > 0:
-                        df_wheel_final = pd.DataFrame({
+                        pd.DataFrame({
                             "No": range(1, len(wheel_winners) + 1),
                             "Nomor Undian": wheel_winners,
                             "Nama": [name_lookup.get(w, "") for w in wheel_winners],
                             "No HP": [phone_lookup.get(w, "") for w in wheel_winners],
                             "Hadiah": wheel_prizes
-                        })
-                        df_wheel_final.to_excel(writer, sheet_name="Grand_Prize", index=False)
-                    
-                    # Summary sheet
-                    summary_data = []
-                    summary_data.append({"Kategori": "E-Voucher", "Jumlah Pemenang": len(evoucher_results) if evoucher_results is not None else 0})
-                    for batch_key, batch_data in shuffle_results.items():
-                        summary_data.append({"Kategori": batch_data.get("prize_name", batch_key), "Jumlah Pemenang": len(batch_data.get("winners", []))})
-                    summary_data.append({"Kategori": "Grand Prize (Wheel)", "Jumlah Pemenang": len(wheel_winners)})
-                    total_winners = sum(item["Jumlah Pemenang"] for item in summary_data)
-                    summary_data.append({"Kategori": "TOTAL", "Jumlah Pemenang": total_winners})
-                    pd.DataFrame(summary_data).to_excel(writer, sheet_name="Summary", index=False)
+                        }).to_excel(writer, sheet_name="Grand_Prize", index=False)
                 
-                st.download_button(
-                    "📊 DOWNLOAD EXCEL LENGKAP",
-                    combined_excel.getvalue(),
-                    "MoveGroove_Undian_Lengkap.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
+                st.download_button("📊 EXCEL LENGKAP", combined_excel.getvalue(), "MoveGroove_Lengkap.xlsx", use_container_width=True)
             
-            with col2:
-                # Combined PPT
+            with ppt_col:
                 prs = Presentation()
                 prs.slide_width = Inches(13.33)
                 prs.slide_height = Inches(7.5)
+                slide_layout = prs.slide_layouts[6]
                 
                 # Title slide
-                slide_layout = prs.slide_layouts[6]
                 slide = prs.slides.add_slide(slide_layout)
                 shape = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
                 shape.fill.solid()
                 shape.fill.fore_color.rgb = RGBColor(33, 150, 243)
                 shape.line.fill.background()
-                
                 title_box = slide.shapes.add_textbox(Inches(0.5), Inches(2.5), Inches(12.33), Inches(2))
                 tf = title_box.text_frame
-                p = tf.paragraphs[0]
-                p.text = "MOVE & GROOVE 2024"
-                p.font.size = Pt(60)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(255, 255, 255)
-                p.alignment = PP_ALIGN.CENTER
-                
+                tf.paragraphs[0].text = "MOVE & GROOVE 2024"
+                tf.paragraphs[0].font.size = Pt(60)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
                 p2 = tf.add_paragraph()
                 p2.text = "HASIL UNDIAN LENGKAP"
                 p2.font.size = Pt(36)
@@ -2388,158 +2339,91 @@ elif current_page == "wheel_page":
                 p2.alignment = PP_ALIGN.CENTER
                 
                 # E-Voucher slides
+                evoucher_results = st.session_state.get("evoucher_results")
                 if evoucher_results is not None and len(evoucher_results) > 0:
-                    prize_tiers = st.session_state.get("prize_tiers", [])
-                    for tier in prize_tiers:
-                        tier_name = tier["name"]
-                        tier_winners = evoucher_results[evoucher_results["Kategori"] == tier_name]["Nomor Undian"].tolist()
-                        if len(tier_winners) > 0:
+                    for tier in st.session_state.get("prize_tiers", []):
+                        tier_winners = evoucher_results[evoucher_results["Kategori"] == tier["name"]]["Nomor Undian"].tolist()
+                        if tier_winners:
                             slide = prs.slides.add_slide(slide_layout)
                             shape = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
                             shape.fill.solid()
                             shape.fill.fore_color.rgb = RGBColor(76, 175, 80)
                             shape.line.fill.background()
-                            
                             title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
-                            tf = title_box.text_frame
-                            p = tf.paragraphs[0]
-                            p.text = f"E-VOUCHER: {tier_name}"
-                            p.font.size = Pt(32)
-                            p.font.bold = True
-                            p.font.color.rgb = RGBColor(255, 255, 255)
-                            p.alignment = PP_ALIGN.CENTER
-                            
-                            # Winners grid
-                            cols = 10
-                            rows_needed = (len(tier_winners) + cols - 1) // cols
-                            cell_width = Inches(1.2)
-                            cell_height = Inches(0.5)
-                            start_x = Inches(0.5)
-                            start_y = Inches(1.3)
-                            gap = Inches(0.08)
-                            
-                            for idx, winner in enumerate(tier_winners):
-                                row = idx // cols
-                                col = idx % cols
-                                left = start_x + col * (cell_width + gap)
-                                top = start_y + row * (cell_height + gap)
-                                
-                                cell = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+                            title_box.text_frame.paragraphs[0].text = f"E-VOUCHER: {tier['name']}"
+                            title_box.text_frame.paragraphs[0].font.size = Pt(32)
+                            title_box.text_frame.paragraphs[0].font.bold = True
+                            title_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                            title_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+                            for idx, w in enumerate(tier_winners):
+                                row, col = idx // 10, idx % 10
+                                cell = slide.shapes.add_shape(5, Inches(0.5) + col * Inches(1.28), Inches(1.3) + row * Inches(0.58), Inches(1.2), Inches(0.5))
                                 cell.fill.solid()
                                 cell.fill.fore_color.rgb = RGBColor(255, 255, 255)
-                                cell.line.color.rgb = RGBColor(76, 175, 80)
-                                cell.line.width = Pt(1)
-                                
-                                cell.text_frame.paragraphs[0].text = str(winner)
+                                cell.text_frame.paragraphs[0].text = str(w)
                                 cell.text_frame.paragraphs[0].font.size = Pt(14)
                                 cell.text_frame.paragraphs[0].font.bold = True
-                                cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(33, 33, 33)
                                 cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
                 
                 # Shuffle slides
-                for batch_key, batch_data in shuffle_results.items():
+                for batch_key, batch_data in st.session_state.get("shuffle_results", {}).items():
                     batch_winners = batch_data.get("winners", [])
-                    batch_name = batch_data.get("prize_name", batch_key)
-                    if len(batch_winners) > 0:
+                    if batch_winners:
                         slide = prs.slides.add_slide(slide_layout)
                         shape = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
                         shape.fill.solid()
                         shape.fill.fore_color.rgb = RGBColor(156, 39, 176)
                         shape.line.fill.background()
-                        
                         title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
-                        tf = title_box.text_frame
-                        p = tf.paragraphs[0]
-                        p.text = f"SHUFFLE: {batch_name}"
-                        p.font.size = Pt(32)
-                        p.font.bold = True
-                        p.font.color.rgb = RGBColor(255, 255, 255)
-                        p.alignment = PP_ALIGN.CENTER
-                        
-                        # Winners grid
-                        cols = 10
-                        cell_width = Inches(1.2)
-                        cell_height = Inches(0.5)
-                        start_x = Inches(0.5)
-                        start_y = Inches(1.3)
-                        gap = Inches(0.08)
-                        
-                        for idx, winner in enumerate(batch_winners):
-                            row = idx // cols
-                            col = idx % cols
-                            left = start_x + col * (cell_width + gap)
-                            top = start_y + row * (cell_height + gap)
-                            
-                            cell = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+                        title_box.text_frame.paragraphs[0].text = f"SHUFFLE: {batch_data.get('prize_name', '')}"
+                        title_box.text_frame.paragraphs[0].font.size = Pt(32)
+                        title_box.text_frame.paragraphs[0].font.bold = True
+                        title_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                        title_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+                        for idx, w in enumerate(batch_winners):
+                            row, col = idx // 10, idx % 10
+                            cell = slide.shapes.add_shape(5, Inches(0.5) + col * Inches(1.28), Inches(1.3) + row * Inches(0.58), Inches(1.2), Inches(0.5))
                             cell.fill.solid()
                             cell.fill.fore_color.rgb = RGBColor(255, 255, 255)
-                            cell.line.color.rgb = RGBColor(156, 39, 176)
-                            cell.line.width = Pt(1)
-                            
-                            cell.text_frame.paragraphs[0].text = str(winner)
+                            cell.text_frame.paragraphs[0].text = str(w)
                             cell.text_frame.paragraphs[0].font.size = Pt(14)
                             cell.text_frame.paragraphs[0].font.bold = True
-                            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(33, 33, 33)
                             cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
                 
                 # Wheel slide
-                if len(wheel_winners) > 0:
+                if wheel_winners:
                     slide = prs.slides.add_slide(slide_layout)
                     shape = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
                     shape.fill.solid()
                     shape.fill.fore_color.rgb = RGBColor(233, 30, 99)
                     shape.line.fill.background()
-                    
                     title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
-                    tf = title_box.text_frame
-                    p = tf.paragraphs[0]
-                    p.text = "GRAND PRIZE - SPINNING WHEEL"
-                    p.font.size = Pt(32)
-                    p.font.bold = True
-                    p.font.color.rgb = RGBColor(255, 255, 255)
-                    p.alignment = PP_ALIGN.CENTER
-                    
-                    # Grand prize winners in 2 columns
-                    for idx, (winner, prize) in enumerate(zip(wheel_winners, wheel_prizes)):
-                        col = idx % 2
-                        row = idx // 2
-                        left = Inches(1) + col * Inches(6)
-                        top = Inches(1.5) + row * Inches(1.1)
-                        
-                        cell = slide.shapes.add_shape(5, left, top, Inches(5.5), Inches(1))
+                    title_box.text_frame.paragraphs[0].text = "GRAND PRIZE - SPINNING WHEEL"
+                    title_box.text_frame.paragraphs[0].font.size = Pt(32)
+                    title_box.text_frame.paragraphs[0].font.bold = True
+                    title_box.text_frame.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                    title_box.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+                    for idx, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
+                        cell = slide.shapes.add_shape(5, Inches(1) + (idx % 2) * Inches(6), Inches(1.5) + (idx // 2) * Inches(1.1), Inches(5.5), Inches(1))
                         cell.fill.solid()
                         cell.fill.fore_color.rgb = RGBColor(255, 255, 255)
-                        cell.line.color.rgb = RGBColor(233, 30, 99)
-                        cell.line.width = Pt(2)
-                        
-                        nama_raw = name_lookup.get(winner, "")
-                        nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
-                        
-                        tf = cell.text_frame
-                        tf.paragraphs[0].text = f"#{idx+1} {winner} - {nama[:25]}"
-                        tf.paragraphs[0].font.size = Pt(18)
-                        tf.paragraphs[0].font.bold = True
-                        tf.paragraphs[0].font.color.rgb = RGBColor(233, 30, 99)
-                        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-                        
-                        p2 = tf.add_paragraph()
-                        p2.text = prize[:40]
+                        nama = str(name_lookup.get(w, "")) if pd.notna(name_lookup.get(w, "")) else "-"
+                        cell.text_frame.paragraphs[0].text = f"#{idx+1} {w} - {nama[:25]}"
+                        cell.text_frame.paragraphs[0].font.size = Pt(18)
+                        cell.text_frame.paragraphs[0].font.bold = True
+                        cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(233, 30, 99)
+                        cell.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+                        p2 = cell.text_frame.add_paragraph()
+                        p2.text = p[:40]
                         p2.font.size = Pt(14)
                         p2.font.color.rgb = RGBColor(100, 100, 100)
                         p2.alignment = PP_ALIGN.CENTER
                 
                 ppt_buffer = BytesIO()
                 prs.save(ppt_buffer)
-                
-                st.download_button(
-                    "📽️ DOWNLOAD PPT LENGKAP",
-                    ppt_buffer.getvalue(),
-                    "MoveGroove_Undian_Lengkap.pptx",
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    use_container_width=True
-                )
+                st.download_button("📽️ PPT LENGKAP", ppt_buffer.getvalue(), "MoveGroove_Lengkap.pptx", use_container_width=True)
         
-        if st.button("📊 SISA NOMOR → KEMBALI KE MENU UTAMA", key="wheel_done_btn", use_container_width=True):
+        if st.button("🏠 KEMBALI KE MENU UTAMA", key="wheel_done_btn", use_container_width=True):
             st.session_state["current_page"] = "home"
             st.rerun()
 
