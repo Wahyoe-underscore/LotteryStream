@@ -2107,20 +2107,31 @@ elif current_page == "wheel_page":
                 if len(wheel_winners) < 10:
                     st.button("➡️ LANJUT KE HADIAH BERIKUTNYA", key="next_wheel", use_container_width=True)
     
-    # Previous winners - compact horizontal display
+    # Previous winners - full width cards
     if len(wheel_winners) > 0:
         st.markdown("---")
         participant_data = st.session_state.get("participant_data")
         name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
         phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
         
-        # Single row of winner badges
-        winners_html = "<div style='display:flex;flex-wrap:wrap;gap:5px;justify-content:center;'>"
+        # Full width winner cards in 5 columns
+        cols = st.columns(5)
         for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
-            short_prize = p[:12] + "..." if len(p) > 12 else p
-            winners_html += f"<span style='background:#fff;border:2px solid #E91E63;padding:5px 10px;border-radius:8px;font-size:0.75rem;'><strong style='color:#E91E63;'>#{i+1}</strong> {w} - {short_prize}</span>"
-        winners_html += "</div>"
-        st.markdown(winners_html, unsafe_allow_html=True)
+            nama_raw = name_lookup.get(w, "")
+            nama = str(nama_raw) if pd.notna(nama_raw) else "-"
+            if nama.lower() == "nan":
+                nama = "-"
+            hp = format_phone(phone_lookup.get(w, ""))
+            with cols[i % 5]:
+                st.markdown(f"""
+                <div style="background:#fff;border:2px solid #E91E63;border-radius:10px;padding:8px;text-align:center;margin-bottom:5px;">
+                    <div style="font-size:0.75rem;color:#E91E63;font-weight:bold;">#{i+1}</div>
+                    <div style="font-size:1.1rem;font-weight:800;color:#333;">{w}</div>
+                    <div style="font-size:0.7rem;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{nama}</div>
+                    <div style="font-size:0.65rem;color:#888;">{hp}</div>
+                    <div style="font-size:0.6rem;color:#E91E63;margin-top:3px;">{p}</div>
+                </div>
+                """, unsafe_allow_html=True)
         
         # Download buttons
         col1, col2 = st.columns(2)
