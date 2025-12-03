@@ -1,5 +1,5 @@
 """
-Generate Move & Groove Lottery Flow Presentation
+Generate Move & Groove Lottery Flow Presentation with Visual Mockups
 Creates a comprehensive PPT documenting the entire lottery process
 """
 
@@ -22,11 +22,13 @@ def create_flow_presentation():
     ORANGE = RGBColor(255, 152, 0)
     DARK = RGBColor(33, 33, 33)
     WHITE = RGBColor(255, 255, 255)
+    LIGHT_GRAY = RGBColor(245, 245, 245)
+    GRAY = RGBColor(158, 158, 158)
     
     def add_title_slide(title, subtitle=""):
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         
-        # Background
+        # Gradient-like background (using rectangle)
         bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
         bg.fill.solid()
         bg.fill.fore_color.rgb = PINK
@@ -50,87 +52,190 @@ def create_flow_presentation():
         
         return slide
     
-    def add_content_slide(title, content_items, highlight_color=PINK):
+    def add_mockup_slide(title, mockup_elements, description="", highlight_color=PINK):
+        """Create a slide with visual mockup of the app screen"""
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         
         # Header bar
-        header = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Inches(1.2))
+        header = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Inches(0.8))
         header.fill.solid()
         header.fill.fore_color.rgb = highlight_color
         header.line.fill.background()
         
         # Title
-        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
+        title_box = slide.shapes.add_textbox(Inches(0.3), Inches(0.15), Inches(8), Inches(0.6))
         tf = title_box.text_frame
         tf.paragraphs[0].text = title
-        tf.paragraphs[0].font.size = Pt(36)
+        tf.paragraphs[0].font.size = Pt(28)
         tf.paragraphs[0].font.bold = True
         tf.paragraphs[0].font.color.rgb = WHITE
         
-        # Content
-        content_box = slide.shapes.add_textbox(Inches(0.8), Inches(1.6), Inches(11.73), Inches(5.5))
-        tf = content_box.text_frame
-        tf.word_wrap = True
+        # Mockup area (browser-like frame)
+        frame = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.5), Inches(1), Inches(8), Inches(6))
+        frame.fill.solid()
+        frame.fill.fore_color.rgb = LIGHT_GRAY
+        frame.line.color.rgb = GRAY
         
-        for i, item in enumerate(content_items):
-            if i == 0:
-                p = tf.paragraphs[0]
-            else:
+        # Add mockup elements
+        y_pos = 1.3
+        for element in mockup_elements:
+            elem_type = element.get("type", "text")
+            
+            if elem_type == "header":
+                box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.7), Inches(y_pos), Inches(7.6), Inches(0.6))
+                box.fill.solid()
+                box.fill.fore_color.rgb = element.get("color", PINK)
+                box.line.fill.background()
+                
+                txt = slide.shapes.add_textbox(Inches(0.7), Inches(y_pos + 0.1), Inches(7.6), Inches(0.5))
+                tf = txt.text_frame
+                tf.paragraphs[0].text = element.get("text", "")
+                tf.paragraphs[0].font.size = Pt(18)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = WHITE
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                y_pos += 0.8
+                
+            elif elem_type == "card":
+                box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(element.get("x", 0.7)), Inches(y_pos), Inches(element.get("w", 2.3)), Inches(1.2))
+                box.fill.solid()
+                box.fill.fore_color.rgb = WHITE
+                box.line.color.rgb = element.get("border", PINK)
+                
+                txt = slide.shapes.add_textbox(Inches(element.get("x", 0.7) + 0.1), Inches(y_pos + 0.2), Inches(element.get("w", 2.3) - 0.2), Inches(0.9))
+                tf = txt.text_frame
+                tf.paragraphs[0].text = element.get("title", "")
+                tf.paragraphs[0].font.size = Pt(12)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = element.get("border", PINK)
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                
+                if element.get("subtitle"):
+                    p = tf.add_paragraph()
+                    p.text = element.get("subtitle", "")
+                    p.font.size = Pt(10)
+                    p.font.color.rgb = DARK
+                    p.alignment = PP_ALIGN.CENTER
+                
+            elif elem_type == "button":
+                box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(element.get("x", 2)), Inches(y_pos), Inches(element.get("w", 4)), Inches(0.5))
+                box.fill.solid()
+                box.fill.fore_color.rgb = element.get("color", PINK)
+                box.line.fill.background()
+                
+                txt = slide.shapes.add_textbox(Inches(element.get("x", 2)), Inches(y_pos + 0.1), Inches(element.get("w", 4)), Inches(0.4))
+                tf = txt.text_frame
+                tf.paragraphs[0].text = element.get("text", "Button")
+                tf.paragraphs[0].font.size = Pt(14)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = WHITE
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                y_pos += 0.7
+                
+            elif elem_type == "animation_box":
+                box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.5), Inches(y_pos), Inches(5.5), Inches(2))
+                box.fill.solid()
+                box.fill.fore_color.rgb = RGBColor(26, 26, 46)
+                box.line.fill.background()
+                
+                # Number display
+                num_txt = slide.shapes.add_textbox(Inches(1.5), Inches(y_pos + 0.3), Inches(5.5), Inches(1))
+                tf = num_txt.text_frame
+                tf.paragraphs[0].text = element.get("number", "0123")
+                tf.paragraphs[0].font.size = Pt(48)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = RGBColor(0, 255, 136)
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                
+                # Counter
+                counter_txt = slide.shapes.add_textbox(Inches(1.5), Inches(y_pos + 1.2), Inches(5.5), Inches(0.4))
+                tf = counter_txt.text_frame
+                tf.paragraphs[0].text = element.get("counter", "1523 / 2707")
+                tf.paragraphs[0].font.size = Pt(14)
+                tf.paragraphs[0].font.color.rgb = GRAY
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                
+                # Progress bar
+                prog_bg = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(2), Inches(y_pos + 1.6), Inches(4.5), Inches(0.15))
+                prog_bg.fill.solid()
+                prog_bg.fill.fore_color.rgb = RGBColor(51, 51, 51)
+                prog_bg.line.fill.background()
+                
+                prog_fill = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(2), Inches(y_pos + 1.6), Inches(element.get("progress", 3)), Inches(0.15))
+                prog_fill.fill.solid()
+                prog_fill.fill.fore_color.rgb = RGBColor(0, 255, 136)
+                prog_fill.line.fill.background()
+                
+                y_pos += 2.3
+                
+            elif elem_type == "winner_card":
+                box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.5), Inches(y_pos), Inches(5.5), Inches(1.2))
+                box.fill.solid()
+                box.fill.fore_color.rgb = GREEN
+                box.line.fill.background()
+                
+                txt = slide.shapes.add_textbox(Inches(1.5), Inches(y_pos + 0.15), Inches(5.5), Inches(1))
+                tf = txt.text_frame
+                tf.paragraphs[0].text = element.get("title", "PEMENANG #1")
+                tf.paragraphs[0].font.size = Pt(16)
+                tf.paragraphs[0].font.bold = True
+                tf.paragraphs[0].font.color.rgb = WHITE
+                tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+                
                 p = tf.add_paragraph()
-            p.text = item
-            p.font.size = Pt(24)
-            p.font.color.rgb = DARK
-            p.space_before = Pt(12)
-            p.space_after = Pt(8)
+                p.text = element.get("number", "03997")
+                p.font.size = Pt(28)
+                p.font.bold = True
+                p.font.color.rgb = WHITE
+                p.alignment = PP_ALIGN.CENTER
+                
+                p2 = tf.add_paragraph()
+                p2.text = element.get("details", "Budi Santoso | ****7890")
+                p2.font.size = Pt(12)
+                p2.font.color.rgb = WHITE
+                p2.alignment = PP_ALIGN.CENTER
+                
+                y_pos += 1.4
+                
+            elif elem_type == "newrow":
+                y_pos += element.get("height", 1.4)
+                
+            elif elem_type == "text":
+                txt = slide.shapes.add_textbox(Inches(0.7), Inches(y_pos), Inches(7.6), Inches(0.5))
+                tf = txt.text_frame
+                tf.paragraphs[0].text = element.get("text", "")
+                tf.paragraphs[0].font.size = Pt(element.get("size", 14))
+                tf.paragraphs[0].font.color.rgb = element.get("color", DARK)
+                tf.paragraphs[0].alignment = element.get("align", PP_ALIGN.LEFT)
+                y_pos += 0.5
         
-        return slide
-    
-    def add_step_slide(step_num, title, description, details, color=PINK):
-        slide = prs.slides.add_slide(prs.slide_layouts[6])
-        
-        # Step number circle
-        circle = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.5), Inches(0.4), Inches(1), Inches(1))
-        circle.fill.solid()
-        circle.fill.fore_color.rgb = color
-        circle.line.fill.background()
-        
-        num_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.6), Inches(1), Inches(0.6))
-        tf = num_box.text_frame
-        tf.paragraphs[0].text = str(step_num)
-        tf.paragraphs[0].font.size = Pt(36)
-        tf.paragraphs[0].font.bold = True
-        tf.paragraphs[0].font.color.rgb = WHITE
-        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-        
-        # Title
-        title_box = slide.shapes.add_textbox(Inches(1.8), Inches(0.5), Inches(10), Inches(0.8))
-        tf = title_box.text_frame
-        tf.paragraphs[0].text = title
-        tf.paragraphs[0].font.size = Pt(40)
-        tf.paragraphs[0].font.bold = True
-        tf.paragraphs[0].font.color.rgb = color
-        
-        # Description
-        desc_box = slide.shapes.add_textbox(Inches(0.8), Inches(1.6), Inches(11.73), Inches(1))
-        tf = desc_box.text_frame
-        tf.paragraphs[0].text = description
-        tf.paragraphs[0].font.size = Pt(24)
-        tf.paragraphs[0].font.color.rgb = DARK
-        
-        # Details list
-        details_box = slide.shapes.add_textbox(Inches(1), Inches(2.8), Inches(11.33), Inches(4))
-        tf = details_box.text_frame
-        tf.word_wrap = True
-        
-        for i, detail in enumerate(details):
-            if i == 0:
-                p = tf.paragraphs[0]
-            else:
-                p = tf.add_paragraph()
-            p.text = "• " + detail
-            p.font.size = Pt(22)
-            p.font.color.rgb = DARK
-            p.space_before = Pt(10)
+        # Description panel on the right
+        if description:
+            desc_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(8.7), Inches(1), Inches(4.4), Inches(6))
+            desc_box.fill.solid()
+            desc_box.fill.fore_color.rgb = WHITE
+            desc_box.line.color.rgb = GRAY
+            
+            desc_title = slide.shapes.add_textbox(Inches(8.9), Inches(1.2), Inches(4), Inches(0.5))
+            tf = desc_title.text_frame
+            tf.paragraphs[0].text = "Keterangan:"
+            tf.paragraphs[0].font.size = Pt(16)
+            tf.paragraphs[0].font.bold = True
+            tf.paragraphs[0].font.color.rgb = highlight_color
+            
+            desc_text = slide.shapes.add_textbox(Inches(8.9), Inches(1.7), Inches(4), Inches(5))
+            tf = desc_text.text_frame
+            tf.word_wrap = True
+            
+            for i, line in enumerate(description.split("\n")):
+                if i == 0:
+                    p = tf.paragraphs[0]
+                else:
+                    p = tf.add_paragraph()
+                p.text = line
+                p.font.size = Pt(13)
+                p.font.color.rgb = DARK
+                p.space_after = Pt(6)
         
         return slide
     
@@ -142,150 +247,226 @@ def create_flow_presentation():
         "7 Desember 2024 | Panduan Alur Pengundian"
     )
     
-    # 2. Overview
-    add_content_slide("OVERVIEW SISTEM UNDIAN", [
-        "Sistem undian digital dengan 3 tahap pengundian:",
-        "",
-        "1. E-VOUCHER: 700 pemenang (4 kategori x 175 hadiah)",
-        "2. SHUFFLE: 90 pemenang (3 sesi x 30 hadiah)",
-        "3. WHEEL: 10 Grand Prize (terurut dari termurah ke termahal)",
-        "",
-        "Total: 800 pemenang dari seluruh peserta eligible",
-        "",
-        "Fitur: Auto-save, Backup Google Drive, Validasi Duplikat"
-    ], PURPLE)
+    # 2. Overview slide
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    header = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, Inches(1))
+    header.fill.solid()
+    header.fill.fore_color.rgb = PURPLE
+    header.line.fill.background()
     
-    # 3. Data Setup
-    add_step_slide(1, "UPLOAD DATA PESERTA", 
-        "Langkah pertama: Upload data peserta yang akan diundi",
-        [
-            "Upload CSV file atau masukkan URL Google Sheets",
-            "Format: Nomor Undian, Nama, No HP",
-            "VIP/F otomatis terfilter (tidak ikut undian)",
-            "Sistem menampilkan jumlah peserta eligible",
-            "Data tersimpan otomatis untuk sesi berikutnya"
-        ], PINK)
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.33), Inches(0.7))
+    tf = title_box.text_frame
+    tf.paragraphs[0].text = "OVERVIEW SISTEM UNDIAN"
+    tf.paragraphs[0].font.size = Pt(36)
+    tf.paragraphs[0].font.bold = True
+    tf.paragraphs[0].font.color.rgb = WHITE
     
-    # 4. Home Screen
-    add_step_slide(2, "HALAMAN UTAMA",
-        "Dashboard utama menampilkan 3 pilihan mode undian",
-        [
-            "Panel E-VOUCHER: Selalu aktif, dimulai pertama",
-            "Panel SHUFFLE: Aktif setelah E-Voucher selesai",
-            "Panel WHEEL: Aktif setelah E-Voucher selesai",
-            "Menampilkan status progress setiap tahap",
-            "Tombol hasil untuk melihat pemenang sebelumnya"
-        ], PINK)
+    # 3 mode boxes
+    modes = [
+        {"title": "E-VOUCHER", "count": "700", "desc": "4 kategori\n175 per kategori", "color": GREEN},
+        {"title": "SHUFFLE", "count": "90", "desc": "3 sesi\n30 per sesi", "color": ORANGE},
+        {"title": "WHEEL", "count": "10", "desc": "Grand Prize\nTermurah → Termahal", "color": PURPLE}
+    ]
     
-    # 5. E-Voucher Stage
-    add_step_slide(3, "TAHAP 1: E-VOUCHER",
-        "Undian 700 hadiah voucher dalam 4 kategori",
+    for i, mode in enumerate(modes):
+        x = 0.8 + i * 4.2
+        box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(1.5), Inches(3.8), Inches(2.5))
+        box.fill.solid()
+        box.fill.fore_color.rgb = mode["color"]
+        box.line.fill.background()
+        
+        txt = slide.shapes.add_textbox(Inches(x), Inches(1.7), Inches(3.8), Inches(2.3))
+        tf = txt.text_frame
+        tf.paragraphs[0].text = mode["title"]
+        tf.paragraphs[0].font.size = Pt(24)
+        tf.paragraphs[0].font.bold = True
+        tf.paragraphs[0].font.color.rgb = WHITE
+        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+        
+        p = tf.add_paragraph()
+        p.text = mode["count"]
+        p.font.size = Pt(48)
+        p.font.bold = True
+        p.font.color.rgb = WHITE
+        p.alignment = PP_ALIGN.CENTER
+        
+        p2 = tf.add_paragraph()
+        p2.text = mode["desc"]
+        p2.font.size = Pt(14)
+        p2.font.color.rgb = WHITE
+        p2.alignment = PP_ALIGN.CENTER
+    
+    # Total
+    total_box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(4), Inches(4.3), Inches(5.33), Inches(1))
+    total_box.fill.solid()
+    total_box.fill.fore_color.rgb = PINK
+    total_box.line.fill.background()
+    
+    total_txt = slide.shapes.add_textbox(Inches(4), Inches(4.5), Inches(5.33), Inches(0.7))
+    tf = total_txt.text_frame
+    tf.paragraphs[0].text = "TOTAL: 800 PEMENANG"
+    tf.paragraphs[0].font.size = Pt(28)
+    tf.paragraphs[0].font.bold = True
+    tf.paragraphs[0].font.color.rgb = WHITE
+    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+    
+    # Features
+    features_txt = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(12.33), Inches(1.5))
+    tf = features_txt.text_frame
+    tf.paragraphs[0].text = "Fitur Utama:"
+    tf.paragraphs[0].font.size = Pt(18)
+    tf.paragraphs[0].font.bold = True
+    tf.paragraphs[0].font.color.rgb = DARK
+    
+    features = ["Auto-save hasil undian", "Backup ke Google Drive", "Validasi duplikat", "Transparansi animasi", "Export Excel & PPT"]
+    for feat in features:
+        p = tf.add_paragraph()
+        p.text = "✓ " + feat
+        p.font.size = Pt(16)
+        p.font.color.rgb = DARK
+    
+    # 3. Upload Data Screen
+    add_mockup_slide(
+        "LANGKAH 1: UPLOAD DATA PESERTA",
         [
-            "Tokopedia Rp.100.000,- : 175 pemenang",
-            "Indomaret Rp.100.000,- : 175 pemenang",
-            "Bensin Rp.100.000,- : 175 pemenang",
-            "SNL Rp.100.000,- : 175 pemenang",
-            "",
-            "Animasi cascade menampilkan semua pemenang",
-            "Download Excel & PPT tersedia setelah selesai"
-        ], GREEN)
+            {"type": "header", "text": "SISTEM UNDIAN MOVE & GROOVE", "color": PINK},
+            {"type": "text", "text": "Upload data peserta undian:", "size": 16},
+            {"type": "button", "text": "📁 Upload CSV File", "x": 1, "w": 3, "color": GRAY},
+            {"type": "text", "text": "atau masukkan URL Google Sheets:", "size": 14},
+            {"type": "button", "text": "🔗 https://docs.google.com/spreadsheets/...", "x": 1, "w": 6.5, "color": RGBColor(66, 133, 244)},
+            {"type": "newrow", "height": 0.3},
+            {"type": "button", "text": "✅ LOAD DATA", "x": 2.5, "w": 3.5, "color": GREEN},
+        ],
+        "1. Pilih salah satu:\n   - Upload file CSV\n   - Masukkan URL Google Sheets\n\n2. Format data:\n   - Nomor Undian\n   - Nama\n   - No HP\n\n3. VIP/F otomatis terfilter\n\n4. Klik LOAD DATA\n\n5. Sistem menampilkan:\n   - Total peserta\n   - Peserta eligible\n   - Peserta VIP/F",
+        PINK
+    )
+    
+    # 4. Home Screen with 3 panels
+    add_mockup_slide(
+        "LANGKAH 2: HALAMAN UTAMA",
+        [
+            {"type": "header", "text": "✅ 3500 peserta (3407 eligible, 93 VIP/F)", "color": GREEN},
+            {"type": "card", "title": "E-VOUCHER", "subtitle": "700 Hadiah\n4 Kategori", "x": 0.7, "w": 2.3, "border": GREEN},
+            {"type": "card", "title": "SHUFFLE", "subtitle": "90 Hadiah\n3 Sesi", "x": 3.2, "w": 2.3, "border": ORANGE},
+            {"type": "card", "title": "WHEEL", "subtitle": "10 Grand Prize", "x": 5.7, "w": 2.3, "border": PURPLE},
+        ],
+        "Halaman utama menampilkan:\n\n1. Status data peserta\n   (total, eligible, VIP/F)\n\n2. Tiga panel mode undian:\n   - E-VOUCHER (hijau)\n   - SHUFFLE (orange)\n   - WHEEL (ungu)\n\n3. E-Voucher selalu aktif\n\n4. Shuffle & Wheel aktif\n   setelah E-Voucher selesai\n\n5. Tombol hasil untuk\n   melihat pemenang",
+        PINK
+    )
+    
+    # 5. E-Voucher Preview
+    add_mockup_slide(
+        "LANGKAH 3: E-VOUCHER - PREVIEW",
+        [
+            {"type": "header", "text": "🎁 UNDIAN E-VOUCHER - 700 HADIAH", "color": GREEN},
+            {"type": "card", "title": "TOKOPEDIA", "subtitle": "Rp.100.000\n175 pemenang", "x": 0.7, "w": 1.8, "border": GREEN},
+            {"type": "card", "title": "INDOMARET", "subtitle": "Rp.100.000\n175 pemenang", "x": 2.6, "w": 1.8, "border": GREEN},
+            {"type": "card", "title": "BENSIN", "subtitle": "Rp.100.000\n175 pemenang", "x": 4.5, "w": 1.8, "border": GREEN},
+            {"type": "card", "title": "SNL", "subtitle": "Rp.100.000\n175 pemenang", "x": 6.4, "w": 1.8, "border": GREEN},
+            {"type": "newrow", "height": 1.5},
+            {"type": "button", "text": "🎲 MULAI UNDIAN E-VOUCHER", "x": 1.5, "w": 5.5, "color": GREEN},
+        ],
+        "Preview E-Voucher:\n\n1. 4 kategori hadiah:\n   - Tokopedia Rp.100.000\n   - Indomaret Rp.100.000\n   - Bensin Rp.100.000\n   - SNL Rp.100.000\n\n2. Masing-masing 175 pemenang\n\n3. Total 700 pemenang\n\n4. Klik tombol hijau\n   untuk mulai undian\n\n5. Animasi cascade akan\n   menampilkan pemenang",
+        GREEN
+    )
     
     # 6. E-Voucher Animation
-    add_content_slide("E-VOUCHER: ANIMASI PENGUNDIAN", [
-        "Proses pengundian E-Voucher:",
-        "",
-        "1. Tekan tombol 'MULAI UNDIAN E-VOUCHER'",
-        "2. Progress bar menunjukkan proses shuffle",
-        "3. Animasi cascade menampilkan 700 pemenang",
-        "4. Pemenang ditampilkan per kategori",
-        "5. Download Excel/PPT untuk dokumentasi",
-        "6. Tekan 'SISA NOMOR' untuk lanjut ke tahap berikut",
-        "",
-        "Peserta yang sudah menang TIDAK bisa menang lagi"
-    ], GREEN)
-    
-    # 7. Shuffle Stage
-    add_step_slide(4, "TAHAP 2: SHUFFLE",
-        "Undian 90 hadiah dalam 3 sesi",
+    add_mockup_slide(
+        "LANGKAH 3: E-VOUCHER - ANIMASI",
         [
-            "Sesi 1: 30 pemenang",
-            "Sesi 2: 30 pemenang", 
-            "Sesi 3: 30 pemenang",
-            "",
-            "Setiap sesi memerlukan input nama hadiah",
-            "Animasi slot-machine cascade untuk transparansi",
-            "Download per sesi atau gabungan tersedia"
-        ], ORANGE)
+            {"type": "header", "text": "🎁 MENGUNDI 700 PEMENANG...", "color": GREEN},
+            {"type": "text", "text": "Animasi cascade menampilkan semua pemenang:", "size": 14},
+            {"type": "newrow", "height": 0.2},
+            {"type": "card", "title": "#1: 0234", "subtitle": "Ahmad H.\nTokopedia", "x": 0.7, "w": 1.5, "border": GREEN},
+            {"type": "card", "title": "#2: 1567", "subtitle": "Budi S.\nTokopedia", "x": 2.3, "w": 1.5, "border": GREEN},
+            {"type": "card", "title": "#3: 0891", "subtitle": "Citra D.\nIndomaret", "x": 3.9, "w": 1.5, "border": GREEN},
+            {"type": "card", "title": "#4: 2345", "subtitle": "Dian P.\nIndomaret", "x": 5.5, "w": 1.5, "border": GREEN},
+            {"type": "card", "title": "#5: 0123", "subtitle": "Eko P.\nBensin", "x": 7.1, "w": 1.5, "border": GREEN},
+        ],
+        "Proses Undian E-Voucher:\n\n1. Progress bar menunjukkan\n   proses shuffle\n\n2. Animasi cascade\n   menampilkan pemenang\n   satu per satu\n\n3. Setiap kartu berisi:\n   - Nomor urut\n   - Nomor undian\n   - Nama peserta\n   - Kategori hadiah\n\n4. 700 pemenang ditampilkan\n\n5. Setelah selesai:\n   Download Excel/PPT",
+        GREEN
+    )
+    
+    # 7. Shuffle Mode
+    add_mockup_slide(
+        "LANGKAH 4: SHUFFLE - 3 SESI",
+        [
+            {"type": "header", "text": "🔀 UNDIAN SHUFFLE - 90 HADIAH", "color": ORANGE},
+            {"type": "text", "text": "Sesi: 0/3 | Sisa: 2707 peserta", "size": 14, "color": GRAY},
+            {"type": "newrow", "height": 0.2},
+            {"type": "card", "title": "SESI 1", "subtitle": "30 Hadiah\n[Input nama hadiah]", "x": 0.7, "w": 2.3, "border": ORANGE},
+            {"type": "card", "title": "SESI 2", "subtitle": "30 Hadiah\nMenunggu Sesi 1", "x": 3.2, "w": 2.3, "border": GRAY},
+            {"type": "card", "title": "SESI 3", "subtitle": "30 Hadiah\nMenunggu Sesi 2", "x": 5.7, "w": 2.3, "border": GRAY},
+            {"type": "newrow", "height": 1.5},
+            {"type": "button", "text": "🎰 PUTAR UNDIAN SESI 1", "x": 1.5, "w": 5.5, "color": ORANGE},
+        ],
+        "Mode Shuffle:\n\n1. 3 sesi pengundian\n   (masing-masing 30 hadiah)\n\n2. Setiap sesi:\n   - Input nama hadiah\n   - Klik PUTAR UNDIAN\n   - Animasi slot-machine\n   - 30 pemenang muncul\n\n3. Sesi berurutan\n   (harus selesai Sesi 1\n   untuk lanjut Sesi 2)\n\n4. Download per sesi\n   atau gabungan\n\n5. Total 90 pemenang",
+        ORANGE
+    )
     
     # 8. Shuffle Animation
-    add_content_slide("SHUFFLE: ANIMASI SLOT MACHINE", [
-        "Proses pengundian setiap sesi Shuffle:",
-        "",
-        "1. Input nama hadiah untuk sesi tersebut",
-        "2. Tekan tombol 'PUTAR UNDIAN'",
-        "3. Animasi menampilkan SEMUA nomor peserta sisa",
-        "4. 30 pemenang muncul satu per satu secara cascade",
-        "5. Kartu pemenang menampilkan: Nomor, Nama, No HP",
-        "6. Download hasil per sesi",
-        "7. Lanjut ke sesi berikutnya sampai 3 sesi selesai"
-    ], ORANGE)
-    
-    # 9. Wheel Stage
-    add_step_slide(5, "TAHAP 3: GRAND PRIZE (WHEEL)",
-        "Undian 10 hadiah utama - dari termurah ke termahal",
+    add_mockup_slide(
+        "LANGKAH 4: SHUFFLE - ANIMASI",
         [
-            "Hadiah #1-10 dikonfigurasi sebelum mulai",
-            "Urutan: Termurah dulu, LED TV terakhir",
-            "Setiap spin menampilkan SELURUH nomor peserta sisa",
-            "Counter menunjukkan progress: '1/2707', '2/2707', dst",
-            "Animasi melambat dan berhenti di pemenang",
-            "Kartu pemenang langsung ditampilkan dengan detail"
-        ], PURPLE)
+            {"type": "header", "text": "🎰 SESI 1: DOORPRIZE SPESIAL", "color": ORANGE},
+            {"type": "animation_box", "number": "2847", "counter": "1523 / 2707", "progress": 2.5},
+            {"type": "text", "text": "Animasi menampilkan semua nomor peserta sisa secara berurutan", "size": 12, "color": GRAY},
+        ],
+        "Animasi Shuffle:\n\n1. Badge menunjukkan\n   total peserta sisa\n\n2. Nomor ditampilkan\n   secara BERURUTAN\n   (bukan random sampling)\n\n3. Counter real-time:\n   '1523 / 2707'\n\n4. Progress bar mengikuti\n   nomor yang sudah lewat\n\n5. Kecepatan:\n   - Cepat di awal\n   - Melambat di akhir\n\n6. Berhenti di pemenang\n   dengan warna emas",
+        ORANGE
+    )
     
-    # 10. Wheel Animation Detail
-    add_content_slide("WHEEL: TRANSPARANSI PENUH", [
-        "Fitur transparansi pada Wheel:",
-        "",
-        "1. Badge 'Mengundi dari X peserta' menunjukkan pool",
-        "2. Semua nomor ditampilkan berurutan (bukan acak)",
-        "3. Counter real-time: '1523/2707' dsb",
-        "4. Progress bar mengikuti nomor yang sudah lewat",
-        "5. Kecepatan: Cepat di awal, melambat di akhir",
-        "6. Pemenang ditampilkan dengan warna emas",
-        "7. Detail lengkap: Nomor, Nama, No HP, Hadiah"
-    ], PURPLE)
+    # 9. Wheel Mode
+    add_mockup_slide(
+        "LANGKAH 5: WHEEL - 10 GRAND PRIZE",
+        [
+            {"type": "header", "text": "🎡 HADIAH UTAMA - 10 GRAND PRIZE", "color": PURPLE},
+            {"type": "text", "text": "Progress: ▶1  2  3  4  5  6  7  8  9  10", "size": 14, "color": GRAY},
+            {"type": "newrow", "height": 0.2},
+            {"type": "card", "title": "#1", "subtitle": "Blender\nRp.300.000", "x": 0.7, "w": 1.5, "border": PURPLE},
+            {"type": "card", "title": "#2", "subtitle": "Rice Cooker\nRp.500.000", "x": 2.3, "w": 1.5, "border": PURPLE},
+            {"type": "card", "title": "...", "subtitle": "", "x": 3.9, "w": 1, "border": GRAY},
+            {"type": "card", "title": "#10", "subtitle": "LED TV 43\"\nRp.5.000.000", "x": 5, "w": 1.8, "border": PINK},
+            {"type": "newrow", "height": 1.5},
+            {"type": "button", "text": "🎡 PUTAR UNDIAN!", "x": 1.5, "w": 5.5, "color": PURPLE},
+        ],
+        "Mode Wheel:\n\n1. 10 Grand Prize\n   (termurah → termahal)\n\n2. Konfigurasi hadiah:\n   - No\n   - Nama Hadiah\n   - Keterangan\n\n3. Urutan penting:\n   LED TV sebagai\n   hadiah terakhir (klimaks)\n\n4. Setiap spin:\n   - Animasi penuh\n   - Semua nomor diundi\n   - Transparansi penuh\n\n5. Progress bar 1-10",
+        PURPLE
+    )
+    
+    # 10. Wheel Animation
+    add_mockup_slide(
+        "LANGKAH 5: WHEEL - ANIMASI TRANSPARAN",
+        [
+            {"type": "header", "text": "Mengundi dari 2617 peserta", "color": PURPLE},
+            {"type": "animation_box", "number": "03997", "counter": "2617 / 2617", "progress": 4.5},
+            {"type": "winner_card", "title": "🎉 PEMENANG #1", "number": "03997", "details": "Budi Santoso | ****7890"},
+        ],
+        "Transparansi Wheel:\n\n1. Badge 'Mengundi dari\n   X peserta' menunjukkan\n   total pool sisa\n\n2. Animasi sequential:\n   Semua nomor ditampilkan\n   satu per satu\n\n3. Counter: '1/2617',\n   '2/2617', dst\n\n4. Penonton melihat\n   SETIAP nomor diundi\n\n5. Pemenang ditampilkan:\n   - Nomor undian\n   - Nama lengkap\n   - No HP (masked)",
+        PURPLE
+    )
     
     # 11. Validation & Download
-    add_step_slide(6, "VALIDASI & DOWNLOAD",
-        "Fitur keamanan dan dokumentasi hasil",
+    add_mockup_slide(
+        "LANGKAH 6: VALIDASI & DOWNLOAD",
         [
-            "VALIDASI: Cek duplikat di semua tahap",
-            "Memastikan tidak ada nomor yang menang 2x",
-            "",
-            "DOWNLOAD EXCEL: Semua pemenang dengan detail lengkap",
-            "DOWNLOAD PPT: Presentasi siap pakai untuk pengumuman",
-            "",
-            "Auto-save: Hasil tersimpan otomatis",
-            "Google Drive backup: Sinkronisasi ke cloud"
-        ], PINK)
+            {"type": "header", "text": "🏆 SELESAI - 10/10 HADIAH TERPILIH", "color": GREEN},
+            {"type": "text", "text": "Validasi dan download hasil undian:", "size": 16},
+            {"type": "newrow", "height": 0.3},
+            {"type": "button", "text": "✅ VALIDASI DUPLIKAT", "x": 0.7, "w": 2.5, "color": GREEN},
+            {"type": "button", "text": "📊 EXCEL LENGKAP", "x": 3.3, "w": 2.5, "color": RGBColor(33, 150, 83)},
+            {"type": "button", "text": "📽️ PPT LENGKAP", "x": 5.9, "w": 2.5, "color": ORANGE},
+            {"type": "newrow", "height": 0.5},
+            {"type": "text", "text": "✅ Validasi: Tidak ada duplikat di 800 pemenang", "size": 14, "color": GREEN},
+        ],
+        "Validasi & Download:\n\n1. VALIDASI DUPLIKAT\n   - Cek semua tahap\n   - Pastikan tidak ada\n     nomor menang 2x\n\n2. EXCEL LENGKAP\n   - Semua pemenang\n   - Sheet per tahap\n   - Detail lengkap\n\n3. PPT LENGKAP\n   - Slide per tahap\n   - Siap presentasi\n\n4. Auto-save aktif\n   - Backup lokal\n   - Backup Google Drive",
+        GREEN
+    )
     
-    # 12. Summary
-    add_content_slide("RINGKASAN ALUR", [
-        "1. Upload data peserta (CSV/Google Sheets)",
-        "2. E-Voucher: 700 pemenang dalam 4 kategori",
-        "3. Shuffle: 90 pemenang dalam 3 sesi",
-        "4. Wheel: 10 Grand Prize (termurah → termahal)",
-        "",
-        "Total: 800 pemenang",
-        "",
-        "Setiap tahap memiliki validasi dan backup otomatis",
-        "Semua animasi menampilkan pool peserta untuk transparansi"
-    ], PINK)
-    
-    # 13. Closing
+    # 12. Closing
     add_title_slide(
         "MOVE & GROOVE 2024",
-        "Selamat Mengundi!"
+        "Selamat Mengundi! 🎉"
     )
     
     return prs
