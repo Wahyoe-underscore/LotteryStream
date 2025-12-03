@@ -2352,16 +2352,20 @@ elif current_page == "wheel_page":
         # Cadangan section (after 10 main prizes)
         if st.session_state.get("wheel_done", False) and len(remaining_pool) > 0:
             st.markdown("---")
+            
+            # All cadangan batches
+            all_cadangan_batches = st.session_state.get("cadangan_batches", {})
+            current_batch = st.session_state.get("current_cadangan_batch", 1)
             cadangan_winners = st.session_state.get("cadangan_winners", [])
             
-            st.markdown("""
+            st.markdown(f"""
             <div style="background:linear-gradient(135deg,#FF9800,#F57C00);border-radius:10px;padding:15px;text-align:center;margin-bottom:15px;">
-                <div style="color:white;font-size:1.3rem;font-weight:bold;">🎯 UNDIAN CADANGAN</div>
+                <div style="color:white;font-size:1.3rem;font-weight:bold;">🎯 UNDIAN CADANGAN - Batch {current_batch}</div>
                 <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">10 Nomor Tambahan (Tanpa Hadiah)</div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Progress for cadangan
+            # Progress for current cadangan batch
             cadangan_progress = "<div style='display:flex; gap:3px; justify-content:center; margin:10px 0;'>"
             for i in range(10):
                 if i < len(cadangan_winners):
@@ -2469,9 +2473,9 @@ elif current_page == "wheel_page":
                                 </div>
                                 """, unsafe_allow_html=True)
             
-            # Show cadangan winners cards
+            # Show current batch cadangan winners cards
             if len(cadangan_winners) > 0:
-                st.markdown("#### Pemenang Cadangan:")
+                st.markdown(f"#### Pemenang Cadangan Batch {current_batch}:")
                 cad_cols = st.columns(5)
                 for i, cw in enumerate(cadangan_winners):
                     cw_str = str(cw).strip()
@@ -2488,20 +2492,62 @@ elif current_page == "wheel_page":
                         </div>
                         """, unsafe_allow_html=True)
                 
-                # Download cadangan
-                cad_col1, cad_col2 = st.columns(2)
-                with cad_col1:
-                    df_cadangan = pd.DataFrame({
-                        "No": range(1, len(cadangan_winners) + 1),
-                        "Nomor Undian": cadangan_winners,
-                        "Nama": [name_lookup.get(str(w).strip(), "") for w in cadangan_winners],
-                        "No HP": [phone_lookup.get(str(w).strip(), "") for w in cadangan_winners],
-                        "Keterangan": ["Cadangan"] * len(cadangan_winners)
-                    })
-                    cad_excel_buf = BytesIO()
-                    with pd.ExcelWriter(cad_excel_buf, engine='openpyxl') as writer:
-                        df_cadangan.to_excel(writer, index=False)
-                    st.download_button("📊 Download Excel Cadangan", cad_excel_buf.getvalue(), "cadangan_winners.xlsx", use_container_width=True)
+                # When batch is complete (10 winners), show option to start new batch
+                if len(cadangan_winners) == 10:
+                    # Save current batch
+                    all_cadangan_batches[f"batch_{current_batch}"] = cadangan_winners.copy()
+                    st.session_state["cadangan_batches"] = all_cadangan_batches
+                    
+                    st.success(f"✅ Batch {current_batch} selesai! (10 nomor)")
+                    
+                    cad_btn_col1, cad_btn_col2 = st.columns(2)
+                    with cad_btn_col1:
+                        if st.button("🔄 MULAI BATCH BARU", key=f"new_batch_{current_batch}", use_container_width=True, type="primary"):
+                            st.session_state["current_cadangan_batch"] = current_batch + 1
+                            st.session_state["cadangan_winners"] = []
+                            st.rerun()
+                    
+                    with cad_btn_col2:
+                        # Download current batch
+                        df_cadangan = pd.DataFrame({
+                            "No": range(1, len(cadangan_winners) + 1),
+                            "Nomor Undian": cadangan_winners,
+                            "Nama": [name_lookup.get(str(w).strip(), "") for w in cadangan_winners],
+                            "No HP": [phone_lookup.get(str(w).strip(), "") for w in cadangan_winners],
+                            "Batch": [f"Batch {current_batch}"] * len(cadangan_winners)
+                        })
+                        cad_excel_buf = BytesIO()
+                        with pd.ExcelWriter(cad_excel_buf, engine='openpyxl') as writer:
+                            df_cadangan.to_excel(writer, index=False)
+                        st.download_button(f"📊 Download Batch {current_batch}", cad_excel_buf.getvalue(), f"cadangan_batch_{current_batch}.xlsx", use_container_width=True)
+            
+            # Show all previous batches
+            if len(all_cadangan_batches) > 0:
+                with st.expander(f"📋 Semua Batch Cadangan ({len(all_cadangan_batches)} batch)", expanded=False):
+                    for batch_key, batch_winners in all_cadangan_batches.items():
+                        batch_num = batch_key.split("_")[1]
+                        st.markdown(f"**Batch {batch_num}:** {', '.join(batch_winners)}")
+                    
+                    # Download all batches
+                    all_cad_data = []
+                    for batch_key, batch_winners in all_cadangan_batches.items():
+                        batch_num = batch_key.split("_")[1]
+                        for i, w in enumerate(batch_winners):
+                            w_str = str(w).strip()
+                            all_cad_data.append({
+                                "No": i + 1,
+                                "Nomor Undian": w,
+                                "Nama": name_lookup.get(w_str, ""),
+                                "No HP": phone_lookup.get(w_str, ""),
+                                "Batch": f"Batch {batch_num}"
+                            })
+                    
+                    if len(all_cad_data) > 0:
+                        df_all_cad = pd.DataFrame(all_cad_data)
+                        all_cad_buf = BytesIO()
+                        with pd.ExcelWriter(all_cad_buf, engine='openpyxl') as writer:
+                            df_all_cad.to_excel(writer, index=False)
+                        st.download_button("📊 Download Semua Cadangan", all_cad_buf.getvalue(), "semua_cadangan.xlsx", use_container_width=True)
         
         # Final buttons (only show when wheel is complete)
         if st.session_state.get("wheel_done", False):
