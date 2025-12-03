@@ -337,6 +337,229 @@ def format_phone(phone):
         return "-"
     return phone_str if phone_str else "-"
 
+def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"):
+    """Create an animated shuffle display showing winners being selected - cascade style for many winners"""
+    winners_js = json.dumps(winners)
+    all_nums_js = json.dumps(all_participants[:100])  # Use 100 random numbers for animation variety
+    total_winners = len(winners)
+    
+    # Calculate grid layout based on number of winners
+    if total_winners <= 10:
+        cols = 5
+        slot_size = "90px"
+        font_size = "1.3rem"
+    elif total_winners <= 20:
+        cols = 5
+        slot_size = "80px"
+        font_size = "1.1rem"
+    else:
+        cols = 6
+        slot_size = "70px"
+        font_size = "1rem"
+    
+    html = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                min-height: 100vh;
+                background: transparent;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                padding: 10px;
+            }}
+            .container {{
+                text-align: center;
+                width: 100%;
+                max-width: 600px;
+            }}
+            .header {{
+                background: linear-gradient(135deg, #FF9800, #FF5722);
+                padding: 15px;
+                border-radius: 15px;
+                margin-bottom: 15px;
+            }}
+            .prize-title {{
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: white;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            }}
+            .counter {{
+                font-size: 1rem;
+                color: #fff;
+                margin-top: 5px;
+            }}
+            .slots-container {{
+                display: grid;
+                grid-template-columns: repeat({cols}, 1fr);
+                gap: 8px;
+                margin-bottom: 15px;
+                padding: 10px;
+            }}
+            .slot {{
+                width: {slot_size};
+                height: 55px;
+                background: linear-gradient(145deg, #fff, #f5f5f5);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: {font_size};
+                font-weight: 800;
+                color: #333;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                border: 2px solid #FF9800;
+                overflow: hidden;
+                position: relative;
+                opacity: 0;
+                transform: scale(0.8);
+                transition: all 0.3s ease;
+            }}
+            .slot.active {{
+                opacity: 1;
+                transform: scale(1);
+                animation: glow 0.08s infinite alternate;
+            }}
+            .slot.winner {{
+                background: linear-gradient(135deg, #FF9800, #FF5722);
+                color: white;
+                border-color: #E65100;
+                animation: popIn 0.4s ease;
+                opacity: 1;
+                transform: scale(1);
+            }}
+            @keyframes glow {{
+                0% {{ box-shadow: 0 0 5px #FF9800, inset 0 0 5px rgba(255,152,0,0.2); }}
+                100% {{ box-shadow: 0 0 15px #FF9800, inset 0 0 10px rgba(255,152,0,0.3); }}
+            }}
+            @keyframes popIn {{
+                0% {{ transform: scale(0.5); }}
+                50% {{ transform: scale(1.15); }}
+                100% {{ transform: scale(1); }}
+            }}
+            .progress-container {{
+                width: 100%;
+                margin: 10px 0;
+            }}
+            .progress {{
+                width: 100%;
+                height: 8px;
+                background: #e0e0e0;
+                border-radius: 5px;
+                overflow: hidden;
+            }}
+            .progress-bar {{
+                height: 100%;
+                background: linear-gradient(90deg, #4CAF50, #8BC34A);
+                width: 0%;
+                transition: width 0.15s ease;
+                border-radius: 5px;
+            }}
+            .status {{
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #4CAF50;
+                margin-top: 10px;
+                padding: 12px 25px;
+                background: linear-gradient(145deg, #fff, #f8f9fa);
+                border-radius: 10px;
+                border: 2px solid #4CAF50;
+                display: none;
+                animation: popIn 0.5s ease;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="prize-title">🎲 {prize_name}</div>
+                <div class="counter" id="counter">Mengundi 0/{total_winners} pemenang...</div>
+            </div>
+            <div class="slots-container" id="slotsContainer"></div>
+            <div class="progress-container">
+                <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+            </div>
+            <div class="status" id="status">🎉 {total_winners} PEMENANG TERPILIH!</div>
+        </div>
+        <script>
+            const winners = {winners_js};
+            const allNums = {all_nums_js};
+            const container = document.getElementById('slotsContainer');
+            const progressBar = document.getElementById('progressBar');
+            const status = document.getElementById('status');
+            const counter = document.getElementById('counter');
+            const totalWinners = winners.length;
+            
+            // Create all slot elements (hidden initially)
+            winners.forEach((_, idx) => {{
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.id = 'slot' + idx;
+                slot.innerHTML = '<span class="slot-number">????</span>';
+                container.appendChild(slot);
+            }});
+            
+            function getRandomNum() {{
+                return allNums[Math.floor(Math.random() * allNums.length)];
+            }}
+            
+            let revealedCount = 0;
+            const baseDelay = 80; // ms between each winner reveal
+            const spinDuration = 600; // ms for spin animation per slot
+            
+            function revealWinner(slotIdx) {{
+                const slot = document.getElementById('slot' + slotIdx);
+                const numSpan = slot.querySelector('.slot-number');
+                
+                // Make slot visible and start spinning
+                slot.classList.add('active');
+                
+                let spinCount = 0;
+                const maxSpins = Math.floor(spinDuration / 40);
+                
+                function spin() {{
+                    if (spinCount < maxSpins) {{
+                        numSpan.textContent = getRandomNum();
+                        spinCount++;
+                        setTimeout(spin, 40);
+                    }} else {{
+                        // Reveal winner
+                        slot.classList.remove('active');
+                        slot.classList.add('winner');
+                        numSpan.textContent = winners[slotIdx];
+                        revealedCount++;
+                        
+                        // Update counter and progress
+                        counter.textContent = 'Mengundi ' + revealedCount + '/{total_winners} pemenang...';
+                        progressBar.style.width = (revealedCount / totalWinners * 100) + '%';
+                        
+                        if (revealedCount === totalWinners) {{
+                            counter.textContent = '✅ Selesai!';
+                            status.style.display = 'block';
+                        }}
+                    }}
+                }}
+                spin();
+            }}
+            
+            // Cascade reveal - start each winner after a delay
+            setTimeout(() => {{
+                winners.forEach((_, idx) => {{
+                    setTimeout(() => revealWinner(idx), idx * baseDelay);
+                }});
+            }}, 300);
+        </script>
+    </body>
+    </html>
+    '''
+    return html
+
 def create_spinning_wheel_html(participants, winner, wheel_size=400):
     num_segments = min(len(participants), 20)
     display_participants = participants[:num_segments]
@@ -1626,6 +1849,22 @@ elif current_page == "shuffle_page":
                             idx = secrets.randbelow(len(temp_pool))
                             batch_winners.append(temp_pool.pop(idx))
                         
+                        # Show shuffle animation
+                        scroll_js = """
+                        <script>
+                            setTimeout(function() {
+                                var animElement = document.querySelector('iframe');
+                                if (animElement) {
+                                    animElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                                }
+                            }, 100);
+                        </script>
+                        """
+                        components.html(scroll_js, height=0)
+                        
+                        shuffle_html = create_shuffle_animation_html(remaining_numbers, batch_winners, batch['name'])
+                        components.html(shuffle_html, height=550)
+                        
                         # Assign prizes to winners
                         prize_assignments = []
                         winner_idx = 0
@@ -1656,7 +1895,12 @@ elif current_page == "shuffle_page":
                         # Auto-save results
                         save_lottery_results()
                         
-                        st.rerun()
+                        # Show success message after animation
+                        time.sleep(0.5)
+                        st.success(f"🎉 {len(batch_winners)} pemenang {batch['name']} berhasil diundi!")
+                        
+                        if st.button("✅ Lihat Hasil Lengkap", key=f"view_result_{batch_key}", use_container_width=True):
+                            st.rerun()
                 elif remaining_count == 0:
                     st.warning("Tidak ada sisa peserta")
     
