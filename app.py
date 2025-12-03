@@ -2349,6 +2349,160 @@ elif current_page == "wheel_page":
             else:
                 st.info("Semua nomor sudah diundi")
         
+        # Cadangan section (after 10 main prizes)
+        if st.session_state.get("wheel_done", False) and len(remaining_pool) > 0:
+            st.markdown("---")
+            cadangan_winners = st.session_state.get("cadangan_winners", [])
+            
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#FF9800,#F57C00);border-radius:10px;padding:15px;text-align:center;margin-bottom:15px;">
+                <div style="color:white;font-size:1.3rem;font-weight:bold;">🎯 UNDIAN CADANGAN</div>
+                <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">10 Nomor Tambahan (Tanpa Hadiah)</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Progress for cadangan
+            cadangan_progress = "<div style='display:flex; gap:3px; justify-content:center; margin:10px 0;'>"
+            for i in range(10):
+                if i < len(cadangan_winners):
+                    cadangan_progress += f"<span style='background:#FF9800;color:white;padding:3px 8px;border-radius:3px;font-size:0.7rem;'>✓{i+1}</span>"
+                elif i == len(cadangan_winners):
+                    cadangan_progress += f"<span style='background:#E91E63;color:white;padding:3px 8px;border-radius:3px;font-size:0.7rem;font-weight:bold;'>▶{i+1}</span>"
+                else:
+                    cadangan_progress += f"<span style='background:#ddd;color:#999;padding:3px 8px;border-radius:3px;font-size:0.7rem;'>{i+1}</span>"
+            cadangan_progress += "</div>"
+            st.markdown(cadangan_progress, unsafe_allow_html=True)
+            
+            if len(cadangan_winners) < 10:
+                cad_wheel_col, cad_control_col = st.columns([1, 1])
+                
+                with cad_wheel_col:
+                    cad_wheel_placeholder = st.empty()
+                
+                with cad_control_col:
+                    st.markdown(f"""
+                    <div style="background:linear-gradient(135deg,#607D8B,#455A64);border-radius:15px;padding:20px;text-align:center;margin-bottom:15px;">
+                        <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Cadangan #{len(cadangan_winners)+1}</div>
+                        <div style="color:white;font-size:1.3rem;font-weight:bold;margin:8px 0;">Nomor Tambahan</div>
+                        <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;">Tanpa Hadiah</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    cad_result_placeholder = st.empty()
+                    
+                    cad_spin_clicked = st.button("🎯 PUTAR CADANGAN!", key=f"spin_cadangan_{len(cadangan_winners)}", use_container_width=True, type="secondary")
+                    
+                    if cad_spin_clicked:
+                        cad_remaining_numbers = remaining_pool["Nomor Undian"].tolist()
+                        
+                        if len(cad_remaining_numbers) > 0:
+                            cad_winner_idx = secrets.randbelow(len(cad_remaining_numbers))
+                            cad_winner = cad_remaining_numbers[cad_winner_idx]
+                            
+                            with cad_wheel_placeholder.container():
+                                cad_wheel_html = create_spinning_wheel_html(cad_remaining_numbers, cad_winner, 320)
+                                components.html(cad_wheel_html, height=420)
+                            
+                            cadangan_winners.append(cad_winner)
+                            st.session_state["cadangan_winners"] = cadangan_winners
+                            
+                            new_pool = remaining_pool[remaining_pool["Nomor Undian"] != cad_winner]
+                            st.session_state["remaining_pool"] = new_pool
+                            
+                            save_lottery_results()
+                            
+                            participant_data = st.session_state.get("participant_data")
+                            nama = "-"
+                            hp = "-"
+                            if participant_data is not None:
+                                winner_str = str(cad_winner).strip()
+                                winner_row = participant_data[participant_data["Nomor Undian"].astype(str).str.strip() == winner_str]
+                                if len(winner_row) > 0:
+                                    nama_raw = winner_row.iloc[0].get("Nama", "")
+                                    nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+                                    hp = format_phone(winner_row.iloc[0].get("No HP", ""))
+                            
+                            with cad_result_placeholder.container():
+                                st.markdown(f"""
+                                <div style="background:#FF9800;color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
+                                    <div style="font-size:0.9rem;">🎯 CADANGAN #{len(cadangan_winners)}</div>
+                                    <div style="font-size:2rem;font-weight:900;margin:5px 0;">{cad_winner}</div>
+                                    <div style="font-size:0.9rem;">{nama}</div>
+                                    <div style="font-size:0.8rem;opacity:0.9;">{hp}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                
+                                if len(cadangan_winners) < 10:
+                                    st.markdown("<br>", unsafe_allow_html=True)
+                                    if st.button("➡️ LANJUT CADANGAN BERIKUTNYA", key="next_cadangan", use_container_width=True):
+                                        st.rerun()
+                    else:
+                        with cad_wheel_placeholder.container():
+                            st.markdown(f"""
+                            <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                <div style="font-size:8rem;margin-bottom:15px;">🎯</div>
+                                <div style="color:#888;font-size:1rem;">Undian Cadangan</div>
+                                <div style="color:#FF9800;font-size:1.5rem;font-weight:bold;margin-top:10px;">{len(remaining_pool)} peserta</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        if len(cadangan_winners) > 0:
+                            last_cad = cadangan_winners[-1]
+                            participant_data = st.session_state.get("participant_data")
+                            nama = "-"
+                            hp = "-"
+                            if participant_data is not None:
+                                winner_str = str(last_cad).strip()
+                                winner_row = participant_data[participant_data["Nomor Undian"].astype(str).str.strip() == winner_str]
+                                if len(winner_row) > 0:
+                                    nama_raw = winner_row.iloc[0].get("Nama", "")
+                                    nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+                                    hp = format_phone(winner_row.iloc[0].get("No HP", ""))
+                            
+                            with cad_result_placeholder.container():
+                                st.markdown(f"""
+                                <div style="background:#FF9800;color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
+                                    <div style="font-size:0.9rem;">Cadangan Terakhir</div>
+                                    <div style="font-size:2rem;font-weight:900;margin:5px 0;">{last_cad}</div>
+                                    <div style="font-size:0.9rem;">{nama}</div>
+                                    <div style="font-size:0.8rem;opacity:0.9;">{hp}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+            
+            # Show cadangan winners cards
+            if len(cadangan_winners) > 0:
+                st.markdown("#### Pemenang Cadangan:")
+                cad_cols = st.columns(5)
+                for i, cw in enumerate(cadangan_winners):
+                    cw_str = str(cw).strip()
+                    nama_raw = name_lookup.get(cw_str, "")
+                    nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+                    hp = format_phone(phone_lookup.get(cw_str, ""))
+                    with cad_cols[i % 5]:
+                        st.markdown(f"""
+                        <div style="background:#fff;border:2px solid #FF9800;border-radius:10px;padding:8px;text-align:center;margin-bottom:5px;">
+                            <div style="font-size:0.75rem;color:#FF9800;font-weight:bold;">Cadangan #{i+1}</div>
+                            <div style="font-size:1.1rem;font-weight:800;color:#333;">{cw}</div>
+                            <div style="font-size:0.7rem;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{nama}</div>
+                            <div style="font-size:0.65rem;color:#888;">{hp}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Download cadangan
+                cad_col1, cad_col2 = st.columns(2)
+                with cad_col1:
+                    df_cadangan = pd.DataFrame({
+                        "No": range(1, len(cadangan_winners) + 1),
+                        "Nomor Undian": cadangan_winners,
+                        "Nama": [name_lookup.get(str(w).strip(), "") for w in cadangan_winners],
+                        "No HP": [phone_lookup.get(str(w).strip(), "") for w in cadangan_winners],
+                        "Keterangan": ["Cadangan"] * len(cadangan_winners)
+                    })
+                    cad_excel_buf = BytesIO()
+                    with pd.ExcelWriter(cad_excel_buf, engine='openpyxl') as writer:
+                        df_cadangan.to_excel(writer, index=False)
+                    st.download_button("📊 Download Excel Cadangan", cad_excel_buf.getvalue(), "cadangan_winners.xlsx", use_container_width=True)
+        
         # Final buttons (only show when wheel is complete)
         if st.session_state.get("wheel_done", False):
             st.markdown("---")
