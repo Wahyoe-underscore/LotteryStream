@@ -1753,6 +1753,164 @@ if current_page == "home":
                         st.session_state["current_page"] = "wheel_results"
                         st.rerun()
             
+            # Quick Draw Section on Home Page
+            st.markdown("---")
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#9C27B0,#673AB7);border-radius:15px;padding:20px;text-align:center;margin:15px 0;">
+                <div style="color:white;font-size:1.5rem;font-weight:bold;">🎲 UNDIAN CEPAT</div>
+                <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">1 Pemenang per Undian - Bisa Diakses Kapan Saja</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            remaining_pool = st.session_state.get("remaining_pool", eligible_df)
+            quick_winners = st.session_state.get("quick_draw_winners", [])
+            
+            name_lookup = {}
+            phone_lookup = {}
+            if participant_data is not None:
+                for _, row in participant_data.iterrows():
+                    nomor = str(row.get("Nomor Undian", "")).strip()
+                    name_lookup[nomor] = row.get("Nama", "")
+                    phone_lookup[nomor] = row.get("No HP", "")
+            
+            quick_col1, quick_col2 = st.columns([1, 1])
+            
+            with quick_col1:
+                quick_placeholder = st.empty()
+            
+            with quick_col2:
+                st.markdown(f"""
+                <div style="background:linear-gradient(135deg,#607D8B,#455A64);border-radius:15px;padding:20px;text-align:center;margin-bottom:15px;">
+                    <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Sisa Peserta</div>
+                    <div style="color:white;font-size:2.5rem;font-weight:bold;margin:8px 0;">{len(remaining_pool)}</div>
+                    <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;">Total Undian Cepat: {len(quick_winners)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                quick_result_placeholder = st.empty()
+                
+                if len(remaining_pool) > 0:
+                    quick_spin_clicked = st.button("🎲 UNDI 1 PEMENANG!", key=f"home_quick_draw_{len(quick_winners)}", use_container_width=True, type="primary")
+                    
+                    if quick_spin_clicked:
+                        quick_remaining = remaining_pool["Nomor Undian"].tolist()
+                        
+                        if len(quick_remaining) > 0:
+                            quick_idx = secrets.randbelow(len(quick_remaining))
+                            quick_winner = quick_remaining[quick_idx]
+                            
+                            with quick_placeholder.container():
+                                quick_html = create_spinning_wheel_html(quick_remaining, quick_winner, 320)
+                                components.html(quick_html, height=420)
+                            
+                            quick_winners.append(quick_winner)
+                            st.session_state["quick_draw_winners"] = quick_winners
+                            
+                            new_pool = remaining_pool[remaining_pool["Nomor Undian"] != quick_winner]
+                            st.session_state["remaining_pool"] = new_pool
+                            
+                            save_lottery_results()
+                            
+                            nama = "-"
+                            hp = "-"
+                            if participant_data is not None:
+                                winner_str = str(quick_winner).strip()
+                                winner_row = participant_data[participant_data["Nomor Undian"].astype(str).str.strip() == winner_str]
+                                if len(winner_row) > 0:
+                                    nama_raw = winner_row.iloc[0].get("Nama", "")
+                                    nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+                                    hp = format_phone(winner_row.iloc[0].get("No HP", ""))
+                            
+                            with quick_result_placeholder.container():
+                                st.markdown(f"""
+                                <div style="background:#9C27B0;color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
+                                    <div style="font-size:0.9rem;">🎲 PEMENANG #{len(quick_winners)}</div>
+                                    <div style="font-size:2.5rem;font-weight:900;margin:5px 0;">{quick_winner}</div>
+                                    <div style="font-size:1rem;">{nama}</div>
+                                    <div style="font-size:0.9rem;opacity:0.9;">{hp}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Tidak ada peserta tersisa")
+            
+            if len(quick_winners) == 0:
+                with quick_placeholder.container():
+                    st.markdown(f"""
+                    <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <div style="font-size:8rem;margin-bottom:15px;">🎲</div>
+                        <div style="color:#888;font-size:1rem;">Klik tombol untuk mengundi</div>
+                        <div style="color:#9C27B0;font-size:1.2rem;font-weight:bold;margin-top:10px;">{len(remaining_pool)} peserta tersedia</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            elif not st.session_state.get("home_quick_spin_active"):
+                last_quick = quick_winners[-1]
+                nama = "-"
+                hp = "-"
+                if participant_data is not None:
+                    winner_str = str(last_quick).strip()
+                    winner_row = participant_data[participant_data["Nomor Undian"].astype(str).str.strip() == winner_str]
+                    if len(winner_row) > 0:
+                        nama_raw = winner_row.iloc[0].get("Nama", "")
+                        nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+                        hp = format_phone(winner_row.iloc[0].get("No HP", ""))
+                
+                with quick_placeholder.container():
+                    st.markdown(f"""
+                    <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <div style="font-size:5rem;margin-bottom:15px;">🎉</div>
+                        <div style="color:#9C27B0;font-size:0.9rem;">Pemenang Terakhir</div>
+                        <div style="color:white;font-size:3rem;font-weight:900;margin:10px 0;">{last_quick}</div>
+                        <div style="color:#ccc;font-size:1.1rem;">{nama}</div>
+                        <div style="color:#888;font-size:0.9rem;">{hp}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with quick_result_placeholder.container():
+                    st.markdown(f"""
+                    <div style="background:#9C27B0;color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
+                        <div style="font-size:0.9rem;">Pemenang Terakhir</div>
+                        <div style="font-size:2rem;font-weight:900;margin:5px 0;">{last_quick}</div>
+                        <div style="font-size:0.9rem;">{nama}</div>
+                        <div style="font-size:0.8rem;opacity:0.9;">{hp}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Show quick draw winners list
+            if len(quick_winners) > 0:
+                with st.expander(f"🎲 Semua Pemenang Undian Cepat ({len(quick_winners)} pemenang)", expanded=False):
+                    quick_cols = st.columns(10)
+                    for i, qw in enumerate(quick_winners):
+                        with quick_cols[i % 10]:
+                            st.markdown(f"""
+                            <div style="background:#9C27B0;color:white;padding:5px;border-radius:5px;text-align:center;margin:2px;font-size:0.8rem;">
+                                {qw}
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    quick_dl_col1, quick_dl_col2 = st.columns(2)
+                    with quick_dl_col1:
+                        df_quick = pd.DataFrame({
+                            "No": range(1, len(quick_winners) + 1),
+                            "Nomor Undian": quick_winners,
+                            "Nama": [name_lookup.get(str(w).strip(), "") for w in quick_winners],
+                            "No HP": [phone_lookup.get(str(w).strip(), "") for w in quick_winners],
+                            "Keterangan": ["Undian Cepat"] * len(quick_winners)
+                        })
+                        quick_excel_buf = BytesIO()
+                        with pd.ExcelWriter(quick_excel_buf, engine='openpyxl') as writer:
+                            df_quick.to_excel(writer, index=False)
+                        st.download_button("📊 Excel Undian Cepat", quick_excel_buf.getvalue(), "undian_cepat.xlsx", use_container_width=True)
+                    with quick_dl_col2:
+                        quick_ppt_data = generate_single_winner_pptx(
+                            quick_winners, 
+                            "🎲 UNDIAN CEPAT", 
+                            (156, 39, 176),
+                            name_lookup, 
+                            phone_lookup
+                        )
+                        st.download_button("📽️ PPT Undian Cepat", quick_ppt_data, "undian_cepat.pptx", use_container_width=True)
+            
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("---")
             if st.button("🔄 RESET UNDIAN (Mulai dari Awal)", key="reset_all", use_container_width=True):
