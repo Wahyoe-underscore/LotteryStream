@@ -1,34 +1,30 @@
 [
   {
     "name": "Tokopedia Rp. 100.000,-.",
-    "start": 1,
-    "end": 150,
     "icon": "\ud83c\udf81",
-    "color": "#FF6B6B",
-    "count": 150
+    "count": 150,
+    "start": 1,
+    "end": 150
   },
   {
     "name": "Tokopedia Rp. 200.000,-.",
-    "start": 151,
-    "end": 300,
     "icon": "\u26fd",
-    "color": "#FF6B6B",
-    "count": 150
+    "count": 150,
+    "start": 151,
+    "end": 300
   },
   {
     "name": "Indomaret Rp. 100.000,-.",
-    "start": 301,
-    "end": 500,
     "icon": "\ud83d\udcb3",
-    "color": "#FF6B6B",
-    "count": 200
+    "count": 200,
+    "start": 301,
+    "end": 500
   },
   {
     "name": "Indomaret Rp. 200.000,-.",
-    "start": 501,
-    "end": 700,
     "icon": "\ud83c\udfc6",
-    "color": "#FF6B6B",
-    "count": 200
+    "count": 200,
+    "start": 501,
+    "end": 700
   }
 ]

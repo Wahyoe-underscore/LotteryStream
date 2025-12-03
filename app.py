@@ -899,10 +899,10 @@ elif current_page == "evoucher_category":
                     display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
                     
                     st.markdown(f"""
-                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.5rem 0.3rem; text-align: center; border-left: 4px solid #f5576c; margin-bottom: 0.5rem; min-width: 0;">
-                        <div style="font-size: 0.9rem; font-weight: 800; color: #333; white-space: nowrap;">{nomor}</div>
-                        <div style="font-size: 0.6rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{display_nama}</div>
-                        <div style="font-size: 0.6rem; color: #888; white-space: nowrap;">{hp}</div>
+                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 8px; padding: 0.4rem; text-align: center; border-left: 3px solid #f5576c; margin-bottom: 0.3rem; height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 0.85rem; font-weight: 800; color: #333; line-height: 1.2;">{nomor}</div>
+                        <div style="font-size: 0.55rem; color: #666; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
+                        <div style="font-size: 0.55rem; color: #888; line-height: 1.2;">{hp}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
