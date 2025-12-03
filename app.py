@@ -55,12 +55,21 @@ def secure_shuffle(items):
     return items
 
 def is_eligible_for_prize(name, phone):
-    name_str = str(name).upper() if pd.notna(name) else ""
-    phone_str = str(phone) if pd.notna(phone) else ""
-    if "VIP" in name_str or name_str.startswith("F ") or name_str.endswith(" F") or " F " in name_str:
+    name_str = str(name).strip().upper() if pd.notna(name) else ""
+    phone_str = str(phone).strip().upper() if pd.notna(phone) else ""
+    
+    # Exclude if name contains VIP
+    if "VIP" in name_str:
         return False
-    if phone_str.startswith("F") or phone_str.upper() == "F":
+    
+    # Exclude if name is exactly "F" or contains F as a word
+    if name_str == "F" or name_str.startswith("F ") or name_str.endswith(" F") or " F " in name_str:
         return False
+    
+    # Exclude if phone is "F", empty when name is "F", or starts with "F"
+    if phone_str == "F" or phone_str.startswith("F"):
+        return False
+    
     return True
 
 def get_prize_dynamic(rank, prize_tiers):
