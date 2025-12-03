@@ -1688,22 +1688,16 @@ elif current_page == "shuffle_page":
     remaining_pool = st.session_state.get("remaining_pool", pd.DataFrame())
     shuffle_results = st.session_state.get("shuffle_results", {})
     
-    if st.button("⬅️ KEMBALI KE MENU", key="back_from_shuffle"):
-        st.session_state["current_page"] = "home"
-        st.rerun()
-    
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #FF9800, #FF5722); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
-        <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎲 UNDIAN SHUFFLE</p>
-        <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">Lucky Draw 3 Sesi</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #FF9800;">
-        <p style="color: #333; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong style="color: #FF9800;">{len(remaining_pool)}</strong></p>
-    </div>
-    """, unsafe_allow_html=True)
+    col_back, col_title, col_status = st.columns([1, 3, 2])
+    with col_back:
+        if st.button("⬅️ KEMBALI", key="back_from_shuffle"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+    with col_title:
+        st.markdown("<h2 style='text-align:center; color:#FF9800; margin:0;'>🎲 SHUFFLE</h2>", unsafe_allow_html=True)
+    with col_status:
+        done_count = len([k for k in shuffle_results.keys() if k.startswith("shuffle_batch")])
+        st.markdown(f"<p style='text-align:right; color:#333; margin-top:10px;'>Sesi: <strong style='color:#FF9800;'>{done_count}/3</strong> | Sisa: <strong>{len(remaining_pool)}</strong></p>", unsafe_allow_html=True)
     
     shuffle_batches = [
         {"name": "Sesi 1", "count": 30},
@@ -1711,13 +1705,14 @@ elif current_page == "shuffle_page":
         {"name": "Sesi 3", "count": 30},
     ]
     
+    # Session tabs instead of expanders
+    session_tabs = st.tabs(["📦 Sesi 1", "📦 Sesi 2", "📦 Sesi 3"])
+    
     for i, batch in enumerate(shuffle_batches):
         batch_key = f"shuffle_batch_{i}"
         batch_done = batch_key in shuffle_results
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        with st.expander(f"🎲 {batch['name']} ({batch['count']} pemenang)", expanded=not batch_done):
+        with session_tabs[i]:
             if batch_done:
                 winners = shuffle_results[batch_key]["winners"]
                 prize_assignments = shuffle_results[batch_key].get("prize_assignments", [])
@@ -1896,7 +1891,7 @@ elif current_page == "shuffle_page":
                         components.html(scroll_js, height=0)
                         
                         shuffle_html = create_shuffle_animation_html(remaining_numbers, batch_winners, batch['name'])
-                        components.html(shuffle_html, height=550)
+                        components.html(shuffle_html, height=420)
                         
                         # Assign prizes to winners
                         prize_assignments = []
@@ -2011,36 +2006,29 @@ elif current_page == "wheel_page":
     wheel_winners = st.session_state.get("wheel_winners", [])
     wheel_prizes = st.session_state.get("wheel_prizes", [])
     
-    if st.button("⬅️ KEMBALI KE MENU", key="back_from_wheel"):
-        st.session_state["current_page"] = "home"
-        st.rerun()
-    
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #E91E63, #9C27B0); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
-        <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎡 SPINNING WHEEL</p>
-        <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">10 Hadiah Utama</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #E91E63;">
-        <p style="color: #333; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong style="color: #E91E63;">{len(remaining_pool)}</strong> | Pemenang: <strong style="color: #E91E63;">{len(wheel_winners)}/10</strong></p>
-    </div>
-    """, unsafe_allow_html=True)
+    col_back, col_title, col_status = st.columns([1, 3, 2])
+    with col_back:
+        if st.button("⬅️ KEMBALI", key="back_from_wheel"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+    with col_title:
+        st.markdown("<h2 style='text-align:center; color:#E91E63; margin:0;'>🎡 HADIAH UTAMA</h2>", unsafe_allow_html=True)
+    with col_status:
+        st.markdown(f"<p style='text-align:right; color:#333; margin-top:10px;'>Pemenang: <strong style='color:#E91E63;'>{len(wheel_winners)}/10</strong></p>", unsafe_allow_html=True)
     
     def get_valid_wheel_config():
         """Ensure wheel_config has the correct format"""
         default_config = [
-            {"No": 1, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
-            {"No": 2, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
-            {"No": 3, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
-            {"No": 4, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 1, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
+            {"No": 2, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
+            {"No": 3, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
+            {"No": 4, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
             {"No": 5, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
             {"No": 6, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
-            {"No": 7, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
-            {"No": 8, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
-            {"No": 9, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
-            {"No": 10, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
+            {"No": 7, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 8, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 9, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
+            {"No": 10, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
         ]
         
         existing = st.session_state.get("wheel_config", [])
@@ -2069,151 +2057,104 @@ elif current_page == "wheel_page":
     
     st.session_state["wheel_config"] = get_valid_wheel_config()
     
-    with st.expander("⚙️ Konfigurasi 10 Hadiah Utama", expanded=len(wheel_winners) == 0 and not st.session_state.get("wheel_spinning", False)):
-        st.markdown("""
-        <div style="background: rgba(233,30,99,0.1); border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
-            <p style="color: white; margin: 0; font-size: 0.9rem;">
-                📝 <strong>Petunjuk:</strong> Edit tabel di bawah untuk mengatur nama hadiah utama. 
-                Kolom "Nama Hadiah" akan ditampilkan saat pengundian.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
+    with st.expander("⚙️ Edit Hadiah", expanded=False):
         wheel_config_df = pd.DataFrame(st.session_state["wheel_config"])
-        
         edited_wheel_config = st.data_editor(
-            wheel_config_df,
-            num_rows="fixed",
-            use_container_width=True,
-            hide_index=True,
+            wheel_config_df, num_rows="fixed", use_container_width=True, hide_index=True,
             column_config={
-                "No": st.column_config.NumberColumn(
-                    "No",
-                    help="Urutan hadiah",
-                    disabled=True,
-                    width="small"
-                ),
-                "Nama Hadiah": st.column_config.TextColumn(
-                    "Nama Hadiah",
-                    help="Nama hadiah yang akan ditampilkan",
-                    width="medium",
-                    required=True
-                ),
-                "Keterangan": st.column_config.TextColumn(
-                    "Keterangan",
-                    help="Keterangan tambahan (opsional)",
-                    width="large"
-                )
+                "No": st.column_config.NumberColumn("No", disabled=True, width="small"),
+                "Nama Hadiah": st.column_config.TextColumn("Nama Hadiah", width="medium", required=True),
+                "Keterangan": st.column_config.TextColumn("Keterangan", width="large")
             },
             key="wheel_config_editor"
         )
-        
         st.session_state["wheel_config"] = edited_wheel_config.to_dict('records')
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        cols_preview = st.columns(5)
-        for i, config in enumerate(st.session_state["wheel_config"]):
-            with cols_preview[i % 5]:
-                prize_name = config.get("Nama Hadiah", f"Grand Prize {i+1}")
-                keterangan = config.get("Keterangan", "")
-                st.markdown(f"""
-                <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; margin-bottom: 0.5rem; border: 2px solid #E91E63;">
-                    <div style="font-size: 0.8rem; color: #E91E63; font-weight: 600;">Hadiah #{i+1}</div>
-                    <div style="font-size: 1rem; font-weight: 700; color: #333;">{prize_name}</div>
-                    <div style="font-size: 0.7rem; color: #666;">{keterangan if keterangan else '-'}</div>
-                </div>
-                """, unsafe_allow_html=True)
     
     current_idx = len(wheel_winners)
+    wheel_config = st.session_state.get("wheel_config", [])
+    
+    # Show prize strip - all 10 prizes in one row with current highlighted
+    st.markdown("<div style='display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin:10px 0;'>", unsafe_allow_html=True)
+    prize_html = ""
+    for i, config in enumerate(wheel_config):
+        prize_name = config.get("Nama Hadiah", f"Prize {i+1}")
+        short_name = prize_name[:15] + "..." if len(prize_name) > 15 else prize_name
+        if i < len(wheel_winners):
+            prize_html += f"<span style='background:#4CAF50;color:white;padding:5px 10px;border-radius:5px;font-size:0.7rem;'>✓ {i+1}</span>"
+        elif i == current_idx:
+            prize_html += f"<span style='background:#E91E63;color:white;padding:5px 10px;border-radius:5px;font-size:0.8rem;font-weight:bold;'>🎯 {i+1}. {short_name}</span>"
+        else:
+            prize_html += f"<span style='background:#eee;color:#666;padding:5px 10px;border-radius:5px;font-size:0.7rem;'>{i+1}</span>"
+    st.markdown(f"<div style='display:flex; gap:5px; flex-wrap:wrap; justify-content:center;'>{prize_html}</div>", unsafe_allow_html=True)
     
     if current_idx < 10 and len(remaining_pool) > 0:
-        st.markdown(f"<p style='text-align:center; color:#E91E63; font-size:1.5rem; font-weight: bold;'>🎯 Undian Hadiah ke-{current_idx + 1} dari 10</p>", unsafe_allow_html=True)
-        
-        wheel_config = st.session_state.get("wheel_config", [])
-        prize_name = wheel_config[current_idx].get("Nama Hadiah", f"Grand Prize {current_idx + 1}") if current_idx < len(wheel_config) else f"Grand Prize {current_idx + 1}"
+        prize_name = wheel_config[current_idx].get("Nama Hadiah", f"Prize {current_idx + 1}") if current_idx < len(wheel_config) else f"Prize {current_idx + 1}"
         prize_keterangan = wheel_config[current_idx].get("Keterangan", "") if current_idx < len(wheel_config) else ""
         
-        st.markdown(f"""
-        <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center; border: 2px solid #E91E63;">
-            <p style="color:#E91E63; font-size:1.5rem; font-weight: bold; margin: 0;">{prize_name}</p>
-            <p style="color: #666; font-size:0.9rem; margin: 0.3rem 0 0 0;">{prize_keterangan if prize_keterangan else ''}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🎡 PUTAR WHEEL!", key=f"spin_wheel_{current_idx}", use_container_width=True):
-            st.session_state["wheel_spinning"] = True
-            remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-            
-            if len(remaining_numbers) > 0:
-                winner_idx = secrets.randbelow(len(remaining_numbers))
-                winner = remaining_numbers[winner_idx]
+        col_prize, col_btn = st.columns([3, 2])
+        with col_prize:
+            st.markdown(f"""
+            <div style="background:linear-gradient(135deg,#E91E63,#9C27B0);border-radius:10px;padding:15px;text-align:center;">
+                <p style="color:white;font-size:1.5rem;font-weight:bold;margin:0;">🎁 {prize_name}</p>
+                <p style="color:#fff;font-size:0.9rem;margin:5px 0 0 0;">{prize_keterangan if prize_keterangan else ''}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_btn:
+            if st.button("🎡 PUTAR!", key=f"spin_wheel_{current_idx}", use_container_width=True):
+                st.session_state["wheel_spinning"] = True
+                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
                 
-                scroll_js = """
-                <script>
-                    setTimeout(function() {
-                        var wheelElement = document.querySelector('iframe');
-                        if (wheelElement) {
-                            wheelElement.scrollIntoView({behavior: 'smooth', block: 'center'});
-                        }
-                    }, 100);
-                </script>
-                """
-                components.html(scroll_js, height=0)
-                
-                wheel_html = create_spinning_wheel_html(remaining_numbers[:20], winner, 400)
-                components.html(wheel_html, height=550)
-                
-                wheel_winners.append(winner)
-                wheel_prizes.append(prize_name)
-                st.session_state["wheel_winners"] = wheel_winners
-                st.session_state["wheel_prizes"] = wheel_prizes
-                
-                new_pool = remaining_pool[remaining_pool["Nomor Undian"] != winner]
-                st.session_state["remaining_pool"] = new_pool
-                
-                if len(wheel_winners) == 10:
-                    st.session_state["wheel_done"] = True
-                
-                # Auto-save results
-                save_lottery_results()
-                
-                participant_data = st.session_state.get("participant_data")
-                if participant_data is not None:
-                    winner_row = participant_data[participant_data["Nomor Undian"] == winner]
-                    if len(winner_row) > 0:
-                        nama_raw = winner_row.iloc[0].get("Nama", "")
-                        nama = str(nama_raw) if pd.notna(nama_raw) else "-"
-                        if nama.lower() == "nan":
-                            nama = "-"
-                        hp = format_phone(winner_row.iloc[0].get("No HP", ""))
-                        st.success(f"🎉 Pemenang: {winner} - {nama} ({hp})")
-                
-                if len(wheel_winners) < 10:
-                    if st.button("➡️ Lanjut ke Hadiah Berikutnya", key="next_wheel"):
-                        st.rerun()
+                if len(remaining_numbers) > 0:
+                    winner_idx = secrets.randbelow(len(remaining_numbers))
+                    winner = remaining_numbers[winner_idx]
+                    
+                    wheel_html = create_spinning_wheel_html(remaining_numbers[:20], winner, 320)
+                    components.html(wheel_html, height=450)
+                    
+                    wheel_winners.append(winner)
+                    wheel_prizes.append(prize_name)
+                    st.session_state["wheel_winners"] = wheel_winners
+                    st.session_state["wheel_prizes"] = wheel_prizes
+                    
+                    new_pool = remaining_pool[remaining_pool["Nomor Undian"] != winner]
+                    st.session_state["remaining_pool"] = new_pool
+                    
+                    if len(wheel_winners) == 10:
+                        st.session_state["wheel_done"] = True
+                    
+                    save_lottery_results()
+                    
+                    participant_data = st.session_state.get("participant_data")
+                    if participant_data is not None:
+                        winner_row = participant_data[participant_data["Nomor Undian"] == winner]
+                        if len(winner_row) > 0:
+                            nama_raw = winner_row.iloc[0].get("Nama", "")
+                            nama = str(nama_raw) if pd.notna(nama_raw) else "-"
+                            if nama.lower() == "nan":
+                                nama = "-"
+                            hp = format_phone(winner_row.iloc[0].get("No HP", ""))
+                            st.success(f"🎉 #{current_idx+1} PEMENANG: {winner} - {nama} ({hp})")
+                    
+                    if len(wheel_winners) < 10:
+                        if st.button("➡️ LANJUT", key="next_wheel", use_container_width=True):
+                            st.rerun()
     
     if len(wheel_winners) > 0:
-        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("---")
-        st.markdown("<p style='text-align:center; color:#E91E63; font-size:1.3rem; font-weight:600;'>🏆 Pemenang Wheel</p>", unsafe_allow_html=True)
-        
         participant_data = st.session_state.get("participant_data")
         name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
         phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
         
+        # Compact winners in 2 columns
+        cols = st.columns(2)
         for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
             nama_raw = name_lookup.get(w, "")
             nama = str(nama_raw) if pd.notna(nama_raw) else "-"
             if nama.lower() == "nan":
                 nama = "-"
             hp = format_phone(phone_lookup.get(w, ""))
-            st.markdown(f"""
-            <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; margin: 0.5rem 0; border-left: 4px solid #E91E63;">
-                <p style='color:#333; text-align:center; margin:0; font-size: 1rem;'>
-                    <strong style="color:#E91E63;">#{i+1}</strong> | <strong>{w}</strong> - {nama} | <span style='color:#666;'>{hp}</span> | <span style='color:#E91E63; font-weight:600;'>{p}</span>
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            with cols[i % 2]:
+                st.markdown(f"<div style='background:#fff;border-left:3px solid #E91E63;padding:5px 10px;margin:3px 0;font-size:0.85rem;'><strong style='color:#E91E63;'>#{i+1}</strong> {w} - {nama[:20]} | {p[:20]}</div>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
