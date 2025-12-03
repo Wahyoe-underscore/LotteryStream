@@ -976,7 +976,7 @@ elif current_page == "evoucher_category":
     </div>
     """, unsafe_allow_html=True)
     
-    cols = 10
+    cols = 7
     rows = (len(tier_winners) + cols - 1) // cols
     
     for row in range(rows):
@@ -993,10 +993,10 @@ elif current_page == "evoucher_category":
                     display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
                     
                     st.markdown(f"""
-                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 8px; padding: 0.4rem; text-align: center; border-left: 3px solid #f5576c; margin-bottom: 0.3rem; height: 60px; display: flex; flex-direction: column; justify-content: center;">
-                        <div style="font-size: 0.85rem; font-weight: 800; color: #333; line-height: 1.2;">{nomor}</div>
-                        <div style="font-size: 0.55rem; color: #666; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
-                        <div style="font-size: 0.55rem; color: #888; line-height: 1.2;">{hp}</div>
+                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.6rem; text-align: center; border-left: 4px solid #f5576c; margin-bottom: 0.4rem; height: 75px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #333; line-height: 1.3;">{nomor}</div>
+                        <div style="font-size: 0.7rem; color: #666; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
+                        <div style="font-size: 0.65rem; color: #888; line-height: 1.2;">{hp}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
