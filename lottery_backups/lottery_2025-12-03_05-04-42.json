@@ -1,14 +1,32 @@
 {
   "evoucher_done": false,
   "shuffle_done": false,
-  "wheel_done": false,
+  "wheel_done": true,
   "evoucher_results": null,
   "shuffle_results": {},
   "wheel_winners": [
-    "02538"
+    "03280",
+    "02610",
+    "03104",
+    "04835",
+    "02267",
+    "03539",
+    "01707",
+    "03277",
+    "02223",
+    "04507"
   ],
   "wheel_prizes": [
-    "HP Samsung A07"
+    "HP Samsung A07",
+    "HP Samsung A07",
+    "Kulkas 1 Pintu",
+    "Kulkas 1 Pintu",
+    "Mesin Cuci Matic 7KG",
+    "Mesin Cuci Matic 7KG",
+    "Mesin Cuci Matic 7KG",
+    "Mesin Cuci Matic 7KG",
+    "LED TV 43\"",
+    "LED TV 43\""
   ],
   "wheel_config": [
     {
@@ -3576,14 +3594,6 @@
       "Eligible": true
     },
     {
-      "Nomor Undian": "01707",
-      "Nama": "PINGKAN MAHARANI",
-      "No HP": "081266337094",
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
       "Nomor Undian": "01708",
       "Nama": "RACHEL GHEOVANI SITOMPUL",
       "No HP": "082170040765",
@@ -5816,14 +5826,6 @@
       "Eligible": true
     },
     {
-      "Nomor Undian": "02223",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
       "Nomor Undian": "02224",
       "Nama": NaN,
       "No HP": NaN,
@@ -6161,14 +6163,6 @@
     },
     {
       "Nomor Undian": "02266",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "02267",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -8336,6 +8330,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "02538",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "02539",
       "Nama": NaN,
       "No HP": NaN,
@@ -8897,14 +8899,6 @@
     },
     {
       "Nomor Undian": "02609",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "02610",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -12856,14 +12850,6 @@
       "Eligible": true
     },
     {
-      "Nomor Undian": "03104",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
       "Nomor Undian": "03105",
       "Nama": NaN,
       "No HP": NaN,
@@ -14240,14 +14226,6 @@
       "Eligible": true
     },
     {
-      "Nomor Undian": "03277",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
       "Nomor Undian": "03278",
       "Nama": NaN,
       "No HP": NaN,
@@ -14257,14 +14235,6 @@
     },
     {
       "Nomor Undian": "03279",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "03280",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -16329,14 +16299,6 @@
     },
     {
       "Nomor Undian": "03538",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "03539",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -24080,14 +24042,6 @@
       "Eligible": true
     },
     {
-      "Nomor Undian": "04507",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
       "Nomor Undian": "04508",
       "Nama": NaN,
       "No HP": NaN,
@@ -26697,14 +26651,6 @@
     },
     {
       "Nomor Undian": "04834",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "04835",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -68035,5 +67981,5 @@
     }
   ],
   "data_source_hash": "",
-  "saved_at": "2025-12-03 05:05:49"
+  "saved_at": "2025-12-03 05:11:27"
 }
