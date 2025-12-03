@@ -1761,7 +1761,7 @@ elif current_page == "wheel_page":
     
     st.session_state["wheel_config"] = get_valid_wheel_config()
     
-    with st.expander("⚙️ Konfigurasi 10 Hadiah Utama", expanded=len(wheel_winners) == 0):
+    with st.expander("⚙️ Konfigurasi 10 Hadiah Utama", expanded=len(wheel_winners) == 0 and not st.session_state.get("wheel_spinning", False)):
         st.markdown("""
         <div style="background: rgba(233,30,99,0.1); border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
             <p style="color: white; margin: 0; font-size: 0.9rem;">
@@ -1833,11 +1833,24 @@ elif current_page == "wheel_page":
         """, unsafe_allow_html=True)
         
         if st.button("🎡 PUTAR WHEEL!", key=f"spin_wheel_{current_idx}", use_container_width=True):
+            st.session_state["wheel_spinning"] = True
             remaining_numbers = remaining_pool["Nomor Undian"].tolist()
             
             if len(remaining_numbers) > 0:
                 winner_idx = secrets.randbelow(len(remaining_numbers))
                 winner = remaining_numbers[winner_idx]
+                
+                scroll_js = """
+                <script>
+                    setTimeout(function() {
+                        var wheelElement = document.querySelector('iframe');
+                        if (wheelElement) {
+                            wheelElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        }
+                    }, 100);
+                </script>
+                """
+                components.html(scroll_js, height=0)
                 
                 wheel_html = create_spinning_wheel_html(remaining_numbers[:20], winner, 400)
                 components.html(wheel_html, height=550)
