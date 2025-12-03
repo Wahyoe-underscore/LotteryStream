@@ -893,13 +893,15 @@ elif current_page == "evoucher_category":
                 winner = tier_winners.iloc[idx]
                 with row_cols[col]:
                     nomor = winner["Nomor Undian"]
-                    nama = winner.get("Nama", "")
+                    nama_raw = winner.get("Nama", "")
+                    nama = str(nama_raw) if pd.notna(nama_raw) else ""
                     hp = mask_phone(winner.get("No HP", ""))
+                    display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
                     
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; border-left: 4px solid #f5576c; margin-bottom: 0.5rem;">
                         <div style="font-size: 1.2rem; font-weight: 800; color: #333;">{nomor}</div>
-                        <div style="font-size: 0.7rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{nama[:15] if nama else '-'}</div>
+                        <div style="font-size: 0.7rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{display_nama}</div>
                         <div style="font-size: 0.7rem; color: #888;">{hp}</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -951,12 +953,14 @@ elif current_page == "shuffle_page":
                 cols = st.columns(10)
                 for idx, w in enumerate(winners):
                     with cols[idx % 10]:
-                        nama = name_lookup.get(w, "")[:10]
+                        nama_raw = name_lookup.get(w, "")
+                        nama = str(nama_raw) if pd.notna(nama_raw) else ""
+                        display_nama = nama[:10] if nama and nama.lower() != "nan" else "-"
                         hp = mask_phone(phone_lookup.get(w, ""))
                         st.markdown(f"""
                         <div style='background:#4CAF50;color:white;padding:0.5rem;border-radius:8px;text-align:center;margin:2px;'>
                             <div style='font-weight:bold;'>{w}</div>
-                            <div style='font-size:0.7rem;'>{nama}</div>
+                            <div style='font-size:0.7rem;'>{display_nama}</div>
                             <div style='font-size:0.65rem;'>{hp}</div>
                         </div>
                         """, unsafe_allow_html=True)
@@ -1070,12 +1074,14 @@ elif current_page == "shuffle_results":
             if idx < len(winners):
                 w = winners[idx]
                 with row_cols[col]:
-                    nama = name_lookup.get(w, "")
+                    nama_raw = name_lookup.get(w, "")
+                    nama = str(nama_raw) if pd.notna(nama_raw) else ""
+                    display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
                     hp = mask_phone(phone_lookup.get(w, ""))
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; border-left: 4px solid #FF9800; margin-bottom: 0.5rem;">
                         <div style="font-size: 1.2rem; font-weight: 800; color: #333;">{w}</div>
-                        <div style="font-size: 0.7rem; color: #666;">{nama[:15] if nama else '-'}</div>
+                        <div style="font-size: 0.7rem; color: #666;">{display_nama}</div>
                         <div style="font-size: 0.7rem; color: #888;">{hp}</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1150,7 +1156,10 @@ elif current_page == "wheel_page":
                 if participant_data is not None:
                     winner_row = participant_data[participant_data["Nomor Undian"] == winner]
                     if len(winner_row) > 0:
-                        nama = winner_row.iloc[0].get("Nama", "")
+                        nama_raw = winner_row.iloc[0].get("Nama", "")
+                        nama = str(nama_raw) if pd.notna(nama_raw) else "-"
+                        if nama.lower() == "nan":
+                            nama = "-"
                         hp = mask_phone(winner_row.iloc[0].get("No HP", ""))
                         st.success(f"🎉 Pemenang: {winner} - {nama} ({hp})")
                 
@@ -1168,7 +1177,10 @@ elif current_page == "wheel_page":
         phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
         
         for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
-            nama = name_lookup.get(w, "")
+            nama_raw = name_lookup.get(w, "")
+            nama = str(nama_raw) if pd.notna(nama_raw) else "-"
+            if nama.lower() == "nan":
+                nama = "-"
             hp = mask_phone(phone_lookup.get(w, ""))
             st.markdown(f"""
             <div style="background: rgba(233,30,99,0.2); border-radius: 10px; padding: 0.8rem; margin: 0.5rem 0;">
@@ -1241,13 +1253,15 @@ elif current_page == "wheel_results":
     cols = st.columns(5)
     for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
         with cols[i % 5]:
-            nama = name_lookup.get(w, "")
+            nama_raw = name_lookup.get(w, "")
+            nama = str(nama_raw) if pd.notna(nama_raw) else ""
+            display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
             hp = mask_phone(phone_lookup.get(w, ""))
             st.markdown(f"""
             <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 15px; padding: 1rem; text-align: center; border: 3px solid #E91E63; margin-bottom: 1rem;">
                 <div style="font-size: 0.9rem; color: #E91E63; font-weight: bold;">#{i+1}</div>
                 <div style="font-size: 1.5rem; font-weight: 800; color: #333;">{w}</div>
-                <div style="font-size: 0.85rem; color: #666;">{nama[:15] if nama else '-'}</div>
+                <div style="font-size: 0.85rem; color: #666;">{display_nama}</div>
                 <div style="font-size: 0.8rem; color: #888;">{hp}</div>
                 <div style="font-size: 0.75rem; color: #E91E63; margin-top: 0.5rem;">{p}</div>
             </div>
