@@ -478,8 +478,8 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
     for prize_name, winners in prize_groups.items():
         sorted_winners = sorted(winners, key=lambda x: str(x))
         
-        # 25 winners per slide (5x5 grid)
-        winners_per_slide = 25
+        # 15 winners per slide (5x3 grid)
+        winners_per_slide = 15
         total_slides = (len(sorted_winners) + winners_per_slide - 1) // winners_per_slide
         
         for slide_num in range(total_slides):
@@ -517,13 +517,13 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
             run2.font.size = Pt(18)
             run2.font.color.rgb = RGBColor(255, 255, 255)
             
-            # Grid layout
+            # Grid layout (5x3 = 15 per slide)
             cols = 5
-            rows_per_slide = 5
+            rows_per_slide = 3
             cell_width = Inches(2.4)
-            cell_height = Inches(1.1)
+            cell_height = Inches(1.6)
             gap_x = Inches(0.1)
-            gap_y = Inches(0.1)
+            gap_y = Inches(0.15)
             
             total_grid_width = cols * cell_width + (cols - 1) * gap_x
             start_x = (prs.slide_width - total_grid_width) / 2
