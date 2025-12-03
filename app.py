@@ -15,6 +15,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 PRIZE_CONFIG_FILE = "prize_config.json"
+LOTTERY_RESULTS_FILE = "lottery_results.json"
 
 PRIZE_TIERS = [
     {"name": "Tokopedia Rp.100.000,-", "icon": "🛒", "count": 175, "start": 1, "end": 175},
@@ -43,6 +44,77 @@ def load_prize_config():
 def save_prize_config(config):
     with open(PRIZE_CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=2)
+
+def save_lottery_results():
+    """Auto-save all lottery results to JSON file"""
+    results = {
+        "evoucher_done": st.session_state.get("evoucher_done", False),
+        "shuffle_done": st.session_state.get("shuffle_done", False),
+        "wheel_done": st.session_state.get("wheel_done", False),
+        "evoucher_results": None,
+        "shuffle_results": st.session_state.get("shuffle_results", {}),
+        "wheel_winners": st.session_state.get("wheel_winners", []),
+        "wheel_prizes": st.session_state.get("wheel_prizes", []),
+        "remaining_pool": None,
+        "participant_data": None,
+        "data_source_hash": st.session_state.get("data_source_hash", ""),
+    }
+    
+    # Convert DataFrames to JSON-serializable format
+    if "evoucher_results" in st.session_state and st.session_state["evoucher_results"] is not None:
+        results["evoucher_results"] = st.session_state["evoucher_results"].to_dict('records')
+    
+    if "remaining_pool" in st.session_state and st.session_state["remaining_pool"] is not None:
+        results["remaining_pool"] = st.session_state["remaining_pool"].to_dict('records')
+    
+    if "participant_data" in st.session_state and st.session_state["participant_data"] is not None:
+        results["participant_data"] = st.session_state["participant_data"].to_dict('records')
+    
+    # Write to temp file first, then rename (atomic write)
+    temp_file = LOTTERY_RESULTS_FILE + ".tmp"
+    try:
+        with open(temp_file, 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        os.replace(temp_file, LOTTERY_RESULTS_FILE)
+        return True
+    except Exception as e:
+        return False
+
+def load_lottery_results():
+    """Load lottery results from JSON file"""
+    if not os.path.exists(LOTTERY_RESULTS_FILE):
+        return False
+    
+    try:
+        with open(LOTTERY_RESULTS_FILE, 'r') as f:
+            results = json.load(f)
+        
+        st.session_state["evoucher_done"] = results.get("evoucher_done", False)
+        st.session_state["shuffle_done"] = results.get("shuffle_done", False)
+        st.session_state["wheel_done"] = results.get("wheel_done", False)
+        st.session_state["shuffle_results"] = results.get("shuffle_results", {})
+        st.session_state["wheel_winners"] = results.get("wheel_winners", [])
+        st.session_state["wheel_prizes"] = results.get("wheel_prizes", [])
+        st.session_state["data_source_hash"] = results.get("data_source_hash", "")
+        
+        # Restore DataFrames
+        if results.get("evoucher_results"):
+            st.session_state["evoucher_results"] = pd.DataFrame(results["evoucher_results"])
+        
+        if results.get("remaining_pool"):
+            st.session_state["remaining_pool"] = pd.DataFrame(results["remaining_pool"])
+        
+        if results.get("participant_data"):
+            st.session_state["participant_data"] = pd.DataFrame(results["participant_data"])
+        
+        return True
+    except Exception as e:
+        return False
+
+def clear_lottery_results():
+    """Clear saved lottery results file"""
+    if os.path.exists(LOTTERY_RESULTS_FILE):
+        os.remove(LOTTERY_RESULTS_FILE)
 
 def calculate_total_winners(prize_tiers):
     return sum(tier["count"] for tier in prize_tiers)
@@ -662,10 +734,41 @@ if "prize_tiers" not in st.session_state:
     saved_config = load_prize_config()
     st.session_state["prize_tiers"] = saved_config if saved_config else PRIZE_TIERS.copy()
 
+# Auto-load saved lottery results on startup
+if "results_loaded" not in st.session_state:
+    if load_lottery_results():
+        st.session_state["results_loaded"] = True
+        st.toast("✅ Hasil undian sebelumnya berhasil dimuat!", icon="💾")
+    else:
+        st.session_state["results_loaded"] = True
+
 if os.path.exists("attached_assets/Small Banner-01_1764081768006.png"):
     st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
 st.markdown('<p class="main-title">🎉 UNDIAN MOVE & GROOVE 🎉</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">7 Desember 2024</p>', unsafe_allow_html=True)
+
+# Show backup status indicator
+has_saved_results = os.path.exists(LOTTERY_RESULTS_FILE)
+evoucher_done = st.session_state.get("evoucher_done", False)
+shuffle_done = st.session_state.get("shuffle_done", False)
+wheel_done = st.session_state.get("wheel_done", False)
+
+if evoucher_done or shuffle_done or wheel_done or has_saved_results:
+    status_parts = []
+    if evoucher_done:
+        status_parts.append("E-Voucher ✓")
+    if st.session_state.get("shuffle_results", {}):
+        status_parts.append(f"Shuffle ({len(st.session_state.get('shuffle_results', {}))}/3) ✓")
+    if st.session_state.get("wheel_winners", []):
+        status_parts.append(f"Wheel ({len(st.session_state.get('wheel_winners', []))}/10) ✓")
+    
+    if status_parts:
+        status_text = " | ".join(status_parts)
+        st.markdown(f"""
+        <div style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; border-radius: 8px; padding: 0.5rem; margin: 0.5rem 0; text-align: center;">
+            <span style="color: #4CAF50; font-size: 0.9rem;">💾 Auto-Save Aktif: {status_text}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
 current_page = st.session_state.get("current_page", "home")
 
@@ -1029,6 +1132,9 @@ elif current_page == "evoucher_page":
                 remaining_df = participant_data[participant_data["Nomor Undian"].isin(remaining)].copy() if participant_data is not None else pd.DataFrame()
                 st.session_state["remaining_pool"] = remaining_df
                 
+                # Auto-save results
+                save_lottery_results()
+                
                 progress_bar.empty()
                 status_text.empty()
                 st.balloons()
@@ -1335,6 +1441,9 @@ elif current_page == "shuffle_page":
                         if len(shuffle_results) == 3:
                             st.session_state["shuffle_done"] = True
                         
+                        # Auto-save results
+                        save_lottery_results()
+                        
                         st.rerun()
                 elif remaining_count == 0:
                     st.warning("Tidak ada sisa peserta")
@@ -1473,6 +1582,9 @@ elif current_page == "wheel_page":
                 
                 if len(wheel_winners) == 10:
                     st.session_state["wheel_done"] = True
+                
+                # Auto-save results
+                save_lottery_results()
                 
                 participant_data = st.session_state.get("participant_data")
                 if participant_data is not None:
