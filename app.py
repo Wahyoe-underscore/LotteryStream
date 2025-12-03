@@ -1813,22 +1813,42 @@ elif current_page == "shuffle_page":
                 if shuffle_prize_key not in st.session_state:
                     if i == 0:  # Sesi 1
                         st.session_state[shuffle_prize_key] = pd.DataFrame([
-                            {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 10},
-                            {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 5},
-                            {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 5},
-                            {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 10},
+                            {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 2},
+                            {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 2},
+                            {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 3},
+                            {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 3},
+                            {"Nama Hadiah": "Blender (EM-151G-GY)", "Jumlah": 4},
+                            {"Nama Hadiah": "Rice Cooker (KS-N18MG-PK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Coffee Maker (HM-80L(W))", "Jumlah": 3},
+                            {"Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)", "Jumlah": 4},
+                            {"Nama Hadiah": "Hand Juicer (EM-P01-BK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Toaster (KZS-70L(W))", "Jumlah": 3},
                         ])
                     elif i == 1:  # Sesi 2
                         st.session_state[shuffle_prize_key] = pd.DataFrame([
-                            {"Nama Hadiah": "Coffee Maker (HM-80L(W))", "Jumlah": 10},
-                            {"Nama Hadiah": "Blender (EM-151G-GY)", "Jumlah": 10},
-                            {"Nama Hadiah": "Rice Cooker (KS-N18MG-PK)", "Jumlah": 10},
+                            {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 2},
+                            {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 1},
+                            {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 3},
+                            {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 4},
+                            {"Nama Hadiah": "Blender (EM-151G-GY)", "Jumlah": 3},
+                            {"Nama Hadiah": "Rice Cooker (KS-N18MG-PK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Coffee Maker (HM-80L(W))", "Jumlah": 4},
+                            {"Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Hand Juicer (EM-P01-BK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Toaster (KZS-70L(W))", "Jumlah": 4},
                         ])
                     else:  # Sesi 3
                         st.session_state[shuffle_prize_key] = pd.DataFrame([
-                            {"Nama Hadiah": "Hand Juicer (EM-P01-BK)", "Jumlah": 10},
-                            {"Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)", "Jumlah": 10},
-                            {"Nama Hadiah": "Toaster (KZS-70L(W))", "Jumlah": 10},
+                            {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 1},
+                            {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 2},
+                            {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 4},
+                            {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 3},
+                            {"Nama Hadiah": "Blender (EM-151G-GY)", "Jumlah": 3},
+                            {"Nama Hadiah": "Rice Cooker (KS-N18MG-PK)", "Jumlah": 4},
+                            {"Nama Hadiah": "Coffee Maker (HM-80L(W))", "Jumlah": 3},
+                            {"Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)", "Jumlah": 3},
+                            {"Nama Hadiah": "Hand Juicer (EM-P01-BK)", "Jumlah": 4},
+                            {"Nama Hadiah": "Toaster (KZS-70L(W))", "Jumlah": 3},
                         ])
                 
                 edited_prizes = st.data_editor(
@@ -2011,8 +2031,16 @@ elif current_page == "wheel_page":
     def get_valid_wheel_config():
         """Ensure wheel_config has the correct format"""
         default_config = [
-            {"No": i+1, "Nama Hadiah": f"Grand Prize {i+1}", "Keterangan": ""} 
-            for i in range(10)
+            {"No": 1, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
+            {"No": 2, "Nama Hadiah": "LED TV 43\"", "Keterangan": "43HJ6000I"},
+            {"No": 3, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 4, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 5, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 6, "Nama Hadiah": "Mesin Cuci Matic 7KG", "Keterangan": "ES-M7000P-GG"},
+            {"No": 7, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
+            {"No": 8, "Nama Hadiah": "Kulkas 1 Pintu", "Keterangan": "SJ-N162D-AP"},
+            {"No": 9, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
+            {"No": 10, "Nama Hadiah": "HP Samsung A07", "Keterangan": "EC-8305-B"},
         ]
         
         existing = st.session_state.get("wheel_config", [])
