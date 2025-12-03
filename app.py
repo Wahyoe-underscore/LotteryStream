@@ -1728,11 +1728,38 @@ elif current_page == "wheel_page":
     </div>
     """, unsafe_allow_html=True)
     
-    if "wheel_config" not in st.session_state:
-        st.session_state["wheel_config"] = [
+    def get_valid_wheel_config():
+        """Ensure wheel_config has the correct format"""
+        default_config = [
             {"No": i+1, "Nama Hadiah": f"Grand Prize {i+1}", "Keterangan": ""} 
             for i in range(10)
         ]
+        
+        existing = st.session_state.get("wheel_config", [])
+        
+        if not existing or len(existing) == 0:
+            return default_config
+        
+        if "Nama Hadiah" not in existing[0]:
+            new_config = []
+            for i, item in enumerate(existing[:10]):
+                prize_name = item.get("prize", "") or item.get("name", "") or f"Grand Prize {i+1}"
+                new_config.append({
+                    "No": i+1,
+                    "Nama Hadiah": prize_name if prize_name else f"Grand Prize {i+1}",
+                    "Keterangan": ""
+                })
+            while len(new_config) < 10:
+                new_config.append({
+                    "No": len(new_config)+1,
+                    "Nama Hadiah": f"Grand Prize {len(new_config)+1}",
+                    "Keterangan": ""
+                })
+            return new_config
+        
+        return existing
+    
+    st.session_state["wheel_config"] = get_valid_wheel_config()
     
     with st.expander("⚙️ Konfigurasi 10 Hadiah Utama", expanded=len(wheel_winners) == 0):
         st.markdown("""
