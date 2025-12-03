@@ -454,6 +454,140 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
     pptx_buffer.seek(0)
     return pptx_buffer.getvalue()
 
+def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=None, session_name="Sesi"):
+    """Generate PPT with one slide per prize category"""
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
+    
+    if name_lookup is None:
+        name_lookup = {}
+    if phone_lookup is None:
+        phone_lookup = {}
+    
+    # Group by prize
+    prize_groups = {}
+    for pa in prize_assignments:
+        prize = pa["prize"]
+        if prize not in prize_groups:
+            prize_groups[prize] = []
+        prize_groups[prize].append(pa["winner"])
+    
+    slide_layout = prs.slide_layouts[6]
+    
+    for prize_name, winners in prize_groups.items():
+        sorted_winners = sorted(winners, key=lambda x: str(x))
+        
+        # 25 winners per slide (5x5 grid)
+        winners_per_slide = 25
+        total_slides = (len(sorted_winners) + winners_per_slide - 1) // winners_per_slide
+        
+        for slide_num in range(total_slides):
+            slide = prs.slides.add_slide(slide_layout)
+            
+            # Background
+            background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+            background.fill.gradient()
+            background.fill.gradient_stops[0].color.rgb = RGBColor(76, 175, 80)
+            background.fill.gradient_stops[1].color.rgb = RGBColor(56, 142, 60)
+            background.line.fill.background()
+            
+            # Title with prize name
+            title_text = f"🎁 {prize_name}"
+            if total_slides > 1:
+                title_text += f" ({slide_num + 1}/{total_slides})"
+            
+            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.33), Inches(0.6))
+            tf = title_box.text_frame
+            p = tf.paragraphs[0]
+            p.alignment = PP_ALIGN.CENTER
+            run = p.add_run()
+            run.text = title_text
+            run.font.size = Pt(32)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(255, 255, 255)
+            
+            # Subtitle
+            sub_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.75), Inches(12.33), Inches(0.4))
+            tf2 = sub_box.text_frame
+            p2 = tf2.paragraphs[0]
+            p2.alignment = PP_ALIGN.CENTER
+            run2 = p2.add_run()
+            run2.text = f"{session_name} - {len(sorted_winners)} Pemenang"
+            run2.font.size = Pt(18)
+            run2.font.color.rgb = RGBColor(255, 255, 255)
+            
+            # Grid layout
+            cols = 5
+            rows_per_slide = 5
+            cell_width = Inches(2.4)
+            cell_height = Inches(1.1)
+            gap_x = Inches(0.1)
+            gap_y = Inches(0.1)
+            
+            total_grid_width = cols * cell_width + (cols - 1) * gap_x
+            start_x = (prs.slide_width - total_grid_width) / 2
+            start_y = Inches(1.3)
+            
+            start_idx = slide_num * winners_per_slide
+            end_idx = min(start_idx + winners_per_slide, len(sorted_winners))
+            slide_winners = sorted_winners[start_idx:end_idx]
+            
+            for idx, winner in enumerate(slide_winners):
+                row_num = idx // cols
+                col_num = idx % cols
+                
+                left = start_x + col_num * (cell_width + gap_x)
+                top = start_y + row_num * (cell_height + gap_y)
+                
+                shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+                shape.fill.solid()
+                shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+                shape.line.color.rgb = RGBColor(76, 175, 80)
+                shape.line.width = Pt(2)
+                
+                nomor = str(winner)
+                nama_raw = name_lookup.get(winner, "")
+                nama = str(nama_raw) if pd.notna(nama_raw) else "-"
+                if nama.lower() == "nan":
+                    nama = "-"
+                nama = nama[:12] if len(nama) > 12 else nama
+                hp = mask_phone(phone_lookup.get(winner, ""))
+                
+                tf = shape.text_frame
+                tf.word_wrap = False
+                p = tf.paragraphs[0]
+                p.alignment = PP_ALIGN.CENTER
+                p.space_before = Pt(4)
+                p.space_after = Pt(0)
+                run = p.add_run()
+                run.text = nomor
+                run.font.size = Pt(24)
+                run.font.bold = True
+                run.font.color.rgb = RGBColor(51, 51, 51)
+                
+                p2 = tf.add_paragraph()
+                p2.alignment = PP_ALIGN.CENTER
+                p2.space_before = Pt(2)
+                p2.space_after = Pt(0)
+                run2 = p2.add_run()
+                run2.text = nama
+                run2.font.size = Pt(12)
+                run2.font.color.rgb = RGBColor(102, 102, 102)
+                
+                p3 = tf.add_paragraph()
+                p3.alignment = PP_ALIGN.CENTER
+                p3.space_before = Pt(0)
+                run3 = p3.add_run()
+                run3.text = hp
+                run3.font.size = Pt(11)
+                run3.font.color.rgb = RGBColor(136, 136, 136)
+    
+    pptx_buffer = BytesIO()
+    prs.save(pptx_buffer)
+    pptx_buffer.seek(0)
+    return pptx_buffer.getvalue()
+
 def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_lookup=None):
     prs = Presentation()
     prs.slide_width = Inches(13.33)
@@ -1045,69 +1179,124 @@ elif current_page == "shuffle_page":
         with st.expander(f"🎲 {batch['name']} ({batch['count']} pemenang)", expanded=not batch_done):
             if batch_done:
                 winners = shuffle_results[batch_key]["winners"]
-                prize_name = shuffle_results[batch_key]["prize_name"]
+                prize_assignments = shuffle_results[batch_key].get("prize_assignments", [])
+                prize_config = shuffle_results[batch_key].get("prize_config", [])
                 
-                # Header dengan hadiah
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #4CAF50, #45a049); padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1rem;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: white;">🎁 {prize_name}</div>
-                    <div style="font-size: 1rem; color: rgba(255,255,255,0.9);">{len(winners)} Pemenang</div>
-                </div>
-                """, unsafe_allow_html=True)
+                # Fallback for old format
+                if not prize_assignments:
+                    prize_name = shuffle_results[batch_key].get("prize_name", "Hadiah")
+                    prize_assignments = [{"winner": w, "prize": prize_name} for w in winners]
                 
                 participant_data = st.session_state.get("participant_data")
                 name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
                 phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
                 
-                # Sort winners by nomor undian
-                sorted_winners = sorted(winners, key=lambda x: str(x))
+                # Create lookup for winner -> prize
+                winner_prize_lookup = {pa["winner"]: pa["prize"] for pa in prize_assignments}
                 
-                # Display in 7 columns like E-Voucher
-                num_cols = 7
-                rows = (len(sorted_winners) + num_cols - 1) // num_cols
+                # Group winners by prize
+                prize_groups = {}
+                for pa in prize_assignments:
+                    prize = pa["prize"]
+                    if prize not in prize_groups:
+                        prize_groups[prize] = []
+                    prize_groups[prize].append(pa["winner"])
                 
-                for row in range(rows):
-                    row_cols = st.columns(num_cols)
-                    for col in range(num_cols):
-                        idx = row * num_cols + col
-                        if idx < len(sorted_winners):
-                            w = sorted_winners[idx]
-                            with row_cols[col]:
-                                nama_raw = name_lookup.get(w, "")
-                                nama = str(nama_raw) if pd.notna(nama_raw) else ""
-                                display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
-                                hp = mask_phone(phone_lookup.get(w, ""))
-                                st.markdown(f"""
-                                <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.6rem; text-align: center; border-left: 4px solid #4CAF50; margin-bottom: 0.4rem; height: 75px; display: flex; flex-direction: column; justify-content: center;">
-                                    <div style="font-size: 1.1rem; font-weight: 800; color: #333; line-height: 1.3;">{w}</div>
-                                    <div style="font-size: 0.7rem; color: #666; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
-                                    <div style="font-size: 0.65rem; color: #888; line-height: 1.2;">{hp}</div>
-                                </div>
-                                """, unsafe_allow_html=True)
+                # Display each prize category
+                for prize_name, prize_winners in prize_groups.items():
+                    # Sort winners by nomor undian
+                    sorted_winners = sorted(prize_winners, key=lambda x: str(x))
+                    
+                    # Header untuk kategori hadiah
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #4CAF50, #45a049); padding: 1rem; border-radius: 10px; text-align: center; margin: 1rem 0 0.5rem 0;">
+                        <div style="font-size: 1.2rem; font-weight: bold; color: white;">🎁 {prize_name}</div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.9);">{len(sorted_winners)} Pemenang</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Display in 7 columns
+                    num_cols = 7
+                    rows = (len(sorted_winners) + num_cols - 1) // num_cols
+                    
+                    for row in range(rows):
+                        row_cols = st.columns(num_cols)
+                        for col in range(num_cols):
+                            idx = row * num_cols + col
+                            if idx < len(sorted_winners):
+                                w = sorted_winners[idx]
+                                with row_cols[col]:
+                                    nama_raw = name_lookup.get(w, "")
+                                    nama = str(nama_raw) if pd.notna(nama_raw) else ""
+                                    display_nama = nama[:12] if nama and nama.lower() != "nan" else "-"
+                                    hp = mask_phone(phone_lookup.get(w, ""))
+                                    st.markdown(f"""
+                                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.5rem; text-align: center; border-left: 4px solid #4CAF50; margin-bottom: 0.4rem; height: 70px; display: flex; flex-direction: column; justify-content: center;">
+                                        <div style="font-size: 1rem; font-weight: 800; color: #333; line-height: 1.2;">{w}</div>
+                                        <div style="font-size: 0.65rem; color: #666; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{display_nama}</div>
+                                        <div style="font-size: 0.6rem; color: #888; line-height: 1.1;">{hp}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 col1, col2 = st.columns(2)
                 with col1:
-                    df_batch = pd.DataFrame({
-                        "Nomor Undian": winners,
-                        "Nama": [name_lookup.get(w, "") for w in winners],
-                        "No HP": [phone_lookup.get(w, "") for w in winners],
-                        "Hadiah": prize_name
-                    })
+                    # Build Excel with specific prize for each winner
+                    excel_data = []
+                    for pa in prize_assignments:
+                        w = pa["winner"]
+                        excel_data.append({
+                            "Hadiah": pa["prize"],
+                            "Nomor Undian": w,
+                            "Nama": name_lookup.get(w, ""),
+                            "No HP": phone_lookup.get(w, "")
+                        })
+                    df_batch = pd.DataFrame(excel_data)
+                    # Sort by Hadiah then Nomor Undian
+                    df_batch = df_batch.sort_values(["Hadiah", "Nomor Undian"])
                     excel_buf = BytesIO()
                     with pd.ExcelWriter(excel_buf, engine='openpyxl') as writer:
                         df_batch.to_excel(writer, index=False)
                     st.download_button(f"📊 Download Excel {batch['name']}", excel_buf.getvalue(), f"shuffle_{i+1}.xlsx", use_container_width=True)
                 with col2:
-                    pptx_data = generate_shuffle_pptx(winners, prize_name, name_lookup, phone_lookup)
+                    pptx_data = generate_shuffle_pptx_v2(prize_assignments, name_lookup, phone_lookup, batch['name'])
                     st.download_button(f"📽️ Download PPT {batch['name']}", pptx_data, f"shuffle_{i+1}.pptx", use_container_width=True)
             else:
-                prize_name = st.text_input(f"Nama Hadiah {batch['name']}", placeholder="Contoh: Voucher Rp.500.000", key=f"prize_{batch_key}")
-                
                 remaining_count = len(remaining_pool)
                 max_winners = min(batch['count'], remaining_count)
                 
-                if prize_name and remaining_count > 0:
+                st.markdown(f"**Konfigurasi Hadiah {batch['name']}** (Total: {max_winners} pemenang)")
+                
+                # Default shuffle prizes for this batch
+                shuffle_prize_key = f"shuffle_prizes_{batch_key}"
+                if shuffle_prize_key not in st.session_state:
+                    st.session_state[shuffle_prize_key] = pd.DataFrame([
+                        {"Nama Hadiah": "Speaker (CBOX-B658UBO)", "Jumlah": 10},
+                        {"Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)", "Jumlah": 5},
+                        {"Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)", "Jumlah": 5},
+                        {"Nama Hadiah": "Oven 18L (EO-18BL)", "Jumlah": 10},
+                    ])
+                
+                edited_prizes = st.data_editor(
+                    st.session_state[shuffle_prize_key],
+                    num_rows="dynamic",
+                    use_container_width=True,
+                    key=f"editor_{batch_key}",
+                    column_config={
+                        "Nama Hadiah": st.column_config.TextColumn("Nama Hadiah", width="large"),
+                        "Jumlah": st.column_config.NumberColumn("Jumlah", min_value=1, max_value=100, width="small")
+                    }
+                )
+                st.session_state[shuffle_prize_key] = edited_prizes
+                
+                total_prizes = edited_prizes["Jumlah"].sum() if len(edited_prizes) > 0 else 0
+                
+                if total_prizes != max_winners:
+                    st.warning(f"⚠️ Total hadiah ({int(total_prizes)}) harus sama dengan jumlah pemenang ({max_winners})")
+                else:
+                    st.success(f"✅ Total hadiah: {int(total_prizes)} = {max_winners} pemenang")
+                
+                if remaining_count > 0 and total_prizes == max_winners and len(edited_prizes) > 0:
                     if st.button(f"🎲 MULAI {batch['name']}", key=f"start_{batch_key}", use_container_width=True):
                         remaining_numbers = remaining_pool["Nomor Undian"].tolist()
                         batch_winners = []
@@ -1119,9 +1308,24 @@ elif current_page == "shuffle_page":
                             idx = secrets.randbelow(len(temp_pool))
                             batch_winners.append(temp_pool.pop(idx))
                         
+                        # Assign prizes to winners
+                        prize_assignments = []
+                        winner_idx = 0
+                        for _, row in edited_prizes.iterrows():
+                            prize_name = row["Nama Hadiah"]
+                            count = int(row["Jumlah"])
+                            for _ in range(count):
+                                if winner_idx < len(batch_winners):
+                                    prize_assignments.append({
+                                        "winner": batch_winners[winner_idx],
+                                        "prize": prize_name
+                                    })
+                                    winner_idx += 1
+                        
                         shuffle_results[batch_key] = {
                             "winners": batch_winners,
-                            "prize_name": prize_name
+                            "prize_assignments": prize_assignments,
+                            "prize_config": edited_prizes.to_dict('records')
                         }
                         st.session_state["shuffle_results"] = shuffle_results
                         
@@ -1134,8 +1338,6 @@ elif current_page == "shuffle_page":
                         st.rerun()
                 elif remaining_count == 0:
                     st.warning("Tidak ada sisa peserta")
-                else:
-                    st.info("Masukkan nama hadiah terlebih dahulu")
     
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
