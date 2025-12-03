@@ -2085,21 +2085,24 @@ elif current_page == "wheel_page":
                 save_lottery_results()
                 
                 participant_data = st.session_state.get("participant_data")
+                nama = "-"
+                hp = "-"
                 if participant_data is not None:
-                    winner_row = participant_data[participant_data["Nomor Undian"] == winner]
+                    # Ensure proper string comparison
+                    winner_str = str(winner).strip()
+                    winner_row = participant_data[participant_data["Nomor Undian"].astype(str).str.strip() == winner_str]
                     if len(winner_row) > 0:
                         nama_raw = winner_row.iloc[0].get("Nama", "")
-                        nama = str(nama_raw) if pd.notna(nama_raw) else "-"
-                        if nama.lower() == "nan":
-                            nama = "-"
+                        nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
                         hp = format_phone(winner_row.iloc[0].get("No HP", ""))
-                        st.markdown(f"""
-                        <div style="background:#4CAF50;color:white;padding:15px;border-radius:10px;text-align:center;margin:10px 0;">
-                            <div style="font-size:1.5rem;font-weight:bold;">🎉 PEMENANG #{current_idx+1}</div>
-                            <div style="font-size:2rem;font-weight:900;margin:5px 0;">{winner}</div>
-                            <div style="font-size:1rem;">{nama} | {hp}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div style="background:#4CAF50;color:white;padding:15px;border-radius:10px;text-align:center;margin:10px 0;">
+                    <div style="font-size:1.5rem;font-weight:bold;">🎉 PEMENANG #{current_idx+1}</div>
+                    <div style="font-size:2rem;font-weight:900;margin:5px 0;">{winner}</div>
+                    <div style="font-size:1rem;">{nama} | {hp}</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 if len(wheel_winners) < 10:
                     st.button("➡️ LANJUT KE HADIAH BERIKUTNYA", key="next_wheel", use_container_width=True)
@@ -2108,17 +2111,23 @@ elif current_page == "wheel_page":
     if len(wheel_winners) > 0:
         st.markdown("---")
         participant_data = st.session_state.get("participant_data")
-        name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
-        phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
+        
+        # Create lookup with string keys
+        name_lookup = {}
+        phone_lookup = {}
+        if participant_data is not None:
+            for _, row in participant_data.iterrows():
+                key = str(row["Nomor Undian"]).strip()
+                name_lookup[key] = row.get("Nama", "")
+                phone_lookup[key] = row.get("No HP", "")
         
         # Full width winner cards in 5 columns
         cols = st.columns(5)
         for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
-            nama_raw = name_lookup.get(w, "")
-            nama = str(nama_raw) if pd.notna(nama_raw) else "-"
-            if nama.lower() == "nan":
-                nama = "-"
-            hp = format_phone(phone_lookup.get(w, ""))
+            w_str = str(w).strip()
+            nama_raw = name_lookup.get(w_str, "")
+            nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+            hp = format_phone(phone_lookup.get(w_str, ""))
             with cols[i % 5]:
                 st.markdown(f"""
                 <div style="background:#fff;border:2px solid #E91E63;border-radius:10px;padding:8px;text-align:center;margin-bottom:5px;">
@@ -2136,8 +2145,8 @@ elif current_page == "wheel_page":
             df_wheel = pd.DataFrame({
                 "No": range(1, len(wheel_winners) + 1),
                 "Nomor Undian": wheel_winners,
-                "Nama": [name_lookup.get(w, "") for w in wheel_winners],
-                "No HP": [phone_lookup.get(w, "") for w in wheel_winners],
+                "Nama": [name_lookup.get(str(w).strip(), "") for w in wheel_winners],
+                "No HP": [phone_lookup.get(str(w).strip(), "") for w in wheel_winners],
                 "Hadiah": wheel_prizes
             })
             excel_buf = BytesIO()
@@ -2365,16 +2374,23 @@ elif current_page == "wheel_results":
     """, unsafe_allow_html=True)
     
     participant_data = st.session_state.get("participant_data")
-    name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
-    phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
+    
+    # Create lookup with string keys
+    name_lookup = {}
+    phone_lookup = {}
+    if participant_data is not None:
+        for _, row in participant_data.iterrows():
+            key = str(row["Nomor Undian"]).strip()
+            name_lookup[key] = row.get("Nama", "")
+            phone_lookup[key] = row.get("No HP", "")
     
     cols = st.columns(5)
     for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
         with cols[i % 5]:
-            nama_raw = name_lookup.get(w, "")
-            nama = str(nama_raw) if pd.notna(nama_raw) else ""
-            display_nama = nama if nama and nama.lower() != "nan" else "-"
-            hp = format_phone(phone_lookup.get(w, ""))
+            w_str = str(w).strip()
+            nama_raw = name_lookup.get(w_str, "")
+            display_nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+            hp = format_phone(phone_lookup.get(w_str, ""))
             st.markdown(f"""
             <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 15px; padding: 1rem; text-align: center; border: 3px solid #E91E63; margin-bottom: 1rem;">
                 <div style="font-size: 0.9rem; color: #E91E63; font-weight: bold;">#{i+1}</div>
