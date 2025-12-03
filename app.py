@@ -327,11 +327,12 @@ def get_prize_dynamic(rank, prize_tiers):
             return tier["name"]
     return "Hadiah"
 
-def mask_phone(phone):
+def format_phone(phone):
+    """Format phone number for display (no masking for internal use)"""
     phone_str = str(phone) if pd.notna(phone) else ""
-    if len(phone_str) >= 4:
-        return f"****{phone_str[-4:]}"
-    return phone_str
+    if phone_str.lower() == "nan":
+        return "-"
+    return phone_str if phone_str else "-"
 
 def create_spinning_wheel_html(participants, winner, wheel_size=400):
     num_segments = min(len(participants), 20)
@@ -569,12 +570,11 @@ def generate_pptx(results_df, prize_tiers):
                 nama = str(nama_raw) if pd.notna(nama_raw) else "-"
                 if nama.lower() == "nan":
                     nama = "-"
-                nama = nama[:12] if len(nama) > 12 else nama
                 hp_raw = row.get("No HP", "")
-                hp = mask_phone(hp_raw)
+                hp = format_phone(hp_raw)
                 
                 tf = shape.text_frame
-                tf.word_wrap = False
+                tf.word_wrap = True
                 p = tf.paragraphs[0]
                 p.alignment = PP_ALIGN.CENTER
                 p.space_before = Pt(4)
@@ -666,11 +666,10 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
         nama = str(nama_raw) if pd.notna(nama_raw) else "-"
         if nama.lower() == "nan":
             nama = "-"
-        nama = nama[:12] if len(nama) > 12 else nama
-        hp = mask_phone(phone_lookup.get(winner, ""))
+        hp = format_phone(phone_lookup.get(winner, ""))
         
         tf = shape.text_frame
-        tf.word_wrap = False
+        tf.word_wrap = True
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         p.space_before = Pt(4)
@@ -800,11 +799,10 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
                 nama = str(nama_raw) if pd.notna(nama_raw) else "-"
                 if nama.lower() == "nan":
                     nama = "-"
-                nama = nama[:12] if len(nama) > 12 else nama
-                hp = mask_phone(phone_lookup.get(winner, ""))
+                hp = format_phone(phone_lookup.get(winner, ""))
                 
                 tf = shape.text_frame
-                tf.word_wrap = False
+                tf.word_wrap = True
                 p = tf.paragraphs[0]
                 p.alignment = PP_ALIGN.CENTER
                 p.space_before = Pt(4)
@@ -873,7 +871,7 @@ def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_looku
         nama = str(nama_raw) if pd.notna(nama_raw) else "-"
         if nama.lower() == "nan":
             nama = "-"
-        hp = mask_phone(phone_lookup.get(winner, ""))
+        hp = format_phone(phone_lookup.get(winner, ""))
         
         text_box = slide.shapes.add_textbox(Inches(0.5), start_y + Inches(idx * 0.55), Inches(12.33), Inches(0.5))
         tf = text_box.text_frame
@@ -1427,8 +1425,8 @@ elif current_page == "evoucher_category":
                     nomor = winner["Nomor Undian"]
                     nama_raw = winner.get("Nama", "")
                     nama = str(nama_raw) if pd.notna(nama_raw) else ""
-                    hp = mask_phone(winner.get("No HP", ""))
-                    display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
+                    hp = format_phone(winner.get("No HP", ""))
+                    display_nama = nama if nama and nama.lower() != "nan" else "-"
                     
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.6rem; text-align: center; border-left: 4px solid #f5576c; margin-bottom: 0.4rem; height: 75px; display: flex; flex-direction: column; justify-content: center;">
@@ -1523,8 +1521,8 @@ elif current_page == "shuffle_page":
                                 with row_cols[col]:
                                     nama_raw = name_lookup.get(w, "")
                                     nama = str(nama_raw) if pd.notna(nama_raw) else ""
-                                    display_nama = nama[:12] if nama and nama.lower() != "nan" else "-"
-                                    hp = mask_phone(phone_lookup.get(w, ""))
+                                    display_nama = nama if nama and nama.lower() != "nan" else "-"
+                                    hp = format_phone(phone_lookup.get(w, ""))
                                     st.markdown(f"""
                                     <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.5rem; text-align: center; border-left: 4px solid #4CAF50; margin-bottom: 0.4rem; height: 70px; display: flex; flex-direction: column; justify-content: center;">
                                         <div style="font-size: 1rem; font-weight: 800; color: #333; line-height: 1.2;">{w}</div>
@@ -1696,8 +1694,8 @@ elif current_page == "shuffle_results":
                 with row_cols[col]:
                     nama_raw = name_lookup.get(w, "")
                     nama = str(nama_raw) if pd.notna(nama_raw) else ""
-                    display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
-                    hp = mask_phone(phone_lookup.get(w, ""))
+                    display_nama = nama if nama and nama.lower() != "nan" else "-"
+                    hp = format_phone(phone_lookup.get(w, ""))
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; border-left: 4px solid #FF9800; margin-bottom: 0.5rem;">
                         <div style="font-size: 1.2rem; font-weight: 800; color: #333;">{w}</div>
@@ -1877,7 +1875,7 @@ elif current_page == "wheel_page":
                         nama = str(nama_raw) if pd.notna(nama_raw) else "-"
                         if nama.lower() == "nan":
                             nama = "-"
-                        hp = mask_phone(winner_row.iloc[0].get("No HP", ""))
+                        hp = format_phone(winner_row.iloc[0].get("No HP", ""))
                         st.success(f"🎉 Pemenang: {winner} - {nama} ({hp})")
                 
                 if len(wheel_winners) < 10:
@@ -1898,7 +1896,7 @@ elif current_page == "wheel_page":
             nama = str(nama_raw) if pd.notna(nama_raw) else "-"
             if nama.lower() == "nan":
                 nama = "-"
-            hp = mask_phone(phone_lookup.get(w, ""))
+            hp = format_phone(phone_lookup.get(w, ""))
             st.markdown(f"""
             <div style="background: rgba(233,30,99,0.2); border-radius: 10px; padding: 0.8rem; margin: 0.5rem 0;">
                 <p style='color:white; text-align:center; margin:0;'>
@@ -1972,8 +1970,8 @@ elif current_page == "wheel_results":
         with cols[i % 5]:
             nama_raw = name_lookup.get(w, "")
             nama = str(nama_raw) if pd.notna(nama_raw) else ""
-            display_nama = nama[:15] if nama and nama.lower() != "nan" else "-"
-            hp = mask_phone(phone_lookup.get(w, ""))
+            display_nama = nama if nama and nama.lower() != "nan" else "-"
+            hp = format_phone(phone_lookup.get(w, ""))
             st.markdown(f"""
             <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 15px; padding: 1rem; text-align: center; border: 3px solid #E91E63; margin-bottom: 1rem;">
                 <div style="font-size: 0.9rem; color: #E91E63; font-weight: bold;">#{i+1}</div>
