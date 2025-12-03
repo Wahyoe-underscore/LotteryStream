@@ -1010,7 +1010,7 @@ def generate_shuffle_pptx(winners_list, prize_name, name_lookup=None, phone_look
     return pptx_buffer.getvalue()
 
 def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=None, session_name="Sesi"):
-    """Generate PPT with one slide per prize category"""
+    """Generate PPT with one slide per prize category - centered and proportional"""
     prs = Presentation()
     prs.slide_width = Inches(13.33)
     prs.slide_height = Inches(7.5)
@@ -1020,7 +1020,6 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
     if phone_lookup is None:
         phone_lookup = {}
     
-    # Group by prize
     prize_groups = {}
     for pa in prize_assignments:
         prize = pa["prize"]
@@ -1029,113 +1028,127 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
         prize_groups[prize].append(pa["winner"])
     
     slide_layout = prs.slide_layouts[6]
+    available_height = 7.5 - 1.4
+    available_width = 13.33 - 0.8
     
     for prize_name, winners in prize_groups.items():
         sorted_winners = sorted(winners, key=lambda x: str(x))
+        num_winners = len(sorted_winners)
         
-        # 15 winners per slide (5x3 grid)
-        winners_per_slide = 15
-        total_slides = (len(sorted_winners) + winners_per_slide - 1) // winners_per_slide
+        slide = prs.slides.add_slide(slide_layout)
         
-        for slide_num in range(total_slides):
-            slide = prs.slides.add_slide(slide_layout)
+        background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+        background.fill.gradient()
+        background.fill.gradient_stops[0].color.rgb = RGBColor(76, 175, 80)
+        background.fill.gradient_stops[1].color.rgb = RGBColor(56, 142, 60)
+        background.line.fill.background()
+        
+        title_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.2), Inches(12.53), Inches(0.6))
+        tf = title_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = f"🎁 {prize_name}"
+        run.font.size = Pt(32)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        sub_box = slide.shapes.add_textbox(Inches(0.4), Inches(0.7), Inches(12.53), Inches(0.3))
+        tf2 = sub_box.text_frame
+        p2 = tf2.paragraphs[0]
+        p2.alignment = PP_ALIGN.CENTER
+        run2 = p2.add_run()
+        run2.text = f"{session_name} - {num_winners} Pemenang"
+        run2.font.size = Pt(16)
+        run2.font.color.rgb = RGBColor(230, 230, 230)
+        
+        if num_winners == 1:
+            cols, rows = 1, 1
+            font_nomor, font_nama, font_hp = Pt(72), Pt(28), Pt(22)
+        elif num_winners == 2:
+            cols, rows = 2, 1
+            font_nomor, font_nama, font_hp = Pt(56), Pt(24), Pt(18)
+        elif num_winners <= 4:
+            cols = 2
+            rows = (num_winners + 1) // 2
+            font_nomor, font_nama, font_hp = Pt(48), Pt(20), Pt(16)
+        elif num_winners <= 6:
+            cols = 3
+            rows = (num_winners + 2) // 3
+            font_nomor, font_nama, font_hp = Pt(44), Pt(18), Pt(14)
+        elif num_winners <= 9:
+            cols = 3
+            rows = (num_winners + 2) // 3
+            font_nomor, font_nama, font_hp = Pt(36), Pt(16), Pt(13)
+        elif num_winners <= 12:
+            cols = 4
+            rows = (num_winners + 3) // 4
+            font_nomor, font_nama, font_hp = Pt(32), Pt(14), Pt(12)
+        else:
+            cols = 5
+            rows = (num_winners + 4) // 5
+            font_nomor, font_nama, font_hp = Pt(26), Pt(12), Pt(11)
+        
+        cell_width = Inches((available_width - 0.1 * (cols - 1)) / cols)
+        cell_height = Inches(min((available_height - 0.1 * (rows - 1)) / rows, 1.8))
+        gap_x = Inches(0.1)
+        gap_y = Inches(0.1)
+        
+        total_grid_height = rows * cell_height + (rows - 1) * gap_y
+        start_y = Inches(1.1) + (Inches(available_height) - total_grid_height) / 2
+        
+        for idx, winner in enumerate(sorted_winners):
+            row_num = idx // cols
+            col_num = idx % cols
             
-            # Background
-            background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
-            background.fill.gradient()
-            background.fill.gradient_stops[0].color.rgb = RGBColor(76, 175, 80)
-            background.fill.gradient_stops[1].color.rgb = RGBColor(56, 142, 60)
-            background.line.fill.background()
+            items_in_row = min(cols, num_winners - row_num * cols)
+            row_width = items_in_row * cell_width + (items_in_row - 1) * gap_x
+            row_start_x = (prs.slide_width - row_width) / 2
             
-            # Title with prize name
-            title_text = f"🎁 {prize_name}"
-            if total_slides > 1:
-                title_text += f" ({slide_num + 1}/{total_slides})"
+            left = row_start_x + col_num * (cell_width + gap_x)
+            top = start_y + row_num * (cell_height + gap_y)
             
-            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.2), Inches(12.33), Inches(0.6))
-            tf = title_box.text_frame
+            shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+            shape.line.color.rgb = RGBColor(76, 175, 80)
+            shape.line.width = Pt(2)
+            
+            winner_str = str(winner).strip()
+            nama_raw = name_lookup.get(winner_str, "")
+            nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+            hp = format_phone(phone_lookup.get(winner_str, ""))
+            
+            tf = shape.text_frame
+            tf.word_wrap = True
+            tf.anchor = MSO_ANCHOR.MIDDLE
+            
             p = tf.paragraphs[0]
             p.alignment = PP_ALIGN.CENTER
+            p.space_before = Pt(0)
+            p.space_after = Pt(0)
             run = p.add_run()
-            run.text = title_text
-            run.font.size = Pt(32)
+            run.text = winner_str
+            run.font.size = font_nomor
             run.font.bold = True
-            run.font.color.rgb = RGBColor(255, 255, 255)
+            run.font.color.rgb = RGBColor(51, 51, 51)
             
-            # Subtitle
-            sub_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.75), Inches(12.33), Inches(0.4))
-            tf2 = sub_box.text_frame
-            p2 = tf2.paragraphs[0]
+            p2 = tf.add_paragraph()
             p2.alignment = PP_ALIGN.CENTER
+            p2.space_before = Pt(4)
+            p2.space_after = Pt(0)
             run2 = p2.add_run()
-            run2.text = f"{session_name} - {len(sorted_winners)} Pemenang"
-            run2.font.size = Pt(18)
-            run2.font.color.rgb = RGBColor(255, 255, 255)
+            run2.text = nama
+            run2.font.size = font_nama
+            run2.font.color.rgb = RGBColor(102, 102, 102)
             
-            # Grid layout (5x3 = 15 per slide)
-            cols = 5
-            rows_per_slide = 3
-            cell_width = Inches(2.4)
-            cell_height = Inches(1.6)
-            gap_x = Inches(0.1)
-            gap_y = Inches(0.15)
-            
-            total_grid_width = cols * cell_width + (cols - 1) * gap_x
-            start_x = (prs.slide_width - total_grid_width) / 2
-            start_y = Inches(1.3)
-            
-            start_idx = slide_num * winners_per_slide
-            end_idx = min(start_idx + winners_per_slide, len(sorted_winners))
-            slide_winners = sorted_winners[start_idx:end_idx]
-            
-            for idx, winner in enumerate(slide_winners):
-                row_num = idx // cols
-                col_num = idx % cols
-                
-                left = start_x + col_num * (cell_width + gap_x)
-                top = start_y + row_num * (cell_height + gap_y)
-                
-                shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
-                shape.fill.solid()
-                shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
-                shape.line.color.rgb = RGBColor(76, 175, 80)
-                shape.line.width = Pt(2)
-                
-                nomor = str(winner)
-                nama_raw = name_lookup.get(winner, "")
-                nama = str(nama_raw) if pd.notna(nama_raw) else "-"
-                if nama.lower() == "nan":
-                    nama = "-"
-                hp = format_phone(phone_lookup.get(winner, ""))
-                
-                tf = shape.text_frame
-                tf.word_wrap = True
-                p = tf.paragraphs[0]
-                p.alignment = PP_ALIGN.CENTER
-                p.space_before = Pt(4)
-                p.space_after = Pt(0)
-                run = p.add_run()
-                run.text = nomor
-                run.font.size = Pt(24)
-                run.font.bold = True
-                run.font.color.rgb = RGBColor(51, 51, 51)
-                
-                p2 = tf.add_paragraph()
-                p2.alignment = PP_ALIGN.CENTER
-                p2.space_before = Pt(2)
-                p2.space_after = Pt(0)
-                run2 = p2.add_run()
-                run2.text = nama
-                run2.font.size = Pt(12)
-                run2.font.color.rgb = RGBColor(102, 102, 102)
-                
-                p3 = tf.add_paragraph()
-                p3.alignment = PP_ALIGN.CENTER
-                p3.space_before = Pt(0)
-                run3 = p3.add_run()
-                run3.text = hp
-                run3.font.size = Pt(11)
-                run3.font.color.rgb = RGBColor(136, 136, 136)
+            p3 = tf.add_paragraph()
+            p3.alignment = PP_ALIGN.CENTER
+            p3.space_before = Pt(2)
+            run3 = p3.add_run()
+            run3.text = hp
+            run3.font.size = font_hp
+            run3.font.color.rgb = RGBColor(136, 136, 136)
     
     pptx_buffer = BytesIO()
     prs.save(pptx_buffer)
@@ -1189,6 +1202,215 @@ def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_looku
         run.font.size = Pt(22)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
+    
+    pptx_buffer = BytesIO()
+    prs.save(pptx_buffer)
+    pptx_buffer.seek(0)
+    return pptx_buffer.getvalue()
+
+def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=None, phone_lookup=None):
+    """Generate PPT with 1 winner per slide - large centered display
+    color_tuple: (r, g, b) tuple for background gradient
+    """
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
+    
+    if name_lookup is None:
+        name_lookup = {}
+    if phone_lookup is None:
+        phone_lookup = {}
+    
+    slide_layout = prs.slide_layouts[6]
+    r, g, b = color_tuple
+    
+    for idx, winner in enumerate(winners_list):
+        slide = prs.slides.add_slide(slide_layout)
+        
+        background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+        background.fill.gradient()
+        background.fill.gradient_stops[0].color.rgb = RGBColor(r, g, b)
+        background.fill.gradient_stops[1].color.rgb = RGBColor(
+            max(0, r - 50),
+            max(0, g - 50),
+            max(0, b - 50)
+        )
+        background.line.fill.background()
+        
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(12.33), Inches(0.8))
+        tf = title_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = f"{title} #{idx + 1}"
+        run.font.size = Pt(28)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        winner_str = str(winner).strip()
+        nama_raw = name_lookup.get(winner_str, "")
+        nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+        hp = format_phone(phone_lookup.get(winner_str, ""))
+        
+        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(2.2), Inches(12.33), Inches(1.5))
+        tf = nomor_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = winner_str
+        run.font.size = Pt(120)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        nama_box = slide.shapes.add_textbox(Inches(0.5), Inches(4.0), Inches(12.33), Inches(1.0))
+        tf = nama_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = nama
+        run.font.size = Pt(48)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        hp_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.2), Inches(12.33), Inches(0.8))
+        tf = hp_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = hp
+        run.font.size = Pt(36)
+        run.font.color.rgb = RGBColor(230, 230, 230)
+    
+    pptx_buffer = BytesIO()
+    prs.save(pptx_buffer)
+    pptx_buffer.seek(0)
+    return pptx_buffer.getvalue()
+
+def generate_shuffle_pptx_centered(winners_list, prize_name, name_lookup=None, phone_lookup=None):
+    """Generate PPT with winners centered and proportional to count"""
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
+    
+    if name_lookup is None:
+        name_lookup = {}
+    if phone_lookup is None:
+        phone_lookup = {}
+    
+    sorted_winners = sorted(winners_list, key=lambda x: str(x))
+    num_winners = len(sorted_winners)
+    
+    slide_layout = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(slide_layout)
+    
+    background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+    background.fill.gradient()
+    background.fill.gradient_stops[0].color.rgb = RGBColor(255, 152, 0)
+    background.fill.gradient_stops[1].color.rgb = RGBColor(255, 87, 34)
+    background.line.fill.background()
+    
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
+    tf = title_box.text_frame
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.CENTER
+    run = p.add_run()
+    run.text = f"🎲 {prize_name}"
+    run.font.size = Pt(36)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor(255, 255, 255)
+    
+    available_height = 7.5 - 1.5
+    available_width = 13.33 - 1.0
+    
+    if num_winners <= 6:
+        cols = min(3, num_winners)
+        rows = (num_winners + cols - 1) // cols
+        font_nomor = Pt(48)
+        font_nama = Pt(20)
+        font_hp = Pt(16)
+    elif num_winners <= 12:
+        cols = 4
+        rows = (num_winners + cols - 1) // cols
+        font_nomor = Pt(36)
+        font_nama = Pt(16)
+        font_hp = Pt(14)
+    elif num_winners <= 20:
+        cols = 5
+        rows = (num_winners + cols - 1) // cols
+        font_nomor = Pt(28)
+        font_nama = Pt(14)
+        font_hp = Pt(12)
+    else:
+        cols = 6
+        rows = (num_winners + cols - 1) // cols
+        font_nomor = Pt(24)
+        font_nama = Pt(12)
+        font_hp = Pt(11)
+    
+    cell_width = Inches(available_width / cols - 0.1)
+    cell_height = Inches(min(available_height / rows - 0.1, 1.4))
+    gap_x = Inches(0.1)
+    gap_y = Inches(0.1)
+    
+    total_grid_width = cols * cell_width + (cols - 1) * gap_x
+    total_grid_height = rows * cell_height + (rows - 1) * gap_y
+    start_x = (prs.slide_width - total_grid_width) / 2
+    start_y = Inches(1.3) + (Inches(available_height) - total_grid_height) / 2
+    
+    for idx, winner in enumerate(sorted_winners):
+        row_num = idx // cols
+        col_num = idx % cols
+        
+        items_in_row = min(cols, num_winners - row_num * cols)
+        row_width = items_in_row * cell_width + (items_in_row - 1) * gap_x
+        row_start_x = (prs.slide_width - row_width) / 2
+        
+        left = row_start_x + col_num * (cell_width + gap_x)
+        top = start_y + row_num * (cell_height + gap_y)
+        
+        shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+        shape.line.color.rgb = RGBColor(255, 152, 0)
+        shape.line.width = Pt(2)
+        
+        winner_str = str(winner).strip()
+        nama_raw = name_lookup.get(winner_str, "")
+        nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
+        hp = format_phone(phone_lookup.get(winner_str, ""))
+        
+        tf = shape.text_frame
+        tf.word_wrap = True
+        
+        for para in tf.paragraphs:
+            para._element.getparent().remove(para._element)
+        
+        p = tf.paragraphs[0] if tf.paragraphs else tf.add_paragraph()
+        p.alignment = PP_ALIGN.CENTER
+        p.space_before = Pt(8)
+        p.space_after = Pt(0)
+        run = p.add_run()
+        run.text = winner_str
+        run.font.size = font_nomor
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(51, 51, 51)
+        
+        p2 = tf.add_paragraph()
+        p2.alignment = PP_ALIGN.CENTER
+        p2.space_before = Pt(4)
+        p2.space_after = Pt(0)
+        run2 = p2.add_run()
+        run2.text = nama
+        run2.font.size = font_nama
+        run2.font.color.rgb = RGBColor(102, 102, 102)
+        
+        p3 = tf.add_paragraph()
+        p3.alignment = PP_ALIGN.CENTER
+        p3.space_before = Pt(2)
+        run3 = p3.add_run()
+        run3.text = hp
+        run3.font.size = font_hp
+        run3.font.color.rgb = RGBColor(136, 136, 136)
     
     pptx_buffer = BytesIO()
     prs.save(pptx_buffer)
@@ -2500,7 +2722,7 @@ elif current_page == "wheel_page":
                     
                     st.success(f"✅ Batch {current_batch} selesai! (10 nomor)")
                     
-                    cad_btn_col1, cad_btn_col2 = st.columns(2)
+                    cad_btn_col1, cad_btn_col2, cad_btn_col3 = st.columns(3)
                     with cad_btn_col1:
                         if st.button("🔄 MULAI BATCH BARU", key=f"new_batch_{current_batch}", use_container_width=True, type="primary"):
                             st.session_state["current_cadangan_batch"] = current_batch + 1
@@ -2508,7 +2730,6 @@ elif current_page == "wheel_page":
                             st.rerun()
                     
                     with cad_btn_col2:
-                        # Download current batch
                         df_cadangan = pd.DataFrame({
                             "No": range(1, len(cadangan_winners) + 1),
                             "Nomor Undian": cadangan_winners,
@@ -2519,7 +2740,17 @@ elif current_page == "wheel_page":
                         cad_excel_buf = BytesIO()
                         with pd.ExcelWriter(cad_excel_buf, engine='openpyxl') as writer:
                             df_cadangan.to_excel(writer, index=False)
-                        st.download_button(f"📊 Download Batch {current_batch}", cad_excel_buf.getvalue(), f"cadangan_batch_{current_batch}.xlsx", use_container_width=True)
+                        st.download_button(f"📊 Excel Batch {current_batch}", cad_excel_buf.getvalue(), f"cadangan_batch_{current_batch}.xlsx", use_container_width=True)
+                    
+                    with cad_btn_col3:
+                        cad_ppt_data = generate_single_winner_pptx(
+                            cadangan_winners, 
+                            f"🎯 CADANGAN BATCH {current_batch}", 
+                            (255, 152, 0),
+                            name_lookup, 
+                            phone_lookup
+                        )
+                        st.download_button(f"📽️ PPT Batch {current_batch}", cad_ppt_data, f"cadangan_batch_{current_batch}.pptx", use_container_width=True)
             
             # Show all previous batches
             if len(all_cadangan_batches) > 0:
@@ -2679,7 +2910,19 @@ elif current_page == "wheel_page":
                     quick_excel_buf = BytesIO()
                     with pd.ExcelWriter(quick_excel_buf, engine='openpyxl') as writer:
                         df_quick.to_excel(writer, index=False)
-                    st.download_button("📊 Download Undian Cepat", quick_excel_buf.getvalue(), "undian_cepat.xlsx", use_container_width=True)
+                    
+                    quick_dl_col1, quick_dl_col2 = st.columns(2)
+                    with quick_dl_col1:
+                        st.download_button("📊 Excel Undian Cepat", quick_excel_buf.getvalue(), "undian_cepat.xlsx", use_container_width=True)
+                    with quick_dl_col2:
+                        quick_ppt_data = generate_single_winner_pptx(
+                            quick_winners, 
+                            "🎲 UNDIAN CEPAT", 
+                            (156, 39, 176),
+                            name_lookup, 
+                            phone_lookup
+                        )
+                        st.download_button("📽️ PPT Undian Cepat", quick_ppt_data, "undian_cepat.pptx", use_container_width=True)
         
         # Final buttons (only show when wheel is complete)
         if st.session_state.get("wheel_done", False):
