@@ -561,9 +561,20 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     return html
 
 def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
-    """Create transparent lottery animation - spins through ALL participants in pool"""
+    """Create transparent lottery animation - cycles through ALL participants sequentially"""
     total_pool = len(all_participants)
-    all_nums_js = json.dumps(all_participants)
+    
+    # Shuffle the list but keep all participants - animation will go through ALL of them
+    import random
+    shuffled_list = all_participants.copy()
+    random.shuffle(shuffled_list)
+    
+    # Ensure winner is at the end for the final stop
+    if winner in shuffled_list:
+        shuffled_list.remove(winner)
+    shuffled_list.append(winner)
+    
+    all_nums_js = json.dumps(shuffled_list)
     
     html = f'''
     <!DOCTYPE html>
@@ -615,24 +626,28 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
                 letter-spacing: 8px;
                 min-height: 80px;
             }}
+            .counter {{
+                color: #888;
+                font-size: 0.8rem;
+                margin-top: 8px;
+            }}
             .status {{
                 color: #aaa;
                 font-size: 0.95rem;
-                margin-top: 12px;
+                margin-top: 8px;
             }}
             .progress {{
                 width: 90%;
                 height: 6px;
                 background: #333;
                 border-radius: 3px;
-                margin: 15px auto 0;
+                margin: 12px auto 0;
                 overflow: hidden;
             }}
             .progress-bar {{
                 height: 100%;
                 background: linear-gradient(90deg, #00ff88, #00ccff, #E91E63);
                 width: 0%;
-                transition: width 0.05s;
             }}
         </style>
     </head>
@@ -643,44 +658,56 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             </div>
             <div class="spin-box">
                 <div class="spinning-number" id="num">----</div>
-                <div class="status" id="status">Mengacak semua nomor...</div>
+                <div class="counter" id="counter"></div>
+                <div class="status" id="status">Memulai pengundian...</div>
                 <div class="progress"><div class="progress-bar" id="bar"></div></div>
             </div>
         </div>
         <script>
             const pool = {all_nums_js};
-            const winner = "{winner}";
             const total = {total_pool};
             const numEl = document.getElementById('num');
+            const counterEl = document.getElementById('counter');
             const statusEl = document.getElementById('status');
             const barEl = document.getElementById('bar');
             
-            const duration = 4000;
-            const start = Date.now();
+            let idx = 0;
+            const baseDelay = 15;
+            const maxDelay = 200;
             
             function spin() {{
-                const elapsed = Date.now() - start;
-                const progress = Math.min(elapsed / duration, 1);
-                barEl.style.width = (progress * 100) + '%';
+                numEl.textContent = pool[idx];
+                counterEl.textContent = (idx + 1) + ' / ' + total;
+                barEl.style.width = ((idx + 1) / total * 100) + '%';
                 
-                if (progress < 0.8) {{
-                    numEl.textContent = pool[Math.floor(Math.random() * total)];
-                    statusEl.textContent = 'Mengacak ' + total + ' nomor...';
-                    setTimeout(spin, progress < 0.5 ? 30 : 50 + (progress - 0.5) * 300);
-                }} else if (progress < 1) {{
-                    numEl.textContent = pool[Math.floor(Math.random() * total)];
-                    statusEl.textContent = 'Hampir selesai...';
-                    setTimeout(spin, 100);
+                if (idx < total - 1) {{
+                    // Speed: fast at start, slow down near end
+                    const progress = idx / total;
+                    let delay;
+                    if (progress < 0.7) {{
+                        delay = baseDelay;
+                        statusEl.textContent = 'Mengacak semua nomor...';
+                    }} else if (progress < 0.9) {{
+                        delay = baseDelay + (progress - 0.7) * 500;
+                        statusEl.textContent = 'Memperlambat...';
+                    }} else {{
+                        delay = 80 + (progress - 0.9) * 1200;
+                        statusEl.textContent = 'Hampir selesai...';
+                    }}
+                    idx++;
+                    setTimeout(spin, delay);
                 }} else {{
-                    numEl.textContent = winner;
+                    // Final - show winner
                     numEl.style.color = '#FFD700';
                     numEl.style.textShadow = '0 0 40px rgba(255,215,0,0.8)';
                     statusEl.textContent = '✅ PEMENANG TERPILIH!';
                     statusEl.style.color = '#4CAF50';
                     statusEl.style.fontWeight = 'bold';
+                    counterEl.style.color = '#4CAF50';
                 }}
             }}
-            setTimeout(spin, 200);
+            
+            setTimeout(spin, 300);
         </script>
     </body>
     </html>
