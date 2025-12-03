@@ -672,32 +672,35 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             const barEl = document.getElementById('bar');
             
             let idx = 0;
-            const baseDelay = 15;
-            const maxDelay = 200;
+            let stopped = false;
             
             function spin() {{
+                if (stopped) return;
+                
                 numEl.textContent = pool[idx];
                 counterEl.textContent = (idx + 1) + ' / ' + total;
                 barEl.style.width = ((idx + 1) / total * 100) + '%';
                 
                 if (idx < total - 1) {{
-                    // Speed: fast at start, slow down near end
                     const progress = idx / total;
                     let delay;
-                    if (progress < 0.7) {{
-                        delay = baseDelay;
-                        statusEl.textContent = 'Mengacak semua nomor...';
-                    }} else if (progress < 0.9) {{
-                        delay = baseDelay + (progress - 0.7) * 500;
+                    
+                    // SUPER FAST for most of the animation
+                    if (progress < 0.85) {{
+                        delay = 2;  // 2ms - very fast
+                        if (idx % 50 === 0) statusEl.textContent = 'Mengacak semua nomor...';
+                    }} else if (progress < 0.95) {{
+                        delay = 5 + (progress - 0.85) * 300;
                         statusEl.textContent = 'Memperlambat...';
                     }} else {{
-                        delay = 80 + (progress - 0.9) * 1200;
+                        delay = 40 + (progress - 0.95) * 800;
                         statusEl.textContent = 'Hampir selesai...';
                     }}
                     idx++;
                     setTimeout(spin, delay);
                 }} else {{
-                    // Final - show winner
+                    // Final - show winner and STOP
+                    stopped = true;
                     numEl.style.color = '#FFD700';
                     numEl.style.textShadow = '0 0 40px rgba(255,215,0,0.8)';
                     statusEl.textContent = '✅ PEMENANG TERPILIH!';
@@ -707,7 +710,7 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
                 }}
             }}
             
-            setTimeout(spin, 300);
+            setTimeout(spin, 200);
         </script>
     </body>
     </html>
