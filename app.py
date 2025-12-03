@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import secrets
+import hashlib
 from io import BytesIO, StringIO
 import time
 import re
@@ -59,15 +60,6 @@ def create_spinning_wheel_html(participants, winner, wheel_size=400):
                 width: {wheel_size}px;
                 height: {wheel_size}px;
             }}
-            .wheel {{
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 0 30px rgba(0,0,0,0.3);
-                transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            }}
             .pointer {{
                 position: absolute;
                 top: -20px;
@@ -96,7 +88,6 @@ def create_spinning_wheel_html(participants, winner, wheel_size=400):
                 font-size: 2rem;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 z-index: 50;
-                cursor: pointer;
             }}
             .spin-btn {{
                 background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
@@ -109,14 +100,8 @@ def create_spinning_wheel_html(participants, winner, wheel_size=400):
                 cursor: pointer;
                 margin-top: 30px;
                 box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-                transition: transform 0.2s;
             }}
-            .spin-btn:hover {{ transform: scale(1.05); }}
-            .spin-btn:disabled {{ 
-                opacity: 0.6; 
-                cursor: not-allowed;
-                transform: none;
-            }}
+            .spin-btn:disabled {{ opacity: 0.6; cursor: not-allowed; }}
             .winner-display {{
                 margin-top: 20px;
                 padding: 20px 40px;
@@ -233,7 +218,7 @@ def create_spinning_wheel_html(participants, winner, wheel_size=400):
     return html
 
 def create_shuffle_reveal_html(winners, prize_name):
-    """Create HTML/JS for shuffle and reveal animation for multiple winners"""
+    """Create HTML/JS for shuffle and reveal animation"""
     winners_js = ','.join([f'"{w}"' for w in winners])
     num_winners = len(winners)
     
@@ -280,7 +265,6 @@ def create_shuffle_reveal_html(winners, prize_name):
                 font-weight: 800;
                 color: #333;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                transition: all 0.3s ease;
                 opacity: 0;
                 transform: scale(0);
             }}
@@ -315,9 +299,7 @@ def create_shuffle_reveal_html(winners, prize_name):
                 border-radius: 50px;
                 cursor: pointer;
                 box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-                transition: transform 0.2s;
             }}
-            .shuffle-btn:hover {{ transform: scale(1.05); }}
             .shuffle-btn:disabled {{ opacity: 0.6; cursor: not-allowed; }}
             .status {{
                 color: white;
@@ -339,7 +321,6 @@ def create_shuffle_reveal_html(winners, prize_name):
             const statusEl = document.getElementById('status');
             let cards = [];
             
-            // Create cards
             for (let i = 0; i < winners.length; i++) {{
                 const card = document.createElement('div');
                 card.className = 'number-card';
@@ -351,7 +332,6 @@ def create_shuffle_reveal_html(winners, prize_name):
             async function startShuffle() {{
                 document.getElementById('shuffleBtn').disabled = true;
                 
-                // Start shuffling animation
                 const randomNums = [];
                 for (let i = 0; i < winners.length; i++) {{
                     randomNums.push(String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0'));
@@ -364,7 +344,6 @@ def create_shuffle_reveal_html(winners, prize_name):
                 
                 statusEl.textContent = '🔄 Mengacak nomor...';
                 
-                // Shuffle for 2 seconds
                 const shuffleInterval = setInterval(() => {{
                     cards.forEach(card => {{
                         card.textContent = String(Math.floor(Math.random() * 9000) + 1000).padStart(4, '0');
@@ -376,7 +355,6 @@ def create_shuffle_reveal_html(winners, prize_name):
                 
                 statusEl.textContent = '🎉 Menampilkan pemenang...';
                 
-                // Reveal one by one
                 for (let i = 0; i < winners.length; i++) {{
                     await new Promise(r => setTimeout(r, 100));
                     cards[i].classList.remove('shuffling');
@@ -393,7 +371,6 @@ def create_shuffle_reveal_html(winners, prize_name):
     return html
 
 def save_prize_config(prize_tiers):
-    """Save prize configuration to JSON file"""
     try:
         with open(PRIZE_CONFIG_FILE, 'w') as f:
             json.dump(prize_tiers, f, indent=2)
@@ -403,13 +380,12 @@ def save_prize_config(prize_tiers):
         return False
 
 def load_prize_config():
-    """Load prize configuration from JSON file"""
     try:
         if os.path.exists(PRIZE_CONFIG_FILE):
             with open(PRIZE_CONFIG_FILE, 'r') as f:
                 return json.load(f)
     except Exception as e:
-        st.warning(f"Menggunakan konfigurasi default: {e}")
+        pass
     return None
 
 st.set_page_config(
@@ -434,12 +410,6 @@ st.markdown("""
         color: white;
         text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
         margin-bottom: 0.5rem;
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
     }
     
     .subtitle {
@@ -496,12 +466,6 @@ st.markdown("""
         border-radius: 50px !important;
         border: none !important;
         box-shadow: 0 8px 30px rgba(245, 87, 108, 0.4) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 12px 40px rgba(245, 87, 108, 0.5) !important;
     }
     
     .stDownloadButton > button {
@@ -512,62 +476,6 @@ st.markdown("""
         padding: 1rem 2rem !important;
         border-radius: 50px !important;
         border: none !important;
-        box-shadow: 0 8px 30px rgba(17, 153, 142, 0.4) !important;
-    }
-    
-    .info-box {
-        background: rgba(255,255,255,0.9);
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-left: 5px solid #667eea;
-    }
-    
-    .prize-card-clickable {
-        background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
-        margin: 0.8rem;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 3px solid transparent;
-    }
-    
-    .prize-card-clickable:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-        border-color: #f5576c;
-    }
-    
-    .winner-grid {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 8px;
-        padding: 1rem;
-    }
-    
-    .winner-cell {
-        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 10px;
-        padding: 0.8rem 0.5rem;
-        text-align: center;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #f5576c;
-    }
-    
-    .winner-rank {
-        font-size: 0.75rem;
-        color: #888;
-        font-weight: 600;
-    }
-    
-    .winner-number {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #333;
-        margin-top: 2px;
     }
     
     .prize-header {
@@ -579,51 +487,15 @@ st.markdown("""
         margin-bottom: 1.5rem;
         box-shadow: 0 10px 40px rgba(245, 87, 108, 0.4);
     }
-    
-    .prize-header-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
-    
-    .prize-header-subtitle {
-        font-size: 1.3rem;
-        opacity: 0.9;
-    }
-    
-    .back-button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    
-    .slide-container {
-        background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        margin: 1rem 0;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 PRIZE_TIERS = [
-    {"name": "Bensin Rp.100.000,-", "start": 1, "end": 75, "icon": "⛽", "color": "#FF6B6B", "count": 75},
-    {"name": "Top100 Rp.100.000,-", "start": 76, "end": 175, "icon": "💳", "color": "#4ECDC4", "count": 100},
-    {"name": "SNL Rp.100.000,-", "start": 176, "end": 250, "icon": "🎁", "color": "#45B7D1", "count": 75},
-    {"name": "Bensin Rp.150.000,-", "start": 251, "end": 325, "icon": "⛽", "color": "#96CEB4", "count": 75},
-    {"name": "Top100 Rp.150.000,-", "start": 326, "end": 400, "icon": "💳", "color": "#FFEAA7", "count": 75},
-    {"name": "SNL Rp.150.000,-", "start": 401, "end": 500, "icon": "🎁", "color": "#DDA0DD", "count": 100},
-    {"name": "Bensin Rp.200.000,-", "start": 501, "end": 600, "icon": "⛽", "color": "#98D8C8", "count": 100},
-    {"name": "Top100 Rp.200.000,-", "start": 601, "end": 700, "icon": "💳", "color": "#F7DC6F", "count": 100},
-    {"name": "SNL Rp.200.000,-", "start": 701, "end": 800, "icon": "🎁", "color": "#BB8FCE", "count": 100},
+    {"name": "Tokopedia Rp.100.000,-", "start": 1, "end": 175, "icon": "🛒", "color": "#4CAF50", "count": 175},
+    {"name": "Indomaret Rp.100.000,-", "start": 176, "end": 350, "icon": "🏪", "color": "#FF9800", "count": 175},
+    {"name": "Bensin Rp.100.000,-", "start": 351, "end": 525, "icon": "⛽", "color": "#2196F3", "count": 175},
+    {"name": "SNL Rp.100.000,-", "start": 526, "end": 700, "icon": "🎁", "color": "#E91E63", "count": 175},
 ]
-
-TOTAL_WINNERS = 800
-
-def get_prize(rank):
-    for tier in PRIZE_TIERS:
-        if tier["start"] <= rank <= tier["end"]:
-            return tier["name"]
-    return "Tidak Ada Hadiah"
 
 def get_prize_dynamic(rank, prize_tiers):
     for tier in prize_tiers:
@@ -635,7 +507,6 @@ def calculate_total_winners(prize_tiers):
     return sum(tier["count"] for tier in prize_tiers)
 
 def is_eligible_for_prize(name, phone):
-    """Check if participant is eligible for prize (not marked as VIP or F)"""
     name_str = str(name).strip().upper() if name and str(name) != "nan" else ""
     phone_str = str(phone).strip().upper() if phone and str(phone) != "nan" else ""
     
@@ -644,1757 +515,831 @@ def is_eligible_for_prize(name, phone):
     for code in excluded_codes:
         if name_str == code or phone_str == code:
             return False
-        if code in name_str or code in phone_str:
-            if name_str == code or phone_str == code:
-                return False
-            if name_str.startswith(code + " ") or name_str.endswith(" " + code) or (" " + code + " ") in name_str:
-                return False
-            if phone_str.startswith(code + " ") or phone_str.endswith(" " + code) or (" " + code + " ") in phone_str:
-                return False
-    
-    if name_str == "VIP" or name_str == "F" or phone_str == "VIP" or phone_str == "F":
-        return False
+        if name_str.startswith(code + " ") or name_str.endswith(" " + code):
+            return False
+        if phone_str.startswith(code + " ") or phone_str.endswith(" " + code):
+            return False
     
     return True
 
-def secure_shuffle(data_list):
-    shuffled = data_list.copy()
+def secure_shuffle(participants):
+    shuffled = participants.copy()
     n = len(shuffled)
     for i in range(n - 1, 0, -1):
         j = secrets.randbelow(i + 1)
         shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
     return shuffled
 
-def create_gradient_background(slide, prs):
-    background = slide.shapes.add_shape(
-        1, Inches(0), Inches(0), prs.slide_width, prs.slide_height
-    )
-    background.shadow.inherit = False
-    fill = background.fill
-    fill.gradient()
-    fill.gradient_angle = 135
-    fill.gradient_stops[0].color.rgb = RGBColor(102, 126, 234)
-    fill.gradient_stops[1].color.rgb = RGBColor(240, 147, 251)
-    background.line.fill.background()
-    
-    spTree = slide.shapes._spTree
-    sp = background._element
-    spTree.remove(sp)
-    spTree.insert(2, sp)
-
-def add_winner_cell(slide, left, top, width, height, rank, number):
-    shape = slide.shapes.add_shape(1, left, top, width, height)
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
-    shape.line.color.rgb = RGBColor(245, 87, 108)
-    shape.line.width = Pt(2)
-    
-    tf = shape.text_frame
-    tf.word_wrap = True
-    tf.auto_size = None
-    
-    p1 = tf.paragraphs[0]
-    p1.alignment = PP_ALIGN.CENTER
-    run1 = p1.add_run()
-    run1.text = f"#{rank}"
-    run1.font.size = Pt(9)
-    run1.font.color.rgb = RGBColor(136, 136, 136)
-    run1.font.bold = True
-    
-    p2 = tf.add_paragraph()
-    p2.alignment = PP_ALIGN.CENTER
-    run2 = p2.add_run()
-    run2.text = str(number)
-    run2.font.size = Pt(18)
-    run2.font.color.rgb = RGBColor(51, 51, 51)
-    run2.font.bold = True
-
-def add_header(slide, tier, page_num=None, total_pages=None):
-    header = slide.shapes.add_shape(
-        1, Inches(0.5), Inches(0.3), Inches(12.33), Inches(1.5)
-    )
-    header.fill.solid()
-    header.fill.fore_color.rgb = RGBColor(245, 87, 108)
-    header.line.fill.background()
-    
-    icon_box = slide.shapes.add_textbox(Inches(5.5), Inches(0.35), Inches(2), Inches(0.5))
-    tf_icon = icon_box.text_frame
-    p_icon = tf_icon.paragraphs[0]
-    p_icon.alignment = PP_ALIGN.CENTER
-    run_icon = p_icon.add_run()
-    run_icon.text = tier["icon"]
-    run_icon.font.size = Pt(36)
-    
-    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.85), Inches(12.33), Inches(0.6))
-    tf_title = title_box.text_frame
-    p_title = tf_title.paragraphs[0]
-    p_title.alignment = PP_ALIGN.CENTER
-    run_title = p_title.add_run()
-    run_title.text = tier["name"]
-    run_title.font.size = Pt(32)
-    run_title.font.bold = True
-    run_title.font.color.rgb = RGBColor(255, 255, 255)
-    
-    subtitle_text = f"Peringkat {tier['start']} - {tier['end']} | {tier['count']} Pemenang"
-    if page_num and total_pages:
-        subtitle_text += f" (Slide {page_num}/{total_pages})"
-    
-    subtitle_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.4), Inches(12.33), Inches(0.4))
-    tf_sub = subtitle_box.text_frame
-    p_sub = tf_sub.paragraphs[0]
-    p_sub.alignment = PP_ALIGN.CENTER
-    run_sub = p_sub.add_run()
-    run_sub.text = subtitle_text
-    run_sub.font.size = Pt(16)
-    run_sub.font.color.rgb = RGBColor(255, 255, 255)
-
-def create_winners_slide(prs, tier, winners_data, page_num=None, total_pages=None):
-    slide_layout = prs.slide_layouts[6]
-    slide = prs.slides.add_slide(slide_layout)
-    
-    create_gradient_background(slide, prs)
-    add_header(slide, tier, page_num, total_pages)
-    
-    num_winners = len(winners_data)
-    cols = 10
-    rows = (num_winners + cols - 1) // cols
-    
-    cell_width = Inches(1.15)
-    cell_height = Inches(0.7)
-    gap_x = Inches(0.08)
-    gap_y = Inches(0.08)
-    
-    total_grid_width = cols * cell_width + (cols - 1) * gap_x
-    start_x = (prs.slide_width - total_grid_width) / 2
-    start_y = Inches(2.0)
-    
-    for idx, (_, row) in enumerate(winners_data.iterrows()):
-        row_num = idx // cols
-        col_num = idx % cols
-        
-        left = start_x + col_num * (cell_width + gap_x)
-        top = start_y + row_num * (cell_height + gap_y)
-        
-        add_winner_cell(slide, left, top, cell_width, cell_height, row["Peringkat"], row["Nomor Undian"])
-    
-    return slide
-
-def generate_pptx(results_df, prize_tiers=None):
-    if prize_tiers is None:
-        prize_tiers = PRIZE_TIERS
-    
+def generate_pptx(results_df, prize_tiers, title="Hasil Undian"):
     prs = Presentation()
     prs.slide_width = Inches(13.33)
     prs.slide_height = Inches(7.5)
     
     for tier in prize_tiers:
         tier_winners = results_df[results_df["Hadiah"] == tier["name"]].copy()
+        if len(tier_winners) == 0:
+            continue
+        
         tier_winners = tier_winners.drop_duplicates(subset=["Nomor Undian"])
         tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
         
-        if len(tier_winners) <= 50:
-            create_winners_slide(prs, tier, tier_winners)
-        else:
-            first_half = tier_winners.iloc[:50]
-            second_half = tier_winners.iloc[50:]
+        slide_layout = prs.slide_layouts[6]
+        slide = prs.slides.add_slide(slide_layout)
+        
+        background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+        background.fill.gradient()
+        background.fill.gradient_stops[0].color.rgb = RGBColor(102, 126, 234)
+        background.fill.gradient_stops[1].color.rgb = RGBColor(118, 75, 162)
+        background.line.fill.background()
+        
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
+        tf = title_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = f"{tier['icon']} {tier['name']}"
+        run.font.size = Pt(36)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        subtitle_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.1), Inches(12.33), Inches(0.4))
+        tf_sub = subtitle_box.text_frame
+        p_sub = tf_sub.paragraphs[0]
+        p_sub.alignment = PP_ALIGN.CENTER
+        run_sub = p_sub.add_run()
+        run_sub.text = f"{len(tier_winners)} Pemenang"
+        run_sub.font.size = Pt(20)
+        run_sub.font.color.rgb = RGBColor(255, 255, 255)
+        
+        cols = 10
+        cell_width = Inches(1.15)
+        cell_height = Inches(0.6)
+        gap_x = Inches(0.08)
+        gap_y = Inches(0.08)
+        
+        total_grid_width = cols * cell_width + (cols - 1) * gap_x
+        start_x = (prs.slide_width - total_grid_width) / 2
+        start_y = Inches(1.8)
+        
+        for idx, (_, row) in enumerate(tier_winners.iterrows()):
+            if idx >= 50:
+                break
+            row_num = idx // cols
+            col_num = idx % cols
             
-            create_winners_slide(prs, tier, first_half, 1, 2)
-            create_winners_slide(prs, tier, second_half, 2, 2)
+            left = start_x + col_num * (cell_width + gap_x)
+            top = start_y + row_num * (cell_height + gap_y)
+            
+            shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+            shape.line.color.rgb = RGBColor(245, 87, 108)
+            shape.line.width = Pt(2)
+            
+            shape.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+            shape.text_frame.paragraphs[0].space_before = Pt(0)
+            shape.text_frame.paragraphs[0].space_after = Pt(0)
+            
+            run = shape.text_frame.paragraphs[0].add_run()
+            run.text = str(row["Nomor Undian"])
+            run.font.size = Pt(16)
+            run.font.bold = True
+            run.font.color.rgb = RGBColor(51, 51, 51)
     
     pptx_buffer = BytesIO()
     prs.save(pptx_buffer)
     pptx_buffer.seek(0)
     return pptx_buffer.getvalue()
 
-if "selected_prize" not in st.session_state:
-    st.session_state["selected_prize"] = None
+def generate_shuffle_pptx(winners_list, prize_name):
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
+    
+    slide_layout = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(slide_layout)
+    
+    background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+    background.fill.gradient()
+    background.fill.gradient_stops[0].color.rgb = RGBColor(255, 152, 0)
+    background.fill.gradient_stops[1].color.rgb = RGBColor(255, 87, 34)
+    background.line.fill.background()
+    
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(12.33), Inches(1))
+    tf = title_box.text_frame
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.CENTER
+    run = p.add_run()
+    run.text = f"🎲 {prize_name}"
+    run.font.size = Pt(40)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor(255, 255, 255)
+    
+    cols = 10
+    cell_width = Inches(1.1)
+    cell_height = Inches(0.7)
+    gap_x = Inches(0.1)
+    gap_y = Inches(0.1)
+    
+    total_grid_width = cols * cell_width + (cols - 1) * gap_x
+    start_x = (prs.slide_width - total_grid_width) / 2
+    start_y = Inches(2.0)
+    
+    for idx, winner in enumerate(winners_list):
+        row_num = idx // cols
+        col_num = idx % cols
+        
+        left = start_x + col_num * (cell_width + gap_x)
+        top = start_y + row_num * (cell_height + gap_y)
+        
+        shape = slide.shapes.add_shape(5, left, top, cell_width, cell_height)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(255, 255, 255)
+        
+        shape.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        run = shape.text_frame.paragraphs[0].add_run()
+        run.text = str(winner)
+        run.font.size = Pt(18)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(51, 51, 51)
+    
+    pptx_buffer = BytesIO()
+    prs.save(pptx_buffer)
+    pptx_buffer.seek(0)
+    return pptx_buffer.getvalue()
 
+if "current_page" not in st.session_state:
+    st.session_state["current_page"] = "home"
 if "prize_tiers" not in st.session_state:
     saved_config = load_prize_config()
-    if saved_config:
-        st.session_state["prize_tiers"] = saved_config
-    else:
-        st.session_state["prize_tiers"] = PRIZE_TIERS.copy()
+    st.session_state["prize_tiers"] = saved_config if saved_config else PRIZE_TIERS.copy()
 
-DEFAULT_ICONS = ["🎁", "⛽", "💳", "🏆", "💰", "🎯", "⭐", "🎊", "🎉", "💎"]
+st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
+st.markdown('<p class="main-title">🎉 UNDIAN MOVE & GROOVE 🎉</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">7 Desember 2024</p>', unsafe_allow_html=True)
 
-with st.sidebar:
-    st.markdown("### ⚙️ Pengaturan Hadiah")
-    
-    if not st.session_state.get("lottery_done", False):
-        st.markdown("---")
-        
-        if "new_prizes" not in st.session_state:
-            st.session_state["new_prizes"] = []
-            for tier in st.session_state["prize_tiers"]:
-                st.session_state["new_prizes"].append({
-                    "name": tier["name"],
-                    "count": tier["count"],
-                    "icon": tier["icon"]
-                })
-        
-        st.markdown("**Daftar Hadiah:**")
-        
-        prizes_to_remove = []
-        for idx, prize in enumerate(st.session_state["new_prizes"]):
-            col1, col2, col3 = st.columns([3, 2, 1])
-            with col1:
-                new_name = st.text_input(
-                    "Nama",
-                    value=prize["name"],
-                    key=f"prize_name_{idx}",
-                    label_visibility="collapsed"
-                )
-                if new_name != prize["name"]:
-                    st.session_state["new_prizes"][idx]["name"] = new_name
-            with col2:
-                new_count = st.number_input(
-                    "Jumlah",
-                    min_value=1,
-                    value=int(prize["count"]),
-                    key=f"prize_count_{idx}",
-                    label_visibility="collapsed"
-                )
-                if new_count != prize["count"]:
-                    st.session_state["new_prizes"][idx]["count"] = int(new_count)
-            with col3:
-                if st.button("🗑️", key=f"remove_{idx}"):
-                    prizes_to_remove.append(idx)
-        
-        for idx in sorted(prizes_to_remove, reverse=True):
-            st.session_state["new_prizes"].pop(idx)
-            st.rerun()
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➕ Tambah Hadiah"):
-                icon = DEFAULT_ICONS[len(st.session_state["new_prizes"]) % len(DEFAULT_ICONS)]
-                st.session_state["new_prizes"].append({
-                    "name": "Hadiah Baru",
-                    "count": 10,
-                    "icon": icon
-                })
-                st.rerun()
-        
-        with col2:
-            if st.button("💾 Simpan Hadiah", type="primary"):
-                new_tiers = []
-                current_start = 1
-                for idx in range(len(st.session_state["new_prizes"])):
-                    name_key = f"prize_name_{idx}"
-                    count_key = f"prize_count_{idx}"
-                    name = st.session_state.get(name_key, st.session_state["new_prizes"][idx]["name"])
-                    count = int(st.session_state.get(count_key, st.session_state["new_prizes"][idx]["count"]))
-                    icon = st.session_state["new_prizes"][idx].get("icon", DEFAULT_ICONS[idx % len(DEFAULT_ICONS)])
-                    
-                    new_tiers.append({
-                        "name": name,
-                        "start": current_start,
-                        "end": current_start + count - 1,
-                        "icon": icon,
-                        "color": "#FF6B6B",
-                        "count": count
-                    })
-                    current_start += count
-                
-                st.session_state["prize_tiers"] = new_tiers
-                save_prize_config(new_tiers)
-                del st.session_state["new_prizes"]
-                st.success("✅ Hadiah tersimpan secara permanen!")
-                st.rerun()
-        
-        total = sum(int(st.session_state.get(f"prize_count_{idx}", p["count"])) for idx, p in enumerate(st.session_state["new_prizes"]))
-        st.markdown(f"**Total Pemenang: {total}**")
-        
-        st.markdown("---")
-        st.caption("⚠️ Klik 'Simpan Hadiah' untuk menerapkan perubahan")
-    else:
-        st.info("Undian sudah selesai. Reset untuk mengubah hadiah.")
+current_page = st.session_state.get("current_page", "home")
 
-if st.session_state.get("continue_lottery_mode", False):
-    remaining_pool = st.session_state.get("remaining_pool")
+if current_page == "home":
+    tab1, tab2 = st.tabs(["📁 Upload File CSV", "🔗 Google Sheets URL"])
     
-    if remaining_pool is not None and len(remaining_pool) > 0:
-        st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
-        
-        st.markdown('<p class="main-title">🎡 UNDIAN SISA PESERTA 🎡</p>', unsafe_allow_html=True)
-        st.markdown('<p class="subtitle">Spinning Wheel & Shuffle Mode</p>', unsafe_allow_html=True)
-        
-        all_ws_winners = st.session_state.get("all_wheel_shuffle_winners", [])
-        
-        st.markdown(f"""
-        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0;">
-            <p style="color: white; text-align: center; margin: 0; font-size: 1.2rem;">
-                📊 <strong>Sisa Peserta Eligible:</strong> {len(remaining_pool)} | 
-                <strong>Sudah Diundi:</strong> {len(all_ws_winners)}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:600;'>🎯 Batch Undian Baru</p>", unsafe_allow_html=True)
-        
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            max_winners = len(remaining_pool)
-            num_batch_winners = st.number_input(
-                "Jumlah pemenang batch ini",
-                min_value=1,
-                max_value=max_winners,
-                value=min(10, max_winners),
-                key="batch_winner_count"
-            )
-        with col2:
-            batch_prize_name = st.text_input(
-                "Nama hadiah untuk batch ini",
-                value="",
-                placeholder="Contoh: Voucher Belanja Rp.500.000,-",
-                key="batch_prize_name"
-            )
-        
-        if not batch_prize_name:
-            st.warning("⚠️ Masukkan nama hadiah terlebih dahulu")
-        
-        col_w1, col_w2 = st.columns(2)
-        with col_w1:
-            wheel_disabled = not batch_prize_name
-            if st.button("🎡 SPINNING WHEEL", use_container_width=True, type="primary", disabled=wheel_disabled):
-                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                batch_winners = []
-                temp_pool = remaining_numbers.copy()
-                for _ in range(min(num_batch_winners, len(temp_pool))):
-                    idx = secrets.randbelow(len(temp_pool))
-                    batch_winners.append(temp_pool.pop(idx))
+    df = None
+    
+    with tab1:
+        uploaded_file = st.file_uploader("Upload File CSV", type=["csv"], help="File CSV harus berisi kolom 'Nomor Undian'")
+        if uploaded_file:
+            try:
+                uploaded_file.seek(0)
+                file_content = uploaded_file.read()
+                uploaded_file.seek(0)
                 
-                st.session_state["wheel_mode_active"] = True
-                st.session_state["wheel_winners"] = batch_winners
-                st.session_state["wheel_current_index"] = 0
-                st.session_state["wheel_prize_display"] = batch_prize_name
-                st.session_state["wheel_batch_confirmed"] = False
-                st.rerun()
-        
-        with col_w2:
-            shuffle_disabled = not batch_prize_name
-            if st.button("🎲 SHUFFLE MODE", use_container_width=True, disabled=shuffle_disabled):
-                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                batch_winners = []
-                temp_pool = remaining_numbers.copy()
-                for _ in range(min(num_batch_winners, len(temp_pool))):
-                    idx = secrets.randbelow(len(temp_pool))
-                    batch_winners.append(temp_pool.pop(idx))
+                content_hash = hashlib.md5(file_content).hexdigest()
+                if st.session_state.get("last_content_hash") != content_hash:
+                    st.session_state["last_content_hash"] = content_hash
+                    st.session_state["data_source_changed"] = True
+                    st.session_state["evoucher_done"] = False
+                    st.session_state["evoucher_results"] = None
+                    st.session_state["shuffle_results"] = {}
+                    st.session_state["wheel_winners"] = []
+                    st.session_state["wheel_prizes"] = []
+                    if "sheets_df" in st.session_state:
+                        del st.session_state["sheets_df"]
+                    if "last_sheets_hash" in st.session_state:
+                        del st.session_state["last_sheets_hash"]
+                    if "remaining_pool" in st.session_state:
+                        del st.session_state["remaining_pool"]
                 
-                st.session_state["shuffle_mode_active"] = True
-                st.session_state["shuffle_winners"] = batch_winners
-                st.session_state["shuffle_prize_display"] = batch_prize_name
-                st.session_state["shuffle_batch_confirmed"] = False
-                st.rerun()
-        
-        if st.session_state.get("wheel_mode_active"):
-            wheel_winners = st.session_state.get("wheel_winners", [])
-            wheel_idx = st.session_state.get("wheel_current_index", 0)
-            prize_display = st.session_state.get("wheel_prize_display", "Hadiah")
-            participant_data = st.session_state.get("participant_data")
-            
-            st.markdown("---")
-            
-            if wheel_idx < len(wheel_winners):
-                current_winner = wheel_winners[wheel_idx]
-                
-                winner_name = ""
-                winner_phone = ""
-                if participant_data is not None:
-                    winner_row = participant_data[participant_data["Nomor Undian"] == current_winner]
-                    if len(winner_row) > 0:
-                        winner_name = winner_row.iloc[0].get("Nama", "")
-                        phone = str(winner_row.iloc[0].get("No HP", ""))
-                        if len(phone) >= 4:
-                            winner_phone = f"****{phone[-4:]}"
-                
-                st.markdown(f"""
-                <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                    🎯 {prize_display}
-                </div>
-                <div style="text-align:center; color:#fff9c4; font-size:1.2rem; margin-bottom: 1rem;">
-                    Pemenang ke-{wheel_idx + 1} dari {len(wheel_winners)}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                wheel_html = create_spinning_wheel_html(wheel_winners, current_winner, wheel_size=450)
-                components.html(wheel_html, height=650)
-                
-                if winner_name or winner_phone:
-                    st.markdown(f"""
-                    <div style="text-align:center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 10px; margin-top: 0.5rem;">
-                        <span style="color: white; font-size: 1rem;">👤 {winner_name} | 📱 {winner_phone}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                col_nav1, col_nav2, col_nav3 = st.columns(3)
-                with col_nav1:
-                    if wheel_idx > 0:
-                        if st.button("⬅️ Sebelumnya", key="wheel_prev_cont", use_container_width=True):
-                            st.session_state["wheel_current_index"] = wheel_idx - 1
-                            st.rerun()
-                with col_nav2:
-                    if st.button("❌ Batalkan", key="wheel_cancel_cont", use_container_width=True):
-                        st.session_state["wheel_mode_active"] = False
-                        st.rerun()
-                with col_nav3:
-                    if wheel_idx < len(wheel_winners) - 1:
-                        if st.button("➡️ Selanjutnya", key="wheel_next_cont", use_container_width=True):
-                            st.session_state["wheel_current_index"] = wheel_idx + 1
-                            st.rerun()
-                    else:
-                        if st.button("✅ Konfirmasi Semua", key="wheel_confirm_cont", use_container_width=True, type="primary"):
-                            for w in wheel_winners:
-                                all_ws_winners.append({"Nomor Undian": w, "Hadiah": prize_display})
-                            st.session_state["all_wheel_shuffle_winners"] = all_ws_winners
-                            
-                            new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(wheel_winners)]
-                            st.session_state["remaining_pool"] = new_pool
-                            st.session_state["wheel_mode_active"] = False
-                            st.success(f"✅ {len(wheel_winners)} pemenang dikonfirmasi!")
-                            st.rerun()
-            
-        if st.session_state.get("shuffle_mode_active"):
-            shuffle_winners = st.session_state.get("shuffle_winners", [])
-            prize_display = st.session_state.get("shuffle_prize_display", "Hadiah")
-            
-            st.markdown("---")
-            
-            st.markdown(f"""
-            <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                🎲 {prize_display}
-            </div>
-            <div style="text-align:center; color:#fff9c4; font-size:1.2rem; margin-bottom: 1rem;">
-                {len(shuffle_winners)} Pemenang
-            </div>
-            """, unsafe_allow_html=True)
-            
-            shuffle_html = create_shuffle_reveal_html(shuffle_winners, prize_display)
-            components.html(shuffle_html, height=500)
-            
-            col_s1, col_s2 = st.columns(2)
-            with col_s1:
-                if st.button("❌ Batalkan", key="shuffle_cancel_cont", use_container_width=True):
-                    st.session_state["shuffle_mode_active"] = False
-                    st.rerun()
-            with col_s2:
-                if st.button("✅ Konfirmasi Pemenang", key="shuffle_confirm_cont", use_container_width=True, type="primary"):
-                    for w in shuffle_winners:
-                        all_ws_winners.append({"Nomor Undian": w, "Hadiah": prize_display})
-                    st.session_state["all_wheel_shuffle_winners"] = all_ws_winners
+                df = pd.read_csv(uploaded_file, dtype=str, encoding='utf-8-sig')
+                df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
+    with tab2:
+        sheets_url = st.text_input("Paste Google Sheets URL", placeholder="https://docs.google.com/spreadsheets/d/...")
+        if sheets_url and st.button("📥 Ambil Data"):
+            try:
+                sheet_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheets_url)
+                if sheet_id_match:
+                    sheet_id = sheet_id_match.group(1)
+                    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+                    response = requests.get(csv_url, timeout=30)
+                    response.raise_for_status()
                     
-                    new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(shuffle_winners)]
-                    st.session_state["remaining_pool"] = new_pool
-                    st.session_state["shuffle_mode_active"] = False
-                    st.success(f"✅ {len(shuffle_winners)} pemenang dikonfirmasi!")
-                    st.rerun()
-        
-        if len(all_ws_winners) > 0 and not st.session_state.get("wheel_mode_active") and not st.session_state.get("shuffle_mode_active"):
-            st.markdown("---")
-            st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📋 Daftar Pemenang Batch</p>", unsafe_allow_html=True)
-            
-            ws_df = pd.DataFrame(all_ws_winners)
-            participant_data = st.session_state.get("participant_data")
-            if participant_data is not None:
-                ws_df = ws_df.merge(
-                    participant_data[["Nomor Undian", "Nama", "No HP"]], 
-                    on="Nomor Undian", 
-                    how="left"
-                )
-                ws_df["No HP Display"] = ws_df["No HP"].apply(lambda x: f"****{str(x)[-4:]}" if pd.notna(x) and len(str(x)) >= 4 else "")
-            
-            by_prize = ws_df.groupby("Hadiah")
-            for prize_name, group in by_prize:
-                st.markdown(f"**{prize_name}** ({len(group)} pemenang)")
-                display_cols = ["Nomor Undian", "Nama"]
-                if "No HP Display" in group.columns:
-                    display_cols.append("No HP Display")
-                st.dataframe(group[display_cols].reset_index(drop=True), use_container_width=True, hide_index=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            col_exp1, col_exp2 = st.columns(2)
-            with col_exp1:
-                export_df = ws_df[["Nomor Undian", "Hadiah"]].copy()
-                if "Nama" in ws_df.columns:
-                    export_df["Nama"] = ws_df["Nama"]
-                if "No HP" in ws_df.columns:
-                    export_df["No HP"] = ws_df["No HP"]
-                
-                excel_buffer = BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                    export_df.to_excel(writer, index=False, sheet_name='Pemenang Batch')
-                excel_data = excel_buffer.getvalue()
-                
-                st.download_button(
-                    label="📊 Download Excel Batch",
-                    data=excel_data,
-                    file_name="pemenang_batch_wheel_shuffle.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-            
-            with col_exp2:
-                remaining_csv = remaining_pool[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
-                st.download_button(
-                    label=f"📥 Download Sisa ({len(remaining_pool)} peserta)",
-                    data=remaining_csv,
-                    file_name="sisa_peserta_eligible.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-        
-        st.markdown("---")
-        col_back1, col_back2 = st.columns(2)
-        with col_back1:
-            if st.button("⬅️ KEMBALI KE HASIL UNDIAN", use_container_width=True):
-                st.session_state["continue_lottery_mode"] = False
-                st.session_state["wheel_mode_active"] = False
-                st.session_state["shuffle_mode_active"] = False
-                st.rerun()
-        with col_back2:
-            if st.button("🔄 RESET SEMUA (Undian Baru)", use_container_width=True):
-                st.session_state["lottery_done"] = False
-                st.session_state["results_df"] = None
-                st.session_state["continue_lottery_mode"] = False
-                st.session_state["wheel_mode_active"] = False
-                st.session_state["shuffle_mode_active"] = False
-                st.session_state["all_wheel_shuffle_winners"] = []
-                st.session_state["excel_downloaded"] = False
-                st.session_state["pptx_downloaded"] = False
-                st.rerun()
-    else:
-        st.warning("Tidak ada sisa peserta eligible. Kembali ke halaman utama.")
-        if st.button("⬅️ Kembali"):
-            st.session_state["continue_lottery_mode"] = False
-            st.rerun()
-
-elif st.session_state.get("selected_prize") is not None and st.session_state.get("lottery_done", False):
-    selected_tier = st.session_state["selected_prize"]
-    results_df = st.session_state["results_df"]
-    
-    tier_winners = results_df[results_df["Hadiah"] == selected_tier["name"]].copy()
-    tier_winners = tier_winners.drop_duplicates(subset=["Nomor Undian"])
-    tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
-    
-    col1, col2, col3 = st.columns([1, 6, 1])
-    with col1:
-        if st.button("⬅️ KEMBALI", use_container_width=True):
-            st.session_state["selected_prize"] = None
-            st.rerun()
-    
-    winner_count = selected_tier["end"] - selected_tier["start"] + 1
-    st.markdown(f"""
-    <div class="prize-header">
-        <div style="font-size: 4rem;">{selected_tier["icon"]}</div>
-        <div class="prize-header-title">{selected_tier["name"]}</div>
-        <div class="prize-header-subtitle">Peringkat {selected_tier["start"]} - {selected_tier["end"]} | {winner_count} Pemenang</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    num_winners = len(tier_winners)
-    
-    col_mode1, col_mode2, col_mode3 = st.columns(3)
-    with col_mode1:
-        grid_mode = st.button("📊 Mode Grid", use_container_width=True, 
-                              type="primary" if st.session_state.get("display_mode", "grid") == "grid" else "secondary")
-        if grid_mode:
-            st.session_state["display_mode"] = "grid"
-            st.session_state["wheel_index"] = 0
-            st.rerun()
-    with col_mode2:
-        shuffle_mode = st.button("🎲 Mode Shuffle", use_container_width=True,
-                                type="primary" if st.session_state.get("display_mode") == "shuffle" else "secondary")
-        if shuffle_mode:
-            st.session_state["display_mode"] = "shuffle"
-            st.rerun()
-    with col_mode3:
-        wheel_mode = st.button("🎡 Mode Wheel", use_container_width=True,
-                              type="primary" if st.session_state.get("display_mode") == "wheel" else "secondary")
-        if wheel_mode:
-            st.session_state["display_mode"] = "wheel"
-            st.session_state["wheel_index"] = 0
-            st.rerun()
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    current_mode = st.session_state.get("display_mode", "grid")
-    
-    if current_mode == "wheel":
-        wheel_index = st.session_state.get("wheel_index", 0)
-        
-        if wheel_index < num_winners:
-            current_winner = tier_winners.iloc[wheel_index]
-            winner_number = current_winner["Nomor Undian"]
-            
-            all_numbers = tier_winners["Nomor Undian"].tolist()
-            
-            st.markdown(f"""
-            <div style="text-align:center; color:white; font-size:1.3rem; margin-bottom:1rem;">
-                🎯 Pemenang ke-{wheel_index + 1} dari {num_winners}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            wheel_html = create_spinning_wheel_html(all_numbers, winner_number, wheel_size=450)
-            components.html(wheel_html, height=650)
-            
-            col_prev, col_next = st.columns(2)
-            with col_prev:
-                if wheel_index > 0:
-                    if st.button("⬅️ Pemenang Sebelumnya", use_container_width=True):
-                        st.session_state["wheel_index"] = wheel_index - 1
-                        st.rerun()
-            with col_next:
-                if wheel_index < num_winners - 1:
-                    if st.button("➡️ Pemenang Selanjutnya", use_container_width=True):
-                        st.session_state["wheel_index"] = wheel_index + 1
-                        st.rerun()
-        else:
-            st.success("✅ Semua pemenang sudah ditampilkan!")
-            if st.button("🔄 Mulai Ulang", use_container_width=True):
-                st.session_state["wheel_index"] = 0
-                st.rerun()
-                
-    elif current_mode == "shuffle":
-        winner_numbers = tier_winners["Nomor Undian"].tolist()
-        shuffle_html = create_shuffle_reveal_html(winner_numbers, selected_tier["name"])
-        components.html(shuffle_html, height=600)
-        
-    else:
-        num_cols = 10 if num_winners >= 10 else num_winners
-        has_phone_data = "No HP" in tier_winners.columns and tier_winners["No HP"].notna().any()
-        has_name_data = "Nama" in tier_winners.columns and tier_winners["Nama"].notna().any()
-        cell_height = 120 if (has_phone_data or has_name_data) else 85
-        grid_height = ((num_winners + num_cols - 1) // num_cols) * cell_height + 40
-        
-        has_phone = "No HP" in tier_winners.columns
-        has_name = "Nama" in tier_winners.columns
-        
-        winners_html = f'''
-        <html>
-        <head>
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-                body {{
-                    margin: 0;
-                    padding: 0;
-                    font-family: 'Poppins', sans-serif;
-                    background: transparent;
-                }}
-                .winner-grid {{
-                    display: grid;
-                    grid-template-columns: repeat({num_cols}, 1fr);
-                    gap: 8px;
-                    padding: 1rem;
-                }}
-                .winner-cell {{
-                    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-                    border-radius: 10px;
-                    padding: 0.8rem 0.5rem;
-                    text-align: center;
-                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-                    border-left: 4px solid #f5576c;
-                }}
-                .winner-rank {{
-                    font-size: 0.75rem;
-                    color: #888;
-                    font-weight: 600;
-                }}
-                .winner-number {{
-                    font-size: 1.3rem;
-                    font-weight: 800;
-                    color: #333;
-                    margin-top: 0.2rem;
-                }}
-                .winner-name {{
-                    font-size: 0.75rem;
-                    color: #555;
-                    margin-top: 0.2rem;
-                    font-weight: 600;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }}
-                .winner-phone {{
-                    font-size: 0.7rem;
-                    color: #666;
-                    margin-top: 0.2rem;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="winner-grid">
-        '''
-        for _, row in tier_winners.iterrows():
-            name = row.get("Nama", "") if has_name else ""
-            name_html = f'<div class="winner-name">{name}</div>' if name and str(name) != "nan" else ""
-            
-            phone = row.get("No HP", "") if has_phone else ""
-            if phone and str(phone) != "nan" and str(phone).strip():
-                phone_display = str(phone).strip()
-            else:
-                phone_display = ""
-            phone_html = f'<div class="winner-phone">📱 {phone_display}</div>' if phone_display else ""
-            
-            winners_html += f'''
-                <div class="winner-cell">
-                    <div class="winner-rank">#{row["Peringkat"]}</div>
-                    <div class="winner-number">{row["Nomor Undian"]}</div>
-                    {name_html}
-                    {phone_html}
-                </div>
-            '''
-        winners_html += '''
-            </div>
-        </body>
-        </html>
-        '''
-        
-        components.html(winners_html, height=grid_height, scrolling=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        tier_excel_buffer = BytesIO()
-        with pd.ExcelWriter(tier_excel_buffer, engine='openpyxl') as writer:
-            tier_winners.to_excel(writer, index=False, sheet_name='Pemenang')
-        tier_excel_data = tier_excel_buffer.getvalue()
-        
-        st.download_button(
-            label=f"📥 Download Pemenang {selected_tier['name']}",
-            data=tier_excel_data,
-            file_name=f"pemenang_{selected_tier['name'].replace(' ', '_').replace('.', '').replace(',', '')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-
-else:
-    st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
-    
-    st.markdown('<p class="main-title">🎉 Sistem Undian Move & Groove 🎉</p>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Awareness of Moving The Body for Bone Health</p>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    has_remaining_pool = st.session_state.get("remaining_pool") is not None and len(st.session_state.get("remaining_pool", [])) > 0
-    
-    if has_remaining_pool and not st.session_state.get("lottery_done", False):
-        remaining_pool = st.session_state.get("remaining_pool")
-        participant_data = st.session_state.get("participant_data")
-        
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #1a5a1a 0%, #2d7d2d 100%); border-radius: 15px; padding: 1.5rem; margin: 1rem 0; text-align: center;">
-            <p style="color: #90EE90; font-size: 1.5rem; font-weight: bold; margin: 0;">📊 Data Sisa Peserta Tersedia</p>
-            <p style="color: white; font-size: 1.2rem; margin: 0.5rem 0;">Peserta Eligible: <strong>{len(remaining_pool)}</strong></p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.markdown("""
-            <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 1rem; text-align: center; border: 2px solid #4CAF50; height: 100%;">
-                <p style="color: #4CAF50; font-size: 1.3rem; font-weight: bold;">🎁 Undian E-Voucher</p>
-                <p style="color: white; font-size: 0.9rem;">700 hadiah, 4 kategori<br>Dikirim lewat WA</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            st.markdown("""
-            <p style="color: #aaa; font-size: 0.85rem; text-align: center;">
-            • Data: 5000 nomor<br>
-            • VIP & F tidak diundi<br>
-            • Ada animasi saat undian<br>
-            • Download PPT, XLS, Sisa
-            </p>
-            """, unsafe_allow_html=True)
-            
-            if st.button("🎲 MULAI UNDIAN UTAMA", key="start_main_lottery", use_container_width=True, type="primary"):
-                st.session_state["lottery_mode"] = "main"
-                st.rerun()
-        
-        with col2:
-            st.markdown("""
-            <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 1rem; text-align: center; border: 2px solid #FF9800; height: 100%;">
-                <p style="color: #FF9800; font-size: 1.3rem; font-weight: bold;">🎲 Shuffle</p>
-                <p style="color: white; font-size: 0.9rem;">Luckydraw Sesi 1, 2, 3<br>Hadiah per batch</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <p style="color: #aaa; font-size: 0.85rem; text-align: center;">
-            • Data: {len(remaining_pool)} sisa peserta<br>
-            • Ada nama & nomor HP<br>
-            • 3x undian per sesi<br>
-            • Update otomatis tiap batch
-            </p>
-            """, unsafe_allow_html=True)
-            
-            shuffle_num = st.number_input("Jumlah pemenang", min_value=1, max_value=len(remaining_pool), value=min(50, len(remaining_pool)), key="shuffle_count_home")
-            shuffle_prize = st.text_input("Nama hadiah", placeholder="Contoh: Voucher Rp.100.000", key="shuffle_prize_home")
-            
-            if st.button("🎲 MULAI SHUFFLE", key="start_shuffle_home", use_container_width=True, disabled=not shuffle_prize):
-                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                batch_winners = []
-                temp_pool = remaining_numbers.copy()
-                for _ in range(min(shuffle_num, len(temp_pool))):
-                    idx = secrets.randbelow(len(temp_pool))
-                    batch_winners.append(temp_pool.pop(idx))
-                
-                st.session_state["shuffle_mode_active"] = True
-                st.session_state["shuffle_winners"] = batch_winners
-                st.session_state["shuffle_prize_display"] = shuffle_prize
-                st.session_state["home_shuffle_mode"] = True
-                st.rerun()
-        
-        with col3:
-            st.markdown("""
-            <div style="background: rgba(255,255,255,0.1); border-radius: 15px; padding: 1rem; text-align: center; border: 2px solid #E91E63; height: 100%;">
-                <p style="color: #E91E63; font-size: 1.3rem; font-weight: bold;">🎡 Spinning Wheel</p>
-                <p style="color: white; font-size: 0.9rem;">Hadiah Utama<br>10 pemenang</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <p style="color: #aaa; font-size: 0.85rem; text-align: center;">
-            • Data: {len(remaining_pool)} sisa peserta<br>
-            • Ada nama & nomor HP<br>
-            • Diputar per hadiah<br>
-            • Efek dramatis
-            </p>
-            """, unsafe_allow_html=True)
-            
-            wheel_num = st.number_input("Jumlah hadiah", min_value=1, max_value=min(50, len(remaining_pool)), value=min(10, len(remaining_pool)), key="wheel_count_home")
-            wheel_prize = st.text_input("Nama hadiah", placeholder="Contoh: Grand Prize", key="wheel_prize_home")
-            
-            if st.button("🎡 MULAI WHEEL", key="start_wheel_home", use_container_width=True, type="primary", disabled=not wheel_prize):
-                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                batch_winners = []
-                temp_pool = remaining_numbers.copy()
-                for _ in range(min(wheel_num, len(temp_pool))):
-                    idx = secrets.randbelow(len(temp_pool))
-                    batch_winners.append(temp_pool.pop(idx))
-                
-                st.session_state["wheel_mode_active"] = True
-                st.session_state["wheel_winners"] = batch_winners
-                st.session_state["wheel_current_index"] = 0
-                st.session_state["wheel_prize_display"] = wheel_prize
-                st.session_state["home_wheel_mode"] = True
-                st.rerun()
-        
-        if st.session_state.get("shuffle_mode_active") and st.session_state.get("home_shuffle_mode"):
-            shuffle_winners = st.session_state.get("shuffle_winners", [])
-            prize_display = st.session_state.get("shuffle_prize_display", "Hadiah")
-            
-            st.markdown("---")
-            st.markdown(f"""
-            <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                🎲 {prize_display} - {len(shuffle_winners)} Pemenang
-            </div>
-            """, unsafe_allow_html=True)
-            
-            shuffle_html = create_shuffle_reveal_html(shuffle_winners, prize_display)
-            components.html(shuffle_html, height=500)
-            
-            if participant_data is not None:
-                st.markdown("**Detail Pemenang:**")
-                winner_details = []
-                for w in shuffle_winners:
-                    row = participant_data[participant_data["Nomor Undian"] == w]
-                    if len(row) > 0:
-                        nama = row.iloc[0].get("Nama", "")
-                        hp = str(row.iloc[0].get("No HP", ""))
-                        hp_masked = f"****{hp[-4:]}" if len(hp) >= 4 else ""
-                        winner_details.append({"Nomor Undian": w, "Nama": nama, "No HP": hp_masked})
-                if winner_details:
-                    st.dataframe(pd.DataFrame(winner_details), use_container_width=True, hide_index=True)
-            
-            col_s1, col_s2 = st.columns(2)
-            with col_s1:
-                if st.button("❌ Batalkan", key="shuffle_cancel_home", use_container_width=True):
-                    st.session_state["shuffle_mode_active"] = False
-                    st.session_state["home_shuffle_mode"] = False
-                    st.rerun()
-            with col_s2:
-                if st.button("✅ Konfirmasi & Update Sisa", key="shuffle_confirm_home", use_container_width=True, type="primary"):
-                    new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(shuffle_winners)]
-                    st.session_state["remaining_pool"] = new_pool
+                    content_hash = hashlib.md5(response.content).hexdigest()
+                    if st.session_state.get("last_sheets_hash") != content_hash:
+                        st.session_state["last_sheets_hash"] = content_hash
+                        st.session_state["data_source_changed"] = True
+                        st.session_state["evoucher_done"] = False
+                        st.session_state["evoucher_results"] = None
+                        st.session_state["shuffle_results"] = {}
+                        st.session_state["wheel_winners"] = []
+                        st.session_state["wheel_prizes"] = []
+                        if "last_content_hash" in st.session_state:
+                            del st.session_state["last_content_hash"]
+                        if "remaining_pool" in st.session_state:
+                            del st.session_state["remaining_pool"]
                     
-                    all_ws = st.session_state.get("all_wheel_shuffle_winners", [])
-                    for w in shuffle_winners:
-                        all_ws.append({"Nomor Undian": w, "Hadiah": prize_display})
-                    st.session_state["all_wheel_shuffle_winners"] = all_ws
-                    
-                    st.session_state["shuffle_mode_active"] = False
-                    st.session_state["home_shuffle_mode"] = False
-                    st.success(f"✅ {len(shuffle_winners)} pemenang dikonfirmasi! Sisa peserta: {len(new_pool)}")
-                    st.rerun()
-        
-        if st.session_state.get("wheel_mode_active") and st.session_state.get("home_wheel_mode"):
-            wheel_winners = st.session_state.get("wheel_winners", [])
-            wheel_idx = st.session_state.get("wheel_current_index", 0)
-            prize_display = st.session_state.get("wheel_prize_display", "Hadiah")
-            
-            st.markdown("---")
-            
-            if wheel_idx < len(wheel_winners):
-                current_winner = wheel_winners[wheel_idx]
-                
-                winner_name = ""
-                winner_phone = ""
-                if participant_data is not None:
-                    winner_row = participant_data[participant_data["Nomor Undian"] == current_winner]
-                    if len(winner_row) > 0:
-                        winner_name = winner_row.iloc[0].get("Nama", "")
-                        phone = str(winner_row.iloc[0].get("No HP", ""))
-                        if len(phone) >= 4:
-                            winner_phone = f"****{phone[-4:]}"
-                
-                st.markdown(f"""
-                <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                    🎯 {prize_display}
-                </div>
-                <div style="text-align:center; color:#fff9c4; font-size:1.2rem; margin-bottom: 1rem;">
-                    Pemenang ke-{wheel_idx + 1} dari {len(wheel_winners)}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                wheel_html = create_spinning_wheel_html(wheel_winners, current_winner, wheel_size=450)
-                components.html(wheel_html, height=650)
-                
-                if winner_name or winner_phone:
-                    st.markdown(f"""
-                    <div style="text-align:center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 10px; margin-top: 0.5rem;">
-                        <span style="color: white; font-size: 1rem;">👤 {winner_name} | 📱 {winner_phone}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                col_nav1, col_nav2, col_nav3 = st.columns(3)
-                with col_nav1:
-                    if wheel_idx > 0:
-                        if st.button("⬅️ Sebelumnya", key="wheel_prev_home", use_container_width=True):
-                            st.session_state["wheel_current_index"] = wheel_idx - 1
-                            st.rerun()
-                with col_nav2:
-                    if st.button("❌ Batalkan", key="wheel_cancel_home", use_container_width=True):
-                        st.session_state["wheel_mode_active"] = False
-                        st.session_state["home_wheel_mode"] = False
-                        st.rerun()
-                with col_nav3:
-                    if wheel_idx < len(wheel_winners) - 1:
-                        if st.button("➡️ Selanjutnya", key="wheel_next_home", use_container_width=True):
-                            st.session_state["wheel_current_index"] = wheel_idx + 1
-                            st.rerun()
-                    else:
-                        if st.button("✅ Konfirmasi Semua", key="wheel_confirm_home", use_container_width=True, type="primary"):
-                            new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(wheel_winners)]
-                            st.session_state["remaining_pool"] = new_pool
-                            
-                            all_ws = st.session_state.get("all_wheel_shuffle_winners", [])
-                            for w in wheel_winners:
-                                all_ws.append({"Nomor Undian": w, "Hadiah": prize_display})
-                            st.session_state["all_wheel_shuffle_winners"] = all_ws
-                            
-                            st.session_state["wheel_mode_active"] = False
-                            st.session_state["home_wheel_mode"] = False
-                            st.success(f"✅ {len(wheel_winners)} pemenang dikonfirmasi! Sisa peserta: {len(new_pool)}")
-                            st.rerun()
-        
-        all_ws_winners = st.session_state.get("all_wheel_shuffle_winners", [])
-        if len(all_ws_winners) > 0 and not st.session_state.get("wheel_mode_active") and not st.session_state.get("shuffle_mode_active"):
-            st.markdown("---")
-            st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📋 Rekap Pemenang Wheel/Shuffle</p>", unsafe_allow_html=True)
-            
-            ws_df = pd.DataFrame(all_ws_winners)
-            if participant_data is not None:
-                ws_df = ws_df.merge(
-                    participant_data[["Nomor Undian", "Nama", "No HP"]], 
-                    on="Nomor Undian", 
-                    how="left"
-                )
-            
-            by_prize = ws_df.groupby("Hadiah")
-            for prize_name, group in by_prize:
-                st.markdown(f"**{prize_name}** ({len(group)} pemenang)")
-            
-            col_exp1, col_exp2 = st.columns(2)
-            with col_exp1:
-                excel_buffer = BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                    ws_df.to_excel(writer, index=False, sheet_name='Pemenang')
-                st.download_button(
-                    label="📊 Download Excel Pemenang",
-                    data=excel_buffer.getvalue(),
-                    file_name="pemenang_wheel_shuffle.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-            with col_exp2:
-                remaining_csv = remaining_pool[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
-                st.download_button(
-                    label=f"📥 Download Sisa ({len(remaining_pool)})",
-                    data=remaining_csv,
-                    file_name="sisa_peserta.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-        
-        st.markdown("---")
-        if st.button("🔄 Reset Semua (Upload Data Baru)", use_container_width=True):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.rerun()
-    
-    elif st.session_state.get("lottery_done", False) and st.session_state.get("results_df") is not None:
-        st.image("attached_assets/Small Banner-01_1764081768006.png", use_container_width=True)
-        
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
-            <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎉 UNDIAN SELESAI! 🎉</p>
-            <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">Klik kategori hadiah untuk melihat pemenang</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        results_df = st.session_state["results_df"]
-        total_winners = len(results_df)
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f"""
-            <div class="stats-card">
-                <div class="stats-number">{st.session_state.get('total_participants', total_winners):,}</div>
-                <div class="stats-label">👥 Total Peserta</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"""
-            <div class="stats-card">
-                <div class="stats-number">{total_winners}</div>
-                <div class="stats-label">🏆 Total Pemenang</div>
-            </div>
-            """, unsafe_allow_html=True)
-        prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-        num_categories = len(prize_tiers)
-        
-        with col3:
-            st.markdown(f"""
-            <div class="stats-card">
-                <div class="stats-number">{num_categories}</div>
-                <div class="stats-label">🎁 Kategori Hadiah</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="section-header">🏆 PILIH KATEGORI HADIAH 🏆</div>', unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:white; font-size:1.2rem;'>Klik pada kategori hadiah untuk melihat pemenang dalam satu layar</p>", unsafe_allow_html=True)
-        
-        cols = st.columns(3)
-        for idx, tier in enumerate(prize_tiers):
-            col_idx = idx % 3
-            with cols[col_idx]:
-                count = len(results_df[results_df["Hadiah"] == tier["name"]])
-                if st.button(
-                    f"{tier['icon']} {tier['name']}\n({count} Pemenang)",
-                    key=f"prize_main_{idx}",
-                    use_container_width=True
-                ):
-                    st.session_state["selected_prize"] = tier
-                    st.rerun()
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("---")
-        
-        st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📥 Download Hasil Undian</p>", unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            excel_buffer = BytesIO()
-            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
-            excel_data = excel_buffer.getvalue()
-            
-            def mark_excel_downloaded():
-                st.session_state["excel_downloaded"] = True
-            
-            st.download_button(
-                label="📊 Download Excel (.xlsx)",
-                data=excel_data,
-                file_name="hasil_undian_move_groove.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                on_click=mark_excel_downloaded
-            )
-        
-        with col2:
-            def mark_pptx_downloaded():
-                st.session_state["pptx_downloaded"] = True
-            
-            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-            pptx_data = generate_pptx(results_df, prize_tiers)
-            
-            st.download_button(
-                label="📽️ Download PowerPoint (.pptx)",
-                data=pptx_data,
-                file_name="hasil_undian_move_groove.pptx",
-                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                use_container_width=True,
-                on_click=mark_pptx_downloaded
-            )
-        
-        excel_done = st.session_state.get("excel_downloaded", False)
-        pptx_done = st.session_state.get("pptx_downloaded", False)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if excel_done:
-            st.markdown("<p style='text-align:center; color:#90EE90;'>✅ Excel sudah di-download</p>", unsafe_allow_html=True)
-        if pptx_done:
-            st.markdown("<p style='text-align:center; color:#90EE90;'>✅ PowerPoint sudah di-download</p>", unsafe_allow_html=True)
-        
-        if excel_done and pptx_done:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("---")
-            st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>🔄 Opsi Setelah Undian</p>", unsafe_allow_html=True)
-            
-            participant_data = st.session_state.get("participant_data")
-            if participant_data is not None:
-                winner_numbers = results_df["Nomor Undian"].tolist()
-                remaining_data = participant_data[~participant_data["Nomor Undian"].isin(winner_numbers)].copy()
-                remaining_eligible = remaining_data[remaining_data["Eligible"] == True]
-                
-                st.markdown(f"""
-                <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0;">
-                    <p style="color: white; text-align: center; margin: 0;">
-                        📊 <strong>Pemenang:</strong> {len(winner_numbers)} | 
-                        <strong>Sisa Peserta:</strong> {len(remaining_data)} | 
-                        <strong>Sisa Eligible:</strong> {len(remaining_eligible)}
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                remaining_csv = remaining_data[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
-                
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.download_button(
-                        label="📥 Download Sisa Peserta (CSV)",
-                        data=remaining_csv,
-                        file_name="sisa_peserta_belum_menang.csv",
-                        mime="text/csv",
-                        use_container_width=True
-                    )
-                
-                with col2:
-                    if st.button("🔄 UNDIAN BARU (Reset)", use_container_width=True):
-                        st.session_state["lottery_done"] = False
-                        st.session_state["results_df"] = None
-                        st.session_state["selected_prize"] = None
-                        st.session_state["excel_downloaded"] = False
-                        st.session_state["pptx_downloaded"] = False
-                        st.rerun()
-                
-                with col3:
-                    if st.button("➡️ LANJUT UNDIAN SISA", use_container_width=True, type="primary"):
-                        st.session_state["remaining_pool"] = remaining_eligible.copy()
-                        st.session_state["continue_lottery_mode"] = True
-                        st.session_state["all_wheel_shuffle_winners"] = []
-                        st.rerun()
-                
-                st.caption("💡 'Download Sisa Peserta' = file baru berisi nomor yang belum menang. Data awal tetap utuh.")
-                
-        elif not excel_done or not pptx_done:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align:center; color:#ffeb3b; font-size:1rem;'>⚠️ Download Excel dan PowerPoint terlebih dahulu sebelum memulai undian baru</p>", unsafe_allow_html=True)
-    
-    else:
-        tab1, tab2 = st.tabs(["📁 Upload File CSV", "🔗 Google Sheets URL"])
-        
-        df = None
-        data_source = None
-        
-        with tab1:
-            uploaded_file = st.file_uploader(
-                "Upload File CSV (harus memiliki kolom 'Nomor Undian' dan 'No HP')",
-                type=["csv"],
-                help="File CSV harus berisi kolom 'Nomor Undian' dan 'No HP'"
-            )
-            
-            if uploaded_file is not None:
-                current_file_name = uploaded_file.name
-                if st.session_state.get("last_uploaded_file") != current_file_name:
-                    st.session_state["last_uploaded_file"] = current_file_name
-                    st.session_state["lottery_done"] = False
-                    st.session_state["results_df"] = None
-                
-                try:
-                    uploaded_file.seek(0)
-                    content = uploaded_file.read()
-                    uploaded_file.seek(0)
-                    
-                    try:
-                        first_line = content.decode('utf-8-sig').split('\n')[0]
-                    except:
-                        first_line = content.decode('utf-8').split('\n')[0]
-                    
-                    uploaded_file.seek(0)
-                    
-                    if ';' in first_line:
-                        df = pd.read_csv(uploaded_file, dtype=str, sep=';', encoding='utf-8-sig')
-                    else:
-                        df = pd.read_csv(uploaded_file, dtype=str, encoding='utf-8-sig')
-                    
+                    df = pd.read_csv(StringIO(response.content.decode('utf-8-sig')), dtype=str)
                     df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-                    data_source = "csv"
-                except Exception as e:
-                    st.error(f"❌ Error membaca file: {str(e)}")
+                    st.session_state["sheets_df"] = df
+                    st.success(f"✅ Berhasil mengambil {len(df)} baris data!")
+            except Exception as e:
+                st.error(f"Error: {e}")
         
-        with tab2:
-            sheets_url = st.text_input(
-                "Paste Google Sheets URL",
-                placeholder="https://docs.google.com/spreadsheets/d/...",
-                help="Pastikan Google Sheets sudah di-share sebagai 'Anyone with the link can view'"
-            )
-            
-            if sheets_url and st.button("📥 Ambil Data dari Google Sheets", use_container_width=True):
-                try:
-                    sheet_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheets_url)
-                    if sheet_id_match:
-                        sheet_id = sheet_id_match.group(1)
-                        csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-                        
-                        with st.spinner("Mengambil data dari Google Sheets..."):
-                            response = requests.get(csv_url, timeout=30)
-                            response.raise_for_status()
-                            
-                            csv_content = response.content.decode('utf-8-sig')
-                            
-                            if ';' in csv_content.split('\n')[0]:
-                                df = pd.read_csv(StringIO(csv_content), dtype=str, sep=';')
-                            else:
-                                df = pd.read_csv(StringIO(csv_content), dtype=str)
-                            
-                            df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-                            data_source = "sheets"
-                            st.session_state["sheets_df"] = df
-                            st.session_state["last_uploaded_file"] = sheets_url
-                            st.success(f"✅ Berhasil mengambil {len(df)} baris data!")
-                    else:
-                        st.error("❌ URL tidak valid. Pastikan URL dari Google Sheets.")
-                except requests.exceptions.RequestException as e:
-                    st.error("❌ Gagal mengambil data. Pastikan Google Sheets sudah di-share sebagai 'Anyone with the link'")
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-            
-            if "sheets_df" in st.session_state and st.session_state.get("last_uploaded_file") == sheets_url:
-                df = st.session_state["sheets_df"]
-                data_source = "sheets"
+        if df is None and "sheets_df" in st.session_state:
+            df = st.session_state["sheets_df"]
+    
+    if df is not None:
+        undian_col = None
+        for col in df.columns:
+            if "undian" in col.lower():
+                undian_col = col
+                break
         
-        if df is not None:
-            undian_col = None
-            for col in df.columns:
-                if "undian" in col.lower():
-                    undian_col = col
-                    break
+        if undian_col is None:
+            st.error("❌ File harus memiliki kolom 'Nomor Undian'")
+        else:
+            df = df.rename(columns={undian_col: "Nomor Undian"})
             
             name_col = None
             for col in df.columns:
-                col_lower = col.lower()
-                if "nama" in col_lower or "name" in col_lower:
+                if "nama" in col.lower():
                     name_col = col
                     break
+            if name_col and name_col != "Nama":
+                df = df.rename(columns={name_col: "Nama"})
+            elif "Nama" not in df.columns:
+                df["Nama"] = ""
             
             phone_col = None
-            phone_candidates_priority = []
-            phone_candidates_secondary = []
-            
             for col in df.columns:
-                col_lower = col.lower()
-                non_empty_count = df[col].notna().sum() - (df[col].astype(str).str.strip() == "").sum() - (df[col].astype(str).str.lower() == "nan").sum()
-                
-                if "hp" in col_lower or "phone" in col_lower or "telp" in col_lower or "telepon" in col_lower:
-                    phone_candidates_priority.append((col, non_empty_count))
-                elif col_lower == "wa" or col_lower.endswith(" wa") or "nomor wa" in col_lower or "(wa)" in col_lower:
-                    phone_candidates_secondary.append((col, non_empty_count))
+                if "hp" in col.lower() or "phone" in col.lower() or "telepon" in col.lower():
+                    phone_col = col
+                    break
+            if phone_col and phone_col != "No HP":
+                df = df.rename(columns={phone_col: "No HP"})
+            elif "No HP" not in df.columns:
+                df["No HP"] = ""
             
-            if phone_candidates_priority:
-                phone_candidates_priority.sort(key=lambda x: x[1], reverse=True)
-                phone_col = phone_candidates_priority[0][0]
-            elif phone_candidates_secondary:
-                phone_candidates_secondary.sort(key=lambda x: x[1], reverse=True)
-                phone_col = phone_candidates_secondary[0][0]
+            df["Nomor Undian"] = df["Nomor Undian"].astype(str).str.strip().str.zfill(4)
+            df = df.dropna(subset=["Nomor Undian"])
+            df = df[df["Nomor Undian"].str.len() > 0]
             
-            if undian_col is None:
-                st.error("❌ Error: File harus memiliki kolom 'Nomor Undian'")
-                st.info("Kolom yang ditemukan: " + ", ".join(df.columns.tolist()))
-            else:
-                df["Nomor Undian"] = df[undian_col].astype(str).str.strip()
-                
-                if name_col:
-                    df["Nama"] = df[name_col].astype(str).str.strip()
-                else:
-                    df["Nama"] = ""
-                
-                if phone_col:
-                    df["No HP"] = df[phone_col].astype(str).str.strip()
-                else:
-                    df["No HP"] = ""
-                
-                df = df[df["Nomor Undian"].notna() & (df["Nomor Undian"] != "") & (df["Nomor Undian"] != "nan")]
-                
-                df["Nomor Undian"] = df["Nomor Undian"].apply(lambda x: str(x).zfill(4))
-                
-                participant_data = df[["Nomor Undian", "Nama", "No HP"]].copy()
-                participant_data = participant_data.drop_duplicates(subset=["Nomor Undian"])
-                
-                participant_data["Eligible"] = participant_data.apply(
-                    lambda row: is_eligible_for_prize(row["Nama"], row["No HP"]), 
-                    axis=1
-                )
-                
-                st.session_state["participant_data"] = participant_data
-                
-                all_participants = participant_data["Nomor Undian"].tolist()
-                total_participants = len(all_participants)
-                
-                eligible_data = participant_data[participant_data["Eligible"] == True]
-                eligible_participants = eligible_data["Nomor Undian"].tolist()
-                total_eligible = len(eligible_participants)
-                total_excluded = total_participants - total_eligible
-                
-                st.session_state["total_participants"] = total_participants
-                st.session_state["eligible_participants"] = eligible_participants
-                st.session_state["total_eligible"] = total_eligible
-                
-                if "remaining_pool" not in st.session_state or st.session_state.get("remaining_pool") is None:
-                    st.session_state["remaining_pool"] = eligible_data.copy()
-                
-                prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-                total_winners = calculate_total_winners(prize_tiers)
-                num_categories = len(prize_tiers)
-                
-                remaining_pool = st.session_state.get("remaining_pool")
-                remaining_count = len(remaining_pool) if remaining_pool is not None else total_eligible
-                
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #1a1a5a 0%, #2d2d7d 100%); border-radius: 15px; padding: 1.5rem; margin: 1rem 0;">
-                    <div style="display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap;">
-                        <div style="padding: 0.5rem 1rem;">
-                            <div style="color: #90EE90; font-size: 2rem; font-weight: bold;">{total_participants:,}</div>
-                            <div style="color: white; font-size: 0.9rem;">🎟️ Total Data</div>
-                        </div>
-                        <div style="padding: 0.5rem 1rem;">
-                            <div style="color: #FFD700; font-size: 2rem; font-weight: bold;">{remaining_count:,}</div>
-                            <div style="color: white; font-size: 0.9rem;">✅ Eligible</div>
-                        </div>
-                        <div style="padding: 0.5rem 1rem;">
-                            <div style="color: #FF6B6B; font-size: 2rem; font-weight: bold;">{total_excluded:,}</div>
-                            <div style="color: white; font-size: 0.9rem;">🚫 VIP/F</div>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:bold;'>🎯 PILIH MODE UNDIAN</p>", unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.markdown(f"""
-                    <div style="background: rgba(76,175,80,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #4CAF50; min-height: 200px;">
-                        <p style="color: #4CAF50; font-size: 1.5rem; font-weight: bold; margin: 0;">🎁 Undian E-Voucher</p>
-                        <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">{total_winners} hadiah, {num_categories} kategori</p>
-                        <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                        Dikirim lewat WA<br>
-                        Ada animasi saat undian<br>
-                        Download PPT, XLS, Sisa
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button(
-                        "🎲 LIHAT KATEGORI E-VOUCHER",
-                        key="show_evoucher_categories",
-                        use_container_width=True,
-                        type="primary"
-                    ):
-                        st.session_state["show_evoucher_preview"] = True
-                        st.rerun()
-                
-                start_lottery = False
-                
-                if st.session_state.get("show_evoucher_preview"):
-                    st.markdown("---")
-                    st.markdown("<p style='text-align:center; color:white; font-size:1.8rem; font-weight:bold;'>🎁 KATEGORI HADIAH E-VOUCHER</p>", unsafe_allow_html=True)
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    prize_cols = st.columns(3)
-                    for idx, tier in enumerate(prize_tiers):
-                        col_idx = idx % 3
-                        with prize_cols[col_idx]:
-                            st.markdown(f"""
-                            <div style="background: white; border-radius: 20px; padding: 1.5rem; text-align: center; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{tier['icon']}</div>
-                                <p style="color: #333; font-size: 1.1rem; font-weight: bold; margin: 0;">{tier['name']}</p>
-                                <p style="color: #666; font-size: 0.9rem; margin: 0.3rem 0;">Peringkat {tier['start']}-{tier['end']}</p>
-                                <p style="color: #FF6B6B; font-size: 1.1rem; font-weight: bold; margin: 0;">{tier['count']} Pemenang</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    
-                    col_back, col_start = st.columns(2)
-                    with col_back:
-                        if st.button("⬅️ KEMBALI", key="back_from_preview", use_container_width=True):
-                            st.session_state["show_evoucher_preview"] = False
-                            st.rerun()
-                    with col_start:
-                        start_lottery = st.button(
-                            "🎲 MULAI UNDIAN SEKARANG",
-                            key="start_evoucher_now",
-                            use_container_width=True,
-                            type="primary"
-                        )
-                
-                with col2:
-                    st.markdown(f"""
-                    <div style="background: rgba(255,152,0,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #FF9800; min-height: 200px;">
-                        <p style="color: #FF9800; font-size: 1.5rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
-                        <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Luckydraw Sesi 1, 2, 3</p>
-                        <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                        Sisa: {remaining_count} peserta<br>
-                        Undian per batch<br>
-                        Update otomatis
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    shuffle_num = st.number_input("Jumlah pemenang", min_value=1, max_value=remaining_count, value=min(50, remaining_count), key="shuffle_num_main")
-                    shuffle_prize = st.text_input("Nama hadiah", placeholder="Contoh: Voucher Rp.100.000", key="shuffle_prize_main")
-                    
-                    shuffle_disabled = not shuffle_prize
-                    if st.button("🎲 MULAI SHUFFLE", key="start_shuffle_main", use_container_width=True, disabled=shuffle_disabled):
-                        remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                        batch_winners = []
-                        temp_pool = remaining_numbers.copy()
-                        for _ in range(min(shuffle_num, len(temp_pool))):
-                            idx = secrets.randbelow(len(temp_pool))
-                            batch_winners.append(temp_pool.pop(idx))
-                        
-                        st.session_state["shuffle_mode_active"] = True
-                        st.session_state["shuffle_winners"] = batch_winners
-                        st.session_state["shuffle_prize_display"] = shuffle_prize
-                        st.session_state["main_shuffle_mode"] = True
-                        st.rerun()
-                
-                with col3:
-                    st.markdown(f"""
-                    <div style="background: rgba(233,30,99,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #E91E63; min-height: 200px;">
-                        <p style="color: #E91E63; font-size: 1.5rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
-                        <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Hadiah Utama</p>
-                        <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                        Sisa: {remaining_count} peserta<br>
-                        Diputar per hadiah<br>
-                        Efek dramatis
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    wheel_num = st.number_input("Jumlah hadiah", min_value=1, max_value=min(50, remaining_count), value=min(10, remaining_count), key="wheel_num_main")
-                    wheel_prize = st.text_input("Nama hadiah", placeholder="Contoh: Grand Prize", key="wheel_prize_main")
-                    
-                    wheel_disabled = not wheel_prize
-                    if st.button("🎡 MULAI WHEEL", key="start_wheel_main", use_container_width=True, type="primary", disabled=wheel_disabled):
-                        remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                        batch_winners = []
-                        temp_pool = remaining_numbers.copy()
-                        for _ in range(min(wheel_num, len(temp_pool))):
-                            idx = secrets.randbelow(len(temp_pool))
-                            batch_winners.append(temp_pool.pop(idx))
-                        
-                        st.session_state["wheel_mode_active"] = True
-                        st.session_state["wheel_winners"] = batch_winners
-                        st.session_state["wheel_current_index"] = 0
-                        st.session_state["wheel_prize_display"] = wheel_prize
-                        st.session_state["main_wheel_mode"] = True
-                        st.rerun()
-                
-                if st.session_state.get("shuffle_mode_active") and st.session_state.get("main_shuffle_mode"):
-                    shuffle_winners = st.session_state.get("shuffle_winners", [])
-                    prize_display = st.session_state.get("shuffle_prize_display", "Hadiah")
-                    
-                    st.markdown("---")
-                    st.markdown(f"""
-                    <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                        🎲 {prize_display} - {len(shuffle_winners)} Pemenang
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    shuffle_html = create_shuffle_reveal_html(shuffle_winners, prize_display)
-                    components.html(shuffle_html, height=500)
-                    
-                    st.markdown("**Detail Pemenang:**")
-                    winner_details = []
-                    for w in shuffle_winners:
-                        row = participant_data[participant_data["Nomor Undian"] == w]
-                        if len(row) > 0:
-                            nama = row.iloc[0].get("Nama", "")
-                            hp = str(row.iloc[0].get("No HP", ""))
-                            hp_masked = f"****{hp[-4:]}" if len(hp) >= 4 else ""
-                            winner_details.append({"Nomor Undian": w, "Nama": nama, "No HP": hp_masked})
-                    if winner_details:
-                        st.dataframe(pd.DataFrame(winner_details), use_container_width=True, hide_index=True)
-                    
-                    col_s1, col_s2 = st.columns(2)
-                    with col_s1:
-                        if st.button("❌ Batalkan", key="shuffle_cancel_main", use_container_width=True):
-                            st.session_state["shuffle_mode_active"] = False
-                            st.session_state["main_shuffle_mode"] = False
-                            st.rerun()
-                    with col_s2:
-                        if st.button("✅ Konfirmasi & Update Sisa", key="shuffle_confirm_main", use_container_width=True, type="primary"):
-                            new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(shuffle_winners)]
-                            st.session_state["remaining_pool"] = new_pool
-                            
-                            all_ws = st.session_state.get("all_wheel_shuffle_winners", [])
-                            for w in shuffle_winners:
-                                all_ws.append({"Nomor Undian": w, "Hadiah": prize_display})
-                            st.session_state["all_wheel_shuffle_winners"] = all_ws
-                            
-                            st.session_state["shuffle_mode_active"] = False
-                            st.session_state["main_shuffle_mode"] = False
-                            st.success(f"✅ {len(shuffle_winners)} pemenang dikonfirmasi! Sisa peserta: {len(new_pool)}")
-                            st.rerun()
-                
-                if st.session_state.get("wheel_mode_active") and st.session_state.get("main_wheel_mode"):
-                    wheel_winners = st.session_state.get("wheel_winners", [])
-                    wheel_idx = st.session_state.get("wheel_current_index", 0)
-                    prize_display = st.session_state.get("wheel_prize_display", "Hadiah")
-                    
-                    st.markdown("---")
-                    
-                    if wheel_idx < len(wheel_winners):
-                        current_winner = wheel_winners[wheel_idx]
-                        
-                        winner_name = ""
-                        winner_phone = ""
-                        winner_row = participant_data[participant_data["Nomor Undian"] == current_winner]
-                        if len(winner_row) > 0:
-                            winner_name = winner_row.iloc[0].get("Nama", "")
-                            phone = str(winner_row.iloc[0].get("No HP", ""))
-                            if len(phone) >= 4:
-                                winner_phone = f"****{phone[-4:]}"
-                        
-                        st.markdown(f"""
-                        <div style="text-align:center; color:white; font-size:1.8rem; margin: 1rem 0;">
-                            🎯 {prize_display}
-                        </div>
-                        <div style="text-align:center; color:#fff9c4; font-size:1.2rem; margin-bottom: 1rem;">
-                            Pemenang ke-{wheel_idx + 1} dari {len(wheel_winners)}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        wheel_html = create_spinning_wheel_html(wheel_winners, current_winner, wheel_size=450)
-                        components.html(wheel_html, height=650)
-                        
-                        if winner_name or winner_phone:
-                            st.markdown(f"""
-                            <div style="text-align:center; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 10px; margin-top: 0.5rem;">
-                                <span style="color: white; font-size: 1rem;">👤 {winner_name} | 📱 {winner_phone}</span>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        col_nav1, col_nav2, col_nav3 = st.columns(3)
-                        with col_nav1:
-                            if wheel_idx > 0:
-                                if st.button("⬅️ Sebelumnya", key="wheel_prev_main", use_container_width=True):
-                                    st.session_state["wheel_current_index"] = wheel_idx - 1
-                                    st.rerun()
-                        with col_nav2:
-                            if st.button("❌ Batalkan", key="wheel_cancel_main", use_container_width=True):
-                                st.session_state["wheel_mode_active"] = False
-                                st.session_state["main_wheel_mode"] = False
-                                st.rerun()
-                        with col_nav3:
-                            if wheel_idx < len(wheel_winners) - 1:
-                                if st.button("➡️ Selanjutnya", key="wheel_next_main", use_container_width=True):
-                                    st.session_state["wheel_current_index"] = wheel_idx + 1
-                                    st.rerun()
-                            else:
-                                if st.button("✅ Konfirmasi Semua", key="wheel_confirm_main", use_container_width=True, type="primary"):
-                                    new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(wheel_winners)]
-                                    st.session_state["remaining_pool"] = new_pool
-                                    
-                                    all_ws = st.session_state.get("all_wheel_shuffle_winners", [])
-                                    for w in wheel_winners:
-                                        all_ws.append({"Nomor Undian": w, "Hadiah": prize_display})
-                                    st.session_state["all_wheel_shuffle_winners"] = all_ws
-                                    
-                                    st.session_state["wheel_mode_active"] = False
-                                    st.session_state["main_wheel_mode"] = False
-                                    st.success(f"✅ {len(wheel_winners)} pemenang dikonfirmasi! Sisa peserta: {len(new_pool)}")
-                                    st.rerun()
-                
-                all_ws_winners = st.session_state.get("all_wheel_shuffle_winners", [])
-                if len(all_ws_winners) > 0 and not st.session_state.get("wheel_mode_active") and not st.session_state.get("shuffle_mode_active"):
-                    st.markdown("---")
-                    st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📋 Rekap Pemenang Shuffle/Wheel</p>", unsafe_allow_html=True)
-                    
-                    ws_df = pd.DataFrame(all_ws_winners)
-                    ws_df = ws_df.merge(
-                        participant_data[["Nomor Undian", "Nama", "No HP"]], 
-                        on="Nomor Undian", 
-                        how="left"
-                    )
-                    
-                    by_prize = ws_df.groupby("Hadiah")
-                    for prize_name_g, group in by_prize:
-                        st.markdown(f"**{prize_name_g}** ({len(group)} pemenang)")
-                    
-                    col_exp1, col_exp2 = st.columns(2)
-                    with col_exp1:
-                        excel_buffer = BytesIO()
-                        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                            ws_df.to_excel(writer, index=False, sheet_name='Pemenang')
-                        st.download_button(
-                            label="📊 Download Excel Pemenang",
-                            data=excel_buffer.getvalue(),
-                            file_name="pemenang_shuffle_wheel.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True
-                        )
-                    with col_exp2:
-                        remaining_csv = remaining_pool[["Nomor Undian", "Nama", "No HP"]].to_csv(index=False)
-                        st.download_button(
-                            label=f"📥 Download Sisa ({len(remaining_pool)})",
-                            data=remaining_csv,
-                            file_name="sisa_peserta.csv",
-                            mime="text/csv",
-                            use_container_width=True
-                        )
-                
-                if start_lottery:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    for i in range(100):
-                        progress_bar.progress(i + 1)
-                        if i < 30:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data peserta... {i+1}%</p>", unsafe_allow_html=True)
-                        elif i < 70:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta secara acak... {i+1}%</p>", unsafe_allow_html=True)
-                        else:
-                            status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
-                        time.sleep(0.03)
-                    
-                    eligible_participants = st.session_state.get("eligible_participants", eligible_participants)
-                    shuffled_participants = secure_shuffle(eligible_participants)
-                    
-                    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-                    total_winners_needed = calculate_total_winners(prize_tiers)
-                    num_winners = min(total_winners_needed, len(shuffled_participants))
-                    winners = shuffled_participants[:num_winners]
-                    
-                    participant_data = st.session_state.get("participant_data")
-                    if participant_data is not None:
-                        name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"]))
-                        phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"]))
-                    else:
-                        name_lookup = {}
-                        phone_lookup = {}
-                    
-                    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-                    
-                    results = []
-                    for i, winner in enumerate(winners, 1):
-                        results.append({
-                            "Peringkat": i,
-                            "Nomor Undian": winner,
-                            "Nama": name_lookup.get(winner, ""),
-                            "No HP": phone_lookup.get(winner, ""),
-                            "Hadiah": get_prize_dynamic(i, prize_tiers)
-                        })
-                    
-                    results_df = pd.DataFrame(results)
-                    
-                    st.session_state["results_df"] = results_df
-                    st.session_state["lottery_done"] = True
-                    
-                    progress_bar.empty()
-                    status_text.empty()
-                    
-                    st.balloons()
-                    st.rerun()
-        
-        if df is None:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.info("📁 Silakan upload file CSV atau paste URL Google Sheets untuk memulai undian.")
+            df["Eligible"] = df.apply(lambda x: is_eligible_for_prize(x.get("Nama", ""), x.get("No HP", "")), axis=1)
+            
+            st.session_state["participant_data"] = df
+            eligible_df = df[df["Eligible"] == True]
+            st.session_state["eligible_participants"] = eligible_df["Nomor Undian"].tolist()
+            
+            if "remaining_pool" not in st.session_state or st.session_state.get("data_source_changed", False):
+                st.session_state["remaining_pool"] = eligible_df.copy()
+                st.session_state["data_source_changed"] = False
+            
+            total_all = len(df)
+            total_eligible = len(eligible_df)
+            total_excluded = total_all - total_eligible
+            
+            st.success(f"✅ Data berhasil dimuat: {total_all} peserta ({total_eligible} eligible, {total_excluded} VIP/F)")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:bold;'>🎯 3 MODE UNDIAN TERSEDIA</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align:center; color:white; font-size:1.8rem; font-weight:bold;'>🎯 PILIH JENIS UNDIAN</p>", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
             
-            prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
-            total_winners = calculate_total_winners(prize_tiers)
-            num_categories = len(prize_tiers)
+            evoucher_done = st.session_state.get("evoucher_done", False)
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
+                prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+                total_prizes = calculate_total_winners(prize_tiers)
                 st.markdown(f"""
-                <div style="background: rgba(76,175,80,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #4CAF50; min-height: 280px;">
-                    <p style="color: #4CAF50; font-size: 1.5rem; font-weight: bold; margin: 0;">🎁 Undian E-Voucher</p>
-                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">{total_winners} hadiah, {num_categories} kategori</p>
-                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                    • Data awal 5000 nomor<br>
-                    • VIP & F tidak diundi<br>
-                    • Animasi saat undian<br>
-                    • Download PPT, XLS, Sisa
+                <div style="background: rgba(76,175,80,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #4CAF50; min-height: 250px;">
+                    <p style="color: #4CAF50; font-size: 1.8rem; font-weight: bold; margin: 0;">🎁 E-Voucher</p>
+                    <p style="color: white; font-size: 1.1rem; margin: 0.5rem 0;">{total_prizes} hadiah, {len(prize_tiers)} kategori</p>
+                    <p style="color: #aaa; font-size: 0.9rem; margin: 0.5rem 0;">
+                    Tokopedia, Indomaret, Bensin, SNL<br>
+                    VIP & F tidak diundi
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🎁 UNDIAN E-VOUCHER", key="btn_evoucher", use_container_width=True):
+                    st.session_state["current_page"] = "evoucher_preview"
+                    st.rerun()
             
             with col2:
-                st.markdown("""
-                <div style="background: rgba(255,152,0,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #FF9800; min-height: 280px;">
-                    <p style="color: #FF9800; font-size: 1.5rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
-                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Luckydraw Sesi 1, 2, 3</p>
-                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                    • Data dari undian sebelumnya<br>
-                    • Nomor yang belum diundi<br>
-                    • Undian 3x per sesi<br>
-                    • Update data otomatis
+                remaining_pool = st.session_state.get("remaining_pool", eligible_df)
+                remaining_count = len(remaining_pool)
+                st.markdown(f"""
+                <div style="background: rgba(255,152,0,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #FF9800; min-height: 250px;">
+                    <p style="color: #FF9800; font-size: 1.8rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
+                    <p style="color: white; font-size: 1.1rem; margin: 0.5rem 0;">Lucky Draw 3 Sesi</p>
+                    <p style="color: #aaa; font-size: 0.9rem; margin: 0.5rem 0;">
+                    Sesi 1, 2, 3 (masing-masing 30 hadiah)<br>
+                    Sisa: {remaining_count} peserta
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
+                shuffle_disabled = not evoucher_done
+                if st.button("🎲 UNDIAN SHUFFLE", key="btn_shuffle", use_container_width=True, disabled=shuffle_disabled):
+                    st.session_state["current_page"] = "shuffle_page"
+                    st.rerun()
+                if shuffle_disabled:
+                    st.caption("⚠️ Selesaikan E-Voucher terlebih dahulu")
             
             with col3:
-                st.markdown("""
-                <div style="background: rgba(233,30,99,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #E91E63; min-height: 280px;">
-                    <p style="color: #E91E63; font-size: 1.5rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
-                    <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Hadiah Utama (10)</p>
-                    <p style="color: #aaa; font-size: 0.85rem; margin: 0.5rem 0;">
-                    • Data dari undian sebelumnya<br>
-                    • Nomor yang belum diundi<br>
-                    • Diputar per hadiah<br>
-                    • Efek dramatis
+                st.markdown(f"""
+                <div style="background: rgba(233,30,99,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #E91E63; min-height: 250px;">
+                    <p style="color: #E91E63; font-size: 1.8rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
+                    <p style="color: white; font-size: 1.1rem; margin: 0.5rem 0;">10 Hadiah Utama</p>
+                    <p style="color: #aaa; font-size: 0.9rem; margin: 0.5rem 0;">
+                    Grand Prize satu per satu<br>
+                    Sisa: {remaining_count} peserta
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
+                wheel_disabled = not evoucher_done
+                if st.button("🎡 UNDIAN WHEEL", key="btn_wheel", use_container_width=True, disabled=wheel_disabled):
+                    st.session_state["current_page"] = "wheel_page"
+                    st.rerun()
+                if wheel_disabled:
+                    st.caption("⚠️ Selesaikan E-Voucher terlebih dahulu")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            st.caption("💡 Upload data terlebih dahulu untuk mengaktifkan tombol undian")
+            st.markdown("---")
+            if st.button("🔄 RESET UNDIAN (Mulai dari Awal)", key="reset_all", use_container_width=True):
+                keys_to_keep = ["prize_tiers", "participant_data", "eligible_participants"]
+                for key in list(st.session_state.keys()):
+                    if key not in keys_to_keep:
+                        del st.session_state[key]
+                st.session_state["remaining_pool"] = eligible_df.copy()
+                st.session_state["current_page"] = "home"
+                st.rerun()
+    
+    else:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.info("📁 Silakan upload file CSV atau paste URL Google Sheets untuk memulai undian.")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:bold;'>🎯 3 MODE UNDIAN TERSEDIA</p>", unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div style="background: rgba(76,175,80,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #4CAF50;">
+                <p style="color: #4CAF50; font-size: 1.5rem; font-weight: bold; margin: 0;">🎁 E-Voucher</p>
+                <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">700 hadiah, 4 kategori</p>
+                <p style="color: #aaa; font-size: 0.85rem;">Tokopedia, Indomaret, Bensin, SNL</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style="background: rgba(255,152,0,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #FF9800;">
+                <p style="color: #FF9800; font-size: 1.5rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
+                <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">Lucky Draw 3 Sesi</p>
+                <p style="color: #aaa; font-size: 0.85rem;">Masing-masing 30 hadiah</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style="background: rgba(233,30,99,0.2); border-radius: 15px; padding: 1.5rem; text-align: center; border: 2px solid #E91E63;">
+                <p style="color: #E91E63; font-size: 1.5rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
+                <p style="color: white; font-size: 1rem; margin: 0.5rem 0;">10 Hadiah Utama</p>
+                <p style="color: #aaa; font-size: 0.85rem;">Grand Prize dramatis</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+elif current_page == "evoucher_preview":
+    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+    total_prizes = calculate_total_winners(prize_tiers)
+    
+    if st.button("⬅️ KEMBALI", key="back_to_home"):
+        st.session_state["current_page"] = "home"
+        st.rerun()
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
+        <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎁 UNDIAN E-VOUCHER</p>
+        <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">{total_prizes} Hadiah - {len(prize_tiers)} Kategori</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:white; font-size:1.5rem; font-weight:bold;'>📋 KATEGORI HADIAH</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    cols = st.columns(4)
+    for idx, tier in enumerate(prize_tiers):
+        with cols[idx % 4]:
+            st.markdown(f"""
+            <div style="background: white; border-radius: 20px; padding: 1.5rem; text-align: center; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">{tier['icon']}</div>
+                <p style="color: #333; font-size: 1.1rem; font-weight: bold; margin: 0;">{tier['name']}</p>
+                <p style="color: #666; font-size: 0.9rem; margin: 0.3rem 0;">Peringkat {tier['start']}-{tier['end']}</p>
+                <p style="color: #f5576c; font-size: 1.2rem; font-weight: bold; margin: 0;">{tier['count']} Pemenang</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    if st.button("🎲 MULAI UNDIAN E-VOUCHER", key="start_evoucher", use_container_width=True):
+        eligible_participants = st.session_state.get("eligible_participants", [])
+        
+        if len(eligible_participants) < total_prizes:
+            st.error(f"❌ Peserta eligible ({len(eligible_participants)}) kurang dari total hadiah ({total_prizes})")
+        else:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            for i in range(100):
+                progress_bar.progress(i + 1)
+                if i < 30:
+                    status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🔄 Mengumpulkan data... {i+1}%</p>", unsafe_allow_html=True)
+                elif i < 70:
+                    status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🎲 Mengacak peserta... {i+1}%</p>", unsafe_allow_html=True)
+                else:
+                    status_text.markdown(f"<p style='text-align:center; font-size:1.5rem; color:white;'>🏆 Menentukan pemenang... {i+1}%</p>", unsafe_allow_html=True)
+                time.sleep(0.02)
+            
+            shuffled = secure_shuffle(eligible_participants)
+            winners = shuffled[:total_prizes]
+            
+            participant_data = st.session_state.get("participant_data")
+            name_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["Nama"])) if participant_data is not None else {}
+            phone_lookup = dict(zip(participant_data["Nomor Undian"], participant_data["No HP"])) if participant_data is not None else {}
+            
+            results = []
+            for i, winner in enumerate(winners, 1):
+                results.append({
+                    "Peringkat": i,
+                    "Nomor Undian": winner,
+                    "Nama": name_lookup.get(winner, ""),
+                    "No HP": phone_lookup.get(winner, ""),
+                    "Hadiah": get_prize_dynamic(i, prize_tiers)
+                })
+            
+            results_df = pd.DataFrame(results)
+            st.session_state["evoucher_results"] = results_df
+            
+            remaining = [p for p in eligible_participants if p not in winners]
+            remaining_df = participant_data[participant_data["Nomor Undian"].isin(remaining)].copy() if participant_data is not None else pd.DataFrame()
+            st.session_state["remaining_pool"] = remaining_df
+            
+            progress_bar.empty()
+            status_text.empty()
+            st.balloons()
+            
+            st.session_state["current_page"] = "evoucher_results"
+            st.rerun()
+
+elif current_page == "evoucher_results":
+    results_df = st.session_state.get("evoucher_results")
+    prize_tiers = st.session_state.get("prize_tiers", PRIZE_TIERS)
+    
+    if results_df is None:
+        st.session_state["current_page"] = "home"
+        st.rerun()
+    
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
+        <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎉 UNDIAN E-VOUCHER SELESAI! 🎉</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">{len(st.session_state.get('eligible_participants', [])):,}</div>
+            <div class="stats-label">👥 Total Peserta</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">{len(results_df)}</div>
+            <div class="stats-label">🏆 Total Pemenang</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        remaining_pool = st.session_state.get("remaining_pool", pd.DataFrame())
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">{len(remaining_pool)}</div>
+            <div class="stats-label">📊 Sisa Peserta</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🏆 PILIH KATEGORI UNTUK LIHAT PEMENANG</div>', unsafe_allow_html=True)
+    
+    cols = st.columns(4)
+    for idx, tier in enumerate(prize_tiers):
+        with cols[idx % 4]:
+            count = len(results_df[results_df["Hadiah"] == tier["name"]])
+            if st.button(f"{tier['icon']} {tier['name']}\n({count} Pemenang)", key=f"view_tier_{idx}", use_container_width=True):
+                st.session_state["viewing_tier"] = tier
+                st.session_state["current_page"] = "evoucher_category"
+                st.rerun()
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>📥 Download Hasil</p>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+            results_df.to_excel(writer, index=False, sheet_name='Hasil Undian')
+        
+        def mark_excel():
+            st.session_state["evoucher_excel_done"] = True
+        
+        st.download_button(
+            label="📊 Download Excel (.xlsx)",
+            data=excel_buffer.getvalue(),
+            file_name="hasil_evoucher.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            on_click=mark_excel
+        )
+    
+    with col2:
+        pptx_data = generate_pptx(results_df, prize_tiers)
+        
+        def mark_pptx():
+            st.session_state["evoucher_pptx_done"] = True
+        
+        st.download_button(
+            label="📽️ Download PowerPoint (.pptx)",
+            data=pptx_data,
+            file_name="hasil_evoucher.pptx",
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            use_container_width=True,
+            on_click=mark_pptx
+        )
+    
+    excel_done = st.session_state.get("evoucher_excel_done", False)
+    pptx_done = st.session_state.get("evoucher_pptx_done", False)
+    
+    if excel_done:
+        st.markdown("<p style='text-align:center; color:#90EE90;'>✅ Excel sudah di-download</p>", unsafe_allow_html=True)
+    if pptx_done:
+        st.markdown("<p style='text-align:center; color:#90EE90;'>✅ PowerPoint sudah di-download</p>", unsafe_allow_html=True)
+    
+    if excel_done and pptx_done:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        if st.button("📊 SISA NOMOR → LANJUT KE SHUFFLE/WHEEL", key="continue_to_shuffle", use_container_width=True):
+            st.session_state["evoucher_done"] = True
+            st.session_state["current_page"] = "home"
+            st.rerun()
+    else:
+        st.markdown("<p style='text-align:center; color:#ffeb3b;'>⚠️ Download Excel dan PPT terlebih dahulu</p>", unsafe_allow_html=True)
+
+elif current_page == "evoucher_category":
+    tier = st.session_state.get("viewing_tier")
+    results_df = st.session_state.get("evoucher_results")
+    
+    if tier is None or results_df is None:
+        st.session_state["current_page"] = "evoucher_results"
+        st.rerun()
+    
+    if st.button("⬅️ KEMBALI", key="back_to_results"):
+        st.session_state["current_page"] = "evoucher_results"
+        st.rerun()
+    
+    tier_winners = results_df[results_df["Hadiah"] == tier["name"]].copy()
+    tier_winners = tier_winners.sort_values(by="Nomor Undian", ascending=True).reset_index(drop=True)
+    
+    st.markdown(f"""
+    <div class="prize-header">
+        <div style="font-size: 4rem;">{tier["icon"]}</div>
+        <div style="font-size: 2.5rem; font-weight: 800;">{tier["name"]}</div>
+        <div style="font-size: 1.3rem;">Peringkat {tier["start"]} - {tier["end"]} | {len(tier_winners)} Pemenang</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    participant_data = st.session_state.get("participant_data")
+    
+    cols = 10
+    rows = (len(tier_winners) + cols - 1) // cols
+    
+    for row in range(rows):
+        row_cols = st.columns(cols)
+        for col in range(cols):
+            idx = row * cols + col
+            if idx < len(tier_winners):
+                winner = tier_winners.iloc[idx]
+                with row_cols[col]:
+                    nomor = winner["Nomor Undian"]
+                    nama = winner.get("Nama", "")
+                    hp = str(winner.get("No HP", ""))
+                    hp_masked = f"****{hp[-4:]}" if len(hp) >= 4 else ""
+                    
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(145deg, #fff, #f8f9fa); border-radius: 10px; padding: 0.8rem; text-align: center; border-left: 4px solid #f5576c; margin-bottom: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: #888;">#{winner["Peringkat"]}</div>
+                        <div style="font-size: 1.2rem; font-weight: 800; color: #333;">{nomor}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+elif current_page == "shuffle_page":
+    remaining_pool = st.session_state.get("remaining_pool", pd.DataFrame())
+    
+    if len(remaining_pool) == 0:
+        st.warning("Tidak ada sisa peserta untuk diundi")
+        if st.button("⬅️ KEMBALI"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+    else:
+        if st.button("⬅️ KEMBALI", key="back_from_shuffle"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #FF9800, #FF5722); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
+            <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎲 UNDIAN SHUFFLE</p>
+            <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">Lucky Draw 3 Sesi</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center;">
+            <p style="color: white; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong>{len(remaining_pool)}</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        shuffle_batches = [
+            {"name": "Sesi 1 - Hadiah Pertama", "count": 30},
+            {"name": "Sesi 2 - Hadiah Kedua", "count": 30},
+            {"name": "Sesi 3 - Hadiah Ketiga", "count": 30},
+        ]
+        
+        shuffle_results = st.session_state.get("shuffle_results", {})
+        
+        for i, batch in enumerate(shuffle_batches):
+            batch_key = f"shuffle_batch_{i}"
+            batch_done = batch_key in shuffle_results
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            with st.expander(f"🎲 {batch['name']} ({batch['count']} pemenang)", expanded=not batch_done):
+                if batch_done:
+                    winners = shuffle_results[batch_key]["winners"]
+                    prize_name = shuffle_results[batch_key]["prize_name"]
+                    
+                    st.success(f"✅ Selesai: {prize_name} - {len(winners)} pemenang")
+                    
+                    cols = st.columns(10)
+                    for idx, w in enumerate(winners):
+                        with cols[idx % 10]:
+                            st.markdown(f"<div style='background:#4CAF50;color:white;padding:0.5rem;border-radius:8px;text-align:center;margin:2px;font-weight:bold;'>{w}</div>", unsafe_allow_html=True)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        excel_buf = BytesIO()
+                        df_batch = pd.DataFrame({"Nomor Undian": winners, "Hadiah": prize_name})
+                        with pd.ExcelWriter(excel_buf, engine='openpyxl') as writer:
+                            df_batch.to_excel(writer, index=False)
+                        st.download_button(f"📊 Download Excel {batch['name']}", excel_buf.getvalue(), f"shuffle_{i+1}.xlsx", use_container_width=True)
+                    with col2:
+                        pptx_data = generate_shuffle_pptx(winners, prize_name)
+                        st.download_button(f"📽️ Download PPT {batch['name']}", pptx_data, f"shuffle_{i+1}.pptx", use_container_width=True)
+                else:
+                    prize_name = st.text_input(f"Nama Hadiah {batch['name']}", placeholder="Contoh: Voucher Rp.500.000", key=f"prize_{batch_key}")
+                    
+                    remaining_count = len(remaining_pool)
+                    max_winners = min(batch['count'], remaining_count)
+                    
+                    if prize_name and remaining_count > 0:
+                        if st.button(f"🎲 MULAI {batch['name']}", key=f"start_{batch_key}", use_container_width=True):
+                            remaining_numbers = remaining_pool["Nomor Undian"].tolist()
+                            batch_winners = []
+                            temp_pool = remaining_numbers.copy()
+                            
+                            for _ in range(max_winners):
+                                if len(temp_pool) == 0:
+                                    break
+                                idx = secrets.randbelow(len(temp_pool))
+                                batch_winners.append(temp_pool.pop(idx))
+                            
+                            shuffle_results[batch_key] = {
+                                "winners": batch_winners,
+                                "prize_name": prize_name
+                            }
+                            st.session_state["shuffle_results"] = shuffle_results
+                            
+                            new_pool = remaining_pool[~remaining_pool["Nomor Undian"].isin(batch_winners)]
+                            st.session_state["remaining_pool"] = new_pool
+                            
+                            st.rerun()
+                    elif remaining_count == 0:
+                        st.warning("Tidak ada sisa peserta")
+                    else:
+                        st.info("Masukkan nama hadiah terlebih dahulu")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        if len(shuffle_results) == 3:
+            if st.button("📊 SISA NOMOR → KEMBALI KE MENU UTAMA", key="shuffle_done", use_container_width=True):
+                st.session_state["current_page"] = "home"
+                st.rerun()
+
+elif current_page == "wheel_page":
+    remaining_pool = st.session_state.get("remaining_pool", pd.DataFrame())
+    
+    if len(remaining_pool) == 0:
+        st.warning("Tidak ada sisa peserta untuk diundi")
+        if st.button("⬅️ KEMBALI"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+    else:
+        if st.button("⬅️ KEMBALI", key="back_from_wheel"):
+            st.session_state["current_page"] = "home"
+            st.rerun()
+        
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #E91E63, #9C27B0); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0;">
+            <p style="color: white; font-size: 2.5rem; font-weight: bold; margin: 0;">🎡 SPINNING WHEEL</p>
+            <p style="color: #fff; font-size: 1.2rem; margin: 0.5rem 0;">10 Hadiah Utama</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; margin: 1rem 0; text-align: center;">
+            <p style="color: white; font-size: 1.2rem; margin: 0;">📊 Sisa Peserta: <strong>{len(remaining_pool)}</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        wheel_winners = st.session_state.get("wheel_winners", [])
+        wheel_prizes = st.session_state.get("wheel_prizes", [])
+        current_wheel_idx = len(wheel_winners)
+        
+        if current_wheel_idx < 10:
+            st.markdown(f"<p style='text-align:center; color:white; font-size:1.5rem;'>🎯 Hadiah ke-{current_wheel_idx + 1} dari 10</p>", unsafe_allow_html=True)
+            
+            prize_name = st.text_input("Nama Hadiah", placeholder="Contoh: Grand Prize - TV 50 inch", key=f"wheel_prize_{current_wheel_idx}")
+            
+            if prize_name:
+                if st.button("🎡 PUTAR WHEEL!", key=f"spin_wheel_{current_wheel_idx}", use_container_width=True):
+                    remaining_numbers = remaining_pool["Nomor Undian"].tolist()
+                    
+                    if len(remaining_numbers) > 0:
+                        winner_idx = secrets.randbelow(len(remaining_numbers))
+                        winner = remaining_numbers[winner_idx]
+                        
+                        wheel_html = create_spinning_wheel_html(remaining_numbers[:20], winner, 400)
+                        components.html(wheel_html, height=600)
+                        
+                        wheel_winners.append(winner)
+                        wheel_prizes.append(prize_name)
+                        st.session_state["wheel_winners"] = wheel_winners
+                        st.session_state["wheel_prizes"] = wheel_prizes
+                        
+                        new_pool = remaining_pool[remaining_pool["Nomor Undian"] != winner]
+                        st.session_state["remaining_pool"] = new_pool
+                        
+                        participant_data = st.session_state.get("participant_data")
+                        if participant_data is not None:
+                            winner_row = participant_data[participant_data["Nomor Undian"] == winner]
+                            if len(winner_row) > 0:
+                                nama = winner_row.iloc[0].get("Nama", "")
+                                hp = str(winner_row.iloc[0].get("No HP", ""))
+                                hp_masked = f"****{hp[-4:]}" if len(hp) >= 4 else ""
+                                st.success(f"🎉 Pemenang: {winner} - {nama} ({hp_masked})")
+                        
+                        if st.button("➡️ Lanjut ke Hadiah Berikutnya", key="next_wheel"):
+                            st.rerun()
+            else:
+                st.info("Masukkan nama hadiah terlebih dahulu")
+        
+        if len(wheel_winners) > 0:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("---")
+            st.markdown("<p style='text-align:center; color:white; font-size:1.3rem; font-weight:600;'>🏆 Pemenang Wheel</p>", unsafe_allow_html=True)
+            
+            for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
+                st.markdown(f"<p style='color:white; text-align:center;'>#{i+1}: <strong>{w}</strong> - {p}</p>", unsafe_allow_html=True)
+            
+            if len(wheel_winners) == 10:
+                col1, col2 = st.columns(2)
+                with col1:
+                    df_wheel = pd.DataFrame({"Nomor Undian": wheel_winners, "Hadiah": wheel_prizes})
+                    excel_buf = BytesIO()
+                    with pd.ExcelWriter(excel_buf, engine='openpyxl') as writer:
+                        df_wheel.to_excel(writer, index=False)
+                    st.download_button("📊 Download Excel Wheel", excel_buf.getvalue(), "wheel_winners.xlsx", use_container_width=True)
+                
+                with col2:
+                    if st.button("📊 SISA NOMOR → KEMBALI KE MENU UTAMA", key="wheel_done", use_container_width=True):
+                        st.session_state["current_page"] = "home"
+                        st.rerun()

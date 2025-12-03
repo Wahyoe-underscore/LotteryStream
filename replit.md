@@ -1,46 +1,66 @@
 # Sistem Undian Move & Groove
 
 ## Overview
-A Streamlit-based lottery system for selecting 800 winners from participant data. The application securely randomizes participants and assigns prizes across 9 tiers. Optimized for large screen presentation at events.
+A Streamlit-based lottery system for the December 7th Move & Groove event with 3 distinct lottery modes. The application uses a state machine architecture for clear navigation between different lottery stages.
+
+## Lottery Flow (State Machine)
+
+### 1. Homepage (`home`)
+- Upload data via CSV file or Google Sheets URL
+- Shows 3 lottery mode panels (E-Voucher, Shuffle, Wheel)
+- E-Voucher always enabled
+- Shuffle & Wheel disabled until E-Voucher is completed
+
+### 2. E-Voucher Mode (`evoucher_preview` → `evoucher_results`)
+- **Preview**: Shows 4 prize categories (Tokopedia, Indomaret, Bensin, SNL)
+- **Run Lottery**: 700 winners selected from eligible participants
+- **Results**: View winners by category, download Excel & PPT
+- **"Sisa Nomor"**: Returns to main menu, enables Shuffle/Wheel modes
+
+### 3. Shuffle Mode (`shuffle_page`)
+- 3 sessions of 30 winners each
+- Each session requires prize name input
+- Download Excel & PPT per session
+- "Sisa Nomor" returns to main menu
+
+### 4. Wheel Mode (`wheel_page`)
+- 10 Grand Prizes, one-by-one reveal
+- Spinning wheel animation for each prize
+- Download results when complete
+
+## Prize Tiers (E-Voucher - 700 Total)
+| Category | Winners |
+|----------|---------|
+| Tokopedia Rp.100.000,- | 175 |
+| Indomaret Rp.100.000,- | 175 |
+| Bensin Rp.100.000,- | 175 |
+| SNL Rp.100.000,- | 175 |
 
 ## Features
-- Two data input options: CSV file upload or Google Sheets URL
-- CSV file upload for participant data (requires "Nomor Undian", optional "Nama" and "No HP" columns)
-- Google Sheets integration: Paste public sheet URL to import participant data
-- Secure randomization using Python's `secrets` module (cryptographically secure)
-- **Customizable prize tiers**: Configure prize names and winner counts via sidebar
-- **VIP/F Eligibility Filter**: Automatically excludes participants marked as VIP or "F" in Nama/No HP columns
-- Winner display in 10-column grid format (optimized for large screens)
-- Phone numbers and names matched to winners automatically
-- Privacy: Phone numbers are masked on display (shows ****1234 format)
-- Full phone numbers and names available in Excel export for admin use
-- Excel and PowerPoint export functionality
-- Must download both Excel and PowerPoint before starting new lottery
-- **Multi-session lottery**: Download remaining participants CSV, reset, or continue with remaining eligible participants
-
-## Display Modes (NEW)
-Three display modes available when viewing winners by category:
-1. **Grid Mode** (Default): Shows all winners in a 10-column grid
-2. **Shuffle Mode**: Animated shuffle & reveal for batch winners - dramatic effect for events
-3. **Wheel Mode**: Spinning wheel animation for individual winner reveals - best for grand prizes
-
-## Prize Tiers (Total 800 Winners)
-| Rank | Prize | Winners |
-|------|-------|---------|
-| 1-75 | Bensin Rp.100.000,- | 75 |
-| 76-175 | Top100 Rp.100.000,- | 100 |
-| 176-250 | SNL Rp.100.000,- | 75 |
-| 251-325 | Bensin Rp.150.000,- | 75 |
-| 326-400 | Top100 Rp.150.000,- | 75 |
-| 401-500 | SNL Rp.150.000,- | 100 |
-| 501-600 | Bensin Rp.200.000,- | 100 |
-| 601-700 | Top100 Rp.200.000,- | 100 |
-| 701-800 | SNL Rp.200.000,- | 100 |
+- CSV upload or Google Sheets URL for participant data
+- VIP/F participants automatically excluded
+- Secure randomization using `secrets` module
+- Phone numbers masked on display (****1234)
+- Excel export with full details
+- PowerPoint export for presentation
+- Remaining participants tracked across all lottery stages
 
 ## Project Structure
-- `app.py` - Main Streamlit application
+- `app.py` - Main Streamlit application with state machine
+- `prize_config.json` - Saved prize configuration
 - `.streamlit/config.toml` - Streamlit server configuration
-- `attached_assets/` - Banner images for the event
+- `attached_assets/` - Banner images
+
+## State Management
+Key session state variables:
+- `current_page`: Controls which page to display
+- `participant_data`: Full DataFrame of all participants
+- `eligible_participants`: List of eligible lottery numbers
+- `remaining_pool`: DataFrame of remaining participants (persisted across draws)
+- `evoucher_done`: Flag to enable Shuffle/Wheel modes
+- `evoucher_results`: E-Voucher lottery results DataFrame
+- `shuffle_results`: Dictionary of shuffle batch results
+- `wheel_winners`: List of wheel prize winners
 
 ## Running the Application
 ```bash
@@ -48,25 +68,11 @@ streamlit run app.py --server.port 5000
 ```
 
 ## CSV Format
-The uploaded CSV file must contain two columns:
 ```csv
-Nomor Undian,No HP
-0001,081234567890
-0002,082345678901
-0003,083456789012
-...
+Nomor Undian,Nama,No HP
+0001,John Doe,081234567890
+0002,Jane Smith,082345678901
 ```
-- **Nomor Undian**: 4-digit lottery number (leading zeros preserved)
-- **No HP**: Phone number for voucher delivery
-
-## Output Formats
-1. **Excel (.xlsx)**: Complete winner list with full phone numbers (for admin/voucher distribution)
-2. **PowerPoint (.pptx)**: Presentation slides with gradient design for event display (no phone numbers)
-
-## Privacy & Security
-- Phone numbers are masked on the large screen display (shows ****1234)
-- Full phone numbers are only available in the Excel export
-- This prevents accidental exposure of personal data during public presentation
 
 ## Dependencies
 - streamlit
