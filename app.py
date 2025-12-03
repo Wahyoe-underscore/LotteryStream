@@ -16,6 +16,114 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 PRIZE_CONFIG_FILE = "prize_config.json"
 LOTTERY_RESULTS_DIR = "lottery_backups"
+GDRIVE_FOLDER_NAME = "Move&Groove_Lottery_Results"
+
+def get_google_drive_access_token():
+    """Get access token for Google Drive API"""
+    hostname = os.environ.get("REPLIT_CONNECTORS_HOSTNAME")
+    x_replit_token = None
+    
+    if os.environ.get("REPL_IDENTITY"):
+        x_replit_token = "repl " + os.environ.get("REPL_IDENTITY")
+    elif os.environ.get("WEB_REPL_RENEWAL"):
+        x_replit_token = "depl " + os.environ.get("WEB_REPL_RENEWAL")
+    
+    if not x_replit_token or not hostname:
+        return None
+    
+    try:
+        response = requests.get(
+            f"https://{hostname}/api/v2/connection?include_secrets=true&connector_names=google-drive",
+            headers={
+                "Accept": "application/json",
+                "X_REPLIT_TOKEN": x_replit_token
+            }
+        )
+        data = response.json()
+        connection = data.get("items", [{}])[0] if data.get("items") else {}
+        settings = connection.get("settings", {})
+        
+        access_token = settings.get("access_token") or settings.get("oauth", {}).get("credentials", {}).get("access_token")
+        return access_token
+    except Exception as e:
+        return None
+
+def get_or_create_gdrive_folder(access_token):
+    """Get or create the lottery results folder in Google Drive"""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    
+    # Search for existing folder
+    search_url = "https://www.googleapis.com/drive/v3/files"
+    params = {
+        "q": f"name='{GDRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+        "spaces": "drive"
+    }
+    
+    try:
+        response = requests.get(search_url, headers=headers, params=params)
+        files = response.json().get("files", [])
+        
+        if files:
+            return files[0]["id"]
+        
+        # Create new folder
+        create_url = "https://www.googleapis.com/drive/v3/files"
+        folder_metadata = {
+            "name": GDRIVE_FOLDER_NAME,
+            "mimeType": "application/vnd.google-apps.folder"
+        }
+        response = requests.post(create_url, headers=headers, json=folder_metadata)
+        return response.json().get("id")
+    except Exception as e:
+        return None
+
+def save_to_google_drive(filename, content, access_token, folder_id=None):
+    """Upload a file to Google Drive"""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    
+    # Check if file exists
+    search_url = "https://www.googleapis.com/drive/v3/files"
+    q = f"name='{filename}' and trashed=false"
+    if folder_id:
+        q += f" and '{folder_id}' in parents"
+    
+    try:
+        response = requests.get(search_url, headers=headers, params={"q": q})
+        files = response.json().get("files", [])
+        
+        if files:
+            # Update existing file
+            file_id = files[0]["id"]
+            upload_url = f"https://www.googleapis.com/upload/drive/v3/files/{file_id}?uploadType=media"
+            response = requests.patch(upload_url, headers={**headers, "Content-Type": "application/json"}, data=content)
+        else:
+            # Create new file
+            metadata = {"name": filename}
+            if folder_id:
+                metadata["parents"] = [folder_id]
+            
+            # Multipart upload
+            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+            body = (
+                f"--{boundary}\r\n"
+                f'Content-Type: application/json; charset=UTF-8\r\n\r\n'
+                f'{json.dumps(metadata)}\r\n'
+                f"--{boundary}\r\n"
+                f"Content-Type: application/json\r\n\r\n"
+                f"{content}\r\n"
+                f"--{boundary}--"
+            )
+            
+            upload_url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+            response = requests.post(
+                upload_url,
+                headers={**headers, "Content-Type": f"multipart/related; boundary={boundary}"},
+                data=body.encode()
+            )
+        
+        return response.status_code in [200, 201]
+    except Exception as e:
+        return False
 
 PRIZE_TIERS = [
     {"name": "Tokopedia Rp.100.000,-", "icon": "🛒", "count": 175, "start": 1, "end": 175},
@@ -60,7 +168,7 @@ def get_current_results_file():
     return os.path.join(LOTTERY_RESULTS_DIR, st.session_state["current_results_file"])
 
 def save_lottery_results():
-    """Auto-save all lottery results to JSON file with timestamp"""
+    """Auto-save all lottery results to JSON file with timestamp and Google Drive"""
     results = {
         "evoucher_done": st.session_state.get("evoucher_done", False),
         "shuffle_done": st.session_state.get("shuffle_done", False),
@@ -85,15 +193,33 @@ def save_lottery_results():
     if "participant_data" in st.session_state and st.session_state["participant_data"] is not None:
         results["participant_data"] = st.session_state["participant_data"].to_dict('records')
     
+    results_json = json.dumps(results, indent=2, default=str)
+    
+    # Save to local file
     results_file = get_current_results_file()
     temp_file = results_file + ".tmp"
+    local_saved = False
     try:
         with open(temp_file, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
+            f.write(results_json)
         os.replace(temp_file, results_file)
-        return True
+        local_saved = True
     except Exception as e:
-        return False
+        pass
+    
+    # Save to Google Drive
+    gdrive_saved = False
+    try:
+        access_token = get_google_drive_access_token()
+        if access_token:
+            folder_id = get_or_create_gdrive_folder(access_token)
+            filename = st.session_state.get("current_results_file", "lottery_results.json")
+            gdrive_saved = save_to_google_drive(filename, results_json, access_token, folder_id)
+            st.session_state["gdrive_save_status"] = gdrive_saved
+    except Exception as e:
+        st.session_state["gdrive_save_status"] = False
+    
+    return local_saved or gdrive_saved
 
 def get_latest_results_file():
     """Find the most recent lottery results file"""
@@ -817,10 +943,12 @@ if evoucher_done or shuffle_done or wheel_done or current_file:
         if status_parts:
             status_text = " | ".join(status_parts)
             file_info = f"📁 {current_file}" if current_file else ""
+            gdrive_status = st.session_state.get("gdrive_save_status", None)
+            gdrive_icon = "☁️✓" if gdrive_status else "💾"
             st.markdown(f"""
             <div style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; border-radius: 8px; padding: 0.5rem; text-align: center;">
-                <span style="color: #4CAF50; font-size: 0.9rem;">💾 Auto-Save: {status_text}</span>
-                <br><span style="color: #888; font-size: 0.75rem;">{file_info}</span>
+                <span style="color: #4CAF50; font-size: 0.9rem;">{gdrive_icon} Auto-Save: {status_text}</span>
+                <br><span style="color: #888; font-size: 0.75rem;">{file_info} {'| Google Drive ✓' if gdrive_status else ''}</span>
             </div>
             """, unsafe_allow_html=True)
     
