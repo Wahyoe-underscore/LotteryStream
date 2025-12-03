@@ -1826,9 +1826,9 @@ elif current_page == "shuffle_page":
                         ])
                     else:  # Sesi 3
                         st.session_state[shuffle_prize_key] = pd.DataFrame([
-                            {"Nama Hadiah": "Hadiah Sesi 3 A", "Jumlah": 10},
-                            {"Nama Hadiah": "Hadiah Sesi 3 B", "Jumlah": 10},
-                            {"Nama Hadiah": "Hadiah Sesi 3 C", "Jumlah": 10},
+                            {"Nama Hadiah": "Hand Juicer (EM-P01-BK)", "Jumlah": 10},
+                            {"Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)", "Jumlah": 10},
+                            {"Nama Hadiah": "Toaster (KZS-70L(W))", "Jumlah": 10},
                         ])
                 
                 edited_prizes = st.data_editor(
