@@ -561,26 +561,9 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     return html
 
 def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
-    """Create a colorful spinning wheel animation"""
+    """Create transparent lottery animation - spins through ALL participants in pool"""
     total_pool = len(all_participants)
-    
-    # Take sample for wheel display (max 12 segments)
-    sample_size = min(12, total_pool)
-    sample_nums = all_participants[:sample_size]
-    
-    # Make sure winner is in the sample
-    winner_idx = 0
-    if winner in sample_nums:
-        winner_idx = sample_nums.index(winner)
-    else:
-        sample_nums[0] = winner
-        winner_idx = 0
-    
-    # Colors for wheel segments
-    colors = ['#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#00BCD4', 
-              '#009688', '#4CAF50', '#8BC34A', '#FFEB3B', '#FF9800', '#FF5722']
-    
-    segments_js = json.dumps(sample_nums)
+    all_nums_js = json.dumps(all_participants)
     
     html = f'''
     <!DOCTYPE html>
@@ -590,175 +573,114 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{
                 display: flex;
-                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 min-height: 100vh;
                 background: transparent;
                 font-family: 'Segoe UI', sans-serif;
             }}
-            .wheel-container {{
-                position: relative;
-                width: 280px;
-                height: 280px;
-            }}
-            .wheel {{
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.2);
-                border: 6px solid #333;
-            }}
-            .wheel-inner {{
-                width: 100%;
-                height: 100%;
-                position: relative;
-                transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-            }}
-            .pointer {{
-                position: absolute;
-                top: -15px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 0;
-                height: 0;
-                border-left: 15px solid transparent;
-                border-right: 15px solid transparent;
-                border-top: 30px solid #E91E63;
-                z-index: 10;
-                filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3));
-            }}
-            .center-circle {{
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 60px;
-                height: 60px;
-                background: linear-gradient(135deg, #333, #111);
-                border-radius: 50%;
-                z-index: 5;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            }}
-            .center-circle span {{
-                color: white;
-                font-size: 0.7rem;
-                font-weight: bold;
-            }}
-            .result {{
-                margin-top: 15px;
+            .container {{
                 text-align: center;
-                opacity: 0;
-                transition: opacity 0.5s;
-            }}
-            .result.show {{
-                opacity: 1;
-            }}
-            .result-number {{
-                font-size: 3rem;
-                font-weight: 900;
-                color: #E91E63;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            }}
-            .result-text {{
-                font-size: 1rem;
-                color: #4CAF50;
-                font-weight: bold;
+                width: 100%;
+                max-width: 450px;
             }}
             .pool-info {{
-                font-size: 0.85rem;
-                color: #666;
-                margin-bottom: 10px;
+                background: linear-gradient(135deg, #E91E63, #9C27B0);
+                padding: 10px 25px;
+                border-radius: 25px;
+                display: inline-block;
+                margin-bottom: 15px;
+            }}
+            .pool-info p {{
+                color: white;
+                margin: 0;
+                font-size: 1rem;
+            }}
+            .pool-info .total {{
+                font-size: 1.5rem;
+                font-weight: bold;
+            }}
+            .spin-box {{
+                background: linear-gradient(145deg, #1a1a2e, #16213e);
+                border-radius: 20px;
+                padding: 30px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            }}
+            .spinning-number {{
+                font-size: 4.5rem;
+                font-weight: 900;
+                color: #00ff88;
+                text-shadow: 0 0 30px rgba(0,255,136,0.6);
+                font-family: 'Courier New', monospace;
+                letter-spacing: 8px;
+                min-height: 80px;
+            }}
+            .status {{
+                color: #aaa;
+                font-size: 0.95rem;
+                margin-top: 12px;
+            }}
+            .progress {{
+                width: 90%;
+                height: 6px;
+                background: #333;
+                border-radius: 3px;
+                margin: 15px auto 0;
+                overflow: hidden;
+            }}
+            .progress-bar {{
+                height: 100%;
+                background: linear-gradient(90deg, #00ff88, #00ccff, #E91E63);
+                width: 0%;
+                transition: width 0.05s;
             }}
         </style>
     </head>
     <body>
-        <div class="pool-info">Mengundi dari <strong>{total_pool}</strong> peserta</div>
-        <div class="wheel-container">
-            <div class="pointer"></div>
-            <div class="wheel">
-                <div class="wheel-inner" id="wheelInner">
-                    <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
-                        <!-- Segments will be drawn here -->
-                    </svg>
-                </div>
+        <div class="container">
+            <div class="pool-info">
+                <p>Mengundi dari <span class="total">{total_pool}</span> peserta</p>
             </div>
-            <div class="center-circle"><span>SPIN</span></div>
+            <div class="spin-box">
+                <div class="spinning-number" id="num">----</div>
+                <div class="status" id="status">Mengacak semua nomor...</div>
+                <div class="progress"><div class="progress-bar" id="bar"></div></div>
+            </div>
         </div>
-        <div class="result" id="result">
-            <div class="result-text">🎉 PEMENANG</div>
-            <div class="result-number" id="resultNumber">{winner}</div>
-        </div>
-        
         <script>
-            const segments = {segments_js};
-            const numSegments = segments.length;
-            const winnerIdx = {winner_idx};
-            const colors = {json.dumps(colors[:sample_size])};
+            const pool = {all_nums_js};
+            const winner = "{winner}";
+            const total = {total_pool};
+            const numEl = document.getElementById('num');
+            const statusEl = document.getElementById('status');
+            const barEl = document.getElementById('bar');
             
-            // Draw wheel segments
-            const svg = document.querySelector('svg');
-            const anglePerSegment = 360 / numSegments;
+            const duration = 4000;
+            const start = Date.now();
             
-            for (let i = 0; i < numSegments; i++) {{
-                const startAngle = i * anglePerSegment - 90;
-                const endAngle = (i + 1) * anglePerSegment - 90;
+            function spin() {{
+                const elapsed = Date.now() - start;
+                const progress = Math.min(elapsed / duration, 1);
+                barEl.style.width = (progress * 100) + '%';
                 
-                const startRad = startAngle * Math.PI / 180;
-                const endRad = endAngle * Math.PI / 180;
-                
-                const x1 = 50 + 50 * Math.cos(startRad);
-                const y1 = 50 + 50 * Math.sin(startRad);
-                const x2 = 50 + 50 * Math.cos(endRad);
-                const y2 = 50 + 50 * Math.sin(endRad);
-                
-                const largeArc = anglePerSegment > 180 ? 1 : 0;
-                
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M 50 50 L ${{x1}} ${{y1}} A 50 50 0 ${{largeArc}} 1 ${{x2}} ${{y2}} Z`);
-                path.setAttribute('fill', colors[i]);
-                svg.appendChild(path);
-                
-                // Add text
-                const midAngle = (startAngle + endAngle) / 2;
-                const midRad = midAngle * Math.PI / 180;
-                const textX = 50 + 32 * Math.cos(midRad);
-                const textY = 50 + 32 * Math.sin(midRad);
-                
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', textX);
-                text.setAttribute('y', textY);
-                text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('dominant-baseline', 'middle');
-                text.setAttribute('fill', 'white');
-                text.setAttribute('font-size', '5');
-                text.setAttribute('font-weight', 'bold');
-                text.setAttribute('transform', `rotate(${{midAngle + 90}}, ${{textX}}, ${{textY}})`);
-                text.textContent = segments[i];
-                svg.appendChild(text);
+                if (progress < 0.8) {{
+                    numEl.textContent = pool[Math.floor(Math.random() * total)];
+                    statusEl.textContent = 'Mengacak ' + total + ' nomor...';
+                    setTimeout(spin, progress < 0.5 ? 30 : 50 + (progress - 0.5) * 300);
+                }} else if (progress < 1) {{
+                    numEl.textContent = pool[Math.floor(Math.random() * total)];
+                    statusEl.textContent = 'Hampir selesai...';
+                    setTimeout(spin, 100);
+                }} else {{
+                    numEl.textContent = winner;
+                    numEl.style.color = '#FFD700';
+                    numEl.style.textShadow = '0 0 40px rgba(255,215,0,0.8)';
+                    statusEl.textContent = '✅ PEMENANG TERPILIH!';
+                    statusEl.style.color = '#4CAF50';
+                    statusEl.style.fontWeight = 'bold';
+                }}
             }}
-            
-            // Spin the wheel
-            const wheel = document.getElementById('wheelInner');
-            const result = document.getElementById('result');
-            
-            // Calculate final rotation to land on winner
-            const targetAngle = 360 - (winnerIdx * anglePerSegment + anglePerSegment / 2);
-            const spins = 5;
-            const finalRotation = spins * 360 + targetAngle;
-            
-            setTimeout(() => {{
-                wheel.style.transform = `rotate(${{finalRotation}}deg)`;
-            }}, 100);
-            
-            setTimeout(() => {{
-                result.classList.add('show');
-            }}, 5200);
+            setTimeout(spin, 200);
         </script>
     </body>
     </html>
