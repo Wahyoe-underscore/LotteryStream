@@ -18,6 +18,9 @@ PRIZE_CONFIG_FILE = "prize_config.json"
 LOTTERY_RESULTS_DIR = "lottery_backups"
 GDRIVE_FOLDER_NAME = "Move&Groove_Lottery_Results"
 
+# Permanent Google Sheets URL for Move & Groove Dec 7th Event
+DEFAULT_SHEETS_URL = "https://docs.google.com/spreadsheets/d/1blM4h0mr4jG2rsphJFs5kqC2rKPO5tl0m4A8SKNcB7E/edit?gid=1638013732#gid=1638013732"
+
 def get_google_drive_access_token():
     """Get access token for Google Drive API"""
     hostname = os.environ.get("REPLIT_CONNECTORS_HOSTNAME")
@@ -996,36 +999,58 @@ if current_page == "home":
                 st.error(f"Error: {e}")
     
     with tab2:
-        sheets_url = st.text_input("Paste Google Sheets URL", placeholder="https://docs.google.com/spreadsheets/d/...")
-        if sheets_url and st.button("📥 Ambil Data"):
+        st.markdown("""
+        <div style="background: rgba(76, 175, 80, 0.2); border: 1px solid #4CAF50; border-radius: 8px; padding: 0.8rem; margin-bottom: 1rem;">
+            <p style="color: #4CAF50; margin: 0; font-size: 0.9rem;">
+                ✅ <strong>Default:</strong> Google Sheets Move & Groove 7 Desember sudah terkonfigurasi
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        sheets_url = st.text_input("Google Sheets URL", value=DEFAULT_SHEETS_URL, help="URL sudah diisi otomatis dengan data Move & Groove")
+        
+        col_load, col_refresh = st.columns(2)
+        with col_load:
+            load_btn = st.button("📥 Ambil Data", use_container_width=True)
+        with col_refresh:
+            refresh_btn = st.button("🔄 Refresh Data", use_container_width=True)
+        
+        if (load_btn or refresh_btn) and sheets_url:
             try:
                 sheet_id_match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheets_url)
                 if sheet_id_match:
                     sheet_id = sheet_id_match.group(1)
-                    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+                    
+                    gid_match = re.search(r'gid=(\d+)', sheets_url)
+                    gid = gid_match.group(1) if gid_match else "0"
+                    
+                    csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
                     response = requests.get(csv_url, timeout=30)
                     response.raise_for_status()
                     
                     content_hash = hashlib.md5(response.content).hexdigest()
-                    if st.session_state.get("last_sheets_hash") != content_hash:
-                        st.session_state["last_sheets_hash"] = content_hash
-                        st.session_state["data_source_changed"] = True
-                        st.session_state["evoucher_done"] = False
-                        st.session_state["evoucher_results"] = None
-                        st.session_state["shuffle_results"] = {}
-                        st.session_state["shuffle_done"] = False
-                        st.session_state["wheel_winners"] = []
-                        st.session_state["wheel_prizes"] = []
-                        st.session_state["wheel_done"] = False
-                        if "last_content_hash" in st.session_state:
-                            del st.session_state["last_content_hash"]
-                        if "remaining_pool" in st.session_state:
-                            del st.session_state["remaining_pool"]
+                    
+                    if refresh_btn or st.session_state.get("last_sheets_hash") != content_hash:
+                        if not refresh_btn:
+                            st.session_state["last_sheets_hash"] = content_hash
+                            st.session_state["data_source_changed"] = True
+                            st.session_state["evoucher_done"] = False
+                            st.session_state["evoucher_results"] = None
+                            st.session_state["shuffle_results"] = {}
+                            st.session_state["shuffle_done"] = False
+                            st.session_state["wheel_winners"] = []
+                            st.session_state["wheel_prizes"] = []
+                            st.session_state["wheel_done"] = False
+                            if "last_content_hash" in st.session_state:
+                                del st.session_state["last_content_hash"]
+                            if "remaining_pool" in st.session_state:
+                                del st.session_state["remaining_pool"]
                     
                     df = pd.read_csv(StringIO(response.content.decode('utf-8-sig')), dtype=str)
                     df.columns = df.columns.str.strip().str.replace('\ufeff', '')
                     st.session_state["sheets_df"] = df
-                    st.success(f"✅ Berhasil mengambil {len(df)} baris data!")
+                    st.session_state["last_sheets_hash"] = content_hash
+                    st.success(f"✅ Berhasil mengambil {len(df)} baris data dari Google Sheets!")
             except Exception as e:
                 st.error(f"Error: {e}")
         
