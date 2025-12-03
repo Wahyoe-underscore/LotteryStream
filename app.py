@@ -560,7 +560,7 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     '''
     return html
 
-def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
+def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
     """Create a REAL spinning wheel (circular) visualization"""
     total_pool = len(all_participants)
     
@@ -604,8 +604,8 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                min-height: 100vh;
+                justify-content: flex-start;
+                padding: 5px;
                 background: transparent;
                 font-family: 'Segoe UI', sans-serif;
             }}
@@ -618,19 +618,19 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
                 width: 100%;
                 height: 100%;
                 border-radius: 50%;
-                box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.2);
+                box-shadow: 0 0 15px rgba(0,0,0,0.3);
             }}
             .pointer {{
                 position: absolute;
-                top: -20px;
+                top: -15px;
                 left: 50%;
                 transform: translateX(-50%);
                 width: 0;
                 height: 0;
-                border-left: 20px solid transparent;
-                border-right: 20px solid transparent;
-                border-top: 35px solid #FFD700;
-                filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4));
+                border-left: 15px solid transparent;
+                border-right: 15px solid transparent;
+                border-top: 28px solid #FFD700;
+                filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
                 z-index: 10;
             }}
             .center-circle {{
@@ -638,45 +638,45 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                width: 70px;
-                height: 70px;
+                width: 50px;
+                height: 50px;
                 background: linear-gradient(145deg, #fff, #f0f0f0);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 0.8rem;
+                font-size: 0.7rem;
                 font-weight: bold;
                 color: #333;
-                box-shadow: 0 0 15px rgba(0,0,0,0.3);
+                box-shadow: 0 0 10px rgba(0,0,0,0.3);
                 z-index: 5;
             }}
             .info {{
-                margin-top: 20px;
+                margin-top: 10px;
                 text-align: center;
             }}
             .pool-badge {{
                 background: linear-gradient(135deg, #E91E63, #9C27B0);
                 color: white;
-                padding: 8px 20px;
-                border-radius: 20px;
-                font-size: 0.9rem;
-                margin-bottom: 10px;
+                padding: 6px 15px;
+                border-radius: 15px;
+                font-size: 0.85rem;
+                margin-bottom: 8px;
                 display: inline-block;
             }}
             .status {{
-                font-size: 1.1rem;
+                font-size: 1rem;
                 color: #666;
-                margin-top: 10px;
+                margin-top: 8px;
             }}
             .winner-display {{
                 display: none;
                 background: linear-gradient(135deg, #4CAF50, #8BC34A);
                 color: white;
-                padding: 15px 30px;
-                border-radius: 15px;
-                margin-top: 15px;
-                font-size: 1.5rem;
+                padding: 10px 25px;
+                border-radius: 12px;
+                margin-top: 10px;
+                font-size: 1.3rem;
                 font-weight: bold;
                 animation: popIn 0.5s ease;
             }}
@@ -692,11 +692,11 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=350):
         <div class="wheel-container">
             <div class="pointer"></div>
             <canvas id="wheel" width="{wheel_size}" height="{wheel_size}"></canvas>
-            <div class="center-circle" id="centerText">SPIN</div>
+            <div class="center-circle" id="centerText">🎡</div>
         </div>
         
         <div class="info">
-            <div class="status" id="status">🎡 Roda berputar...</div>
+            <div class="status" id="status">Roda berputar...</div>
             <div class="winner-display" id="winnerDisplay"></div>
         </div>
         
@@ -2206,8 +2206,8 @@ elif current_page == "wheel_page":
                 winner_idx = secrets.randbelow(len(remaining_numbers))
                 winner = remaining_numbers[winner_idx]
                 
-                wheel_html = create_spinning_wheel_html(remaining_numbers, winner, 320)
-                components.html(wheel_html, height=280)
+                wheel_html = create_spinning_wheel_html(remaining_numbers, winner, 280)
+                components.html(wheel_html, height=420)
                 
                 wheel_winners.append(winner)
                 wheel_prizes.append(prize_name)
