@@ -560,28 +560,10 @@ def create_shuffle_animation_html(all_participants, winners, prize_name="Hadiah"
     '''
     return html
 
-def create_spinning_wheel_html(participants, winner, wheel_size=400):
-    num_segments = min(len(participants), 20)
-    display_participants = participants[:num_segments]
-    
-    if winner not in display_participants:
-        display_participants[-1] = winner
-    
-    winner_index = display_participants.index(winner)
-    
-    colors = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-        '#F8B500', '#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9',
-        '#92A8D1', '#955251', '#B565A7', '#009B77', '#DD4124'
-    ]
-    
-    segments_js = []
-    for i, p in enumerate(display_participants):
-        segments_js.append(f'{{"label": "{p}", "color": "{colors[i % len(colors)]}"}}')
-    
-    rotation_per_segment = 360 / num_segments
-    target_rotation = 360 * 8 + (360 - (winner_index * rotation_per_segment + rotation_per_segment / 2))
+def create_spinning_wheel_html(all_participants, winner, wheel_size=400):
+    """Create a transparent lottery animation showing ALL participants are being randomized"""
+    total_pool = len(all_participants)
+    all_nums_js = json.dumps(all_participants)
     
     html = f'''
     <!DOCTYPE html>
@@ -596,128 +578,202 @@ def create_spinning_wheel_html(participants, winner, wheel_size=400):
                 justify-content: center;
                 min-height: 100vh;
                 background: transparent;
-                font-family: 'Poppins', sans-serif;
+                font-family: 'Segoe UI', sans-serif;
+                padding: 10px;
             }}
-            .wheel-container {{
-                position: relative;
-                width: {wheel_size}px;
-                height: {wheel_size}px;
+            .container {{
+                text-align: center;
+                width: 100%;
+                max-width: 500px;
             }}
-            .pointer {{
-                position: absolute;
-                top: -20px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 0;
-                height: 0;
-                border-left: 20px solid transparent;
-                border-right: 20px solid transparent;
-                border-top: 40px solid #f5576c;
-                z-index: 100;
-                filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+            .pool-info {{
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                padding: 10px 20px;
+                border-radius: 10px;
+                margin-bottom: 15px;
             }}
-            .center-circle {{
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 80px;
-                height: 80px;
-                background: linear-gradient(145deg, #fff, #f0f0f0);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 2rem;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                z-index: 50;
-            }}
-            .winner-display {{
-                margin-top: 20px;
-                padding: 20px 40px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 15px;
+            .pool-info p {{
                 color: white;
-                font-size: 1.5rem;
-                font-weight: 700;
+                margin: 0;
+                font-size: 1rem;
+            }}
+            .pool-info .total {{
+                font-size: 1.8rem;
+                font-weight: bold;
+            }}
+            .number-display {{
+                background: linear-gradient(145deg, #1a1a2e, #16213e);
+                border-radius: 15px;
+                padding: 30px;
+                margin: 15px 0;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            }}
+            .spinning-number {{
+                font-size: 4rem;
+                font-weight: 900;
+                color: #00ff88;
+                text-shadow: 0 0 20px rgba(0,255,136,0.5);
+                font-family: 'Courier New', monospace;
+                letter-spacing: 5px;
+            }}
+            .status-text {{
+                color: #aaa;
+                font-size: 0.9rem;
+                margin-top: 10px;
+            }}
+            .number-scroll {{
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin: 15px 0;
+                flex-wrap: wrap;
+                max-height: 80px;
+                overflow: hidden;
+            }}
+            .scroll-num {{
+                background: rgba(255,255,255,0.1);
+                color: #888;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 0.8rem;
+                font-family: monospace;
+            }}
+            .scroll-num.active {{
+                background: #E91E63;
+                color: white;
+                animation: pulse 0.1s;
+            }}
+            @keyframes pulse {{
+                0% {{ transform: scale(1); }}
+                50% {{ transform: scale(1.2); }}
+                100% {{ transform: scale(1); }}
+            }}
+            .winner-reveal {{
+                background: linear-gradient(135deg, #E91E63, #9C27B0);
+                padding: 20px;
+                border-radius: 15px;
+                margin-top: 15px;
                 display: none;
                 animation: popIn 0.5s ease;
+            }}
+            .winner-reveal h2 {{
+                color: white;
+                margin: 0;
+                font-size: 1.2rem;
+            }}
+            .winner-reveal .winner-num {{
+                color: #fff;
+                font-size: 3rem;
+                font-weight: 900;
+                margin: 10px 0;
             }}
             @keyframes popIn {{
                 0% {{ transform: scale(0); opacity: 0; }}
                 100% {{ transform: scale(1); opacity: 1; }}
             }}
+            .progress {{
+                width: 100%;
+                height: 6px;
+                background: #333;
+                border-radius: 3px;
+                margin-top: 15px;
+                overflow: hidden;
+            }}
+            .progress-bar {{
+                height: 100%;
+                background: linear-gradient(90deg, #00ff88, #00ccff);
+                width: 0%;
+                transition: width 0.1s;
+            }}
         </style>
     </head>
     <body>
-        <div class="wheel-container">
-            <div class="pointer"></div>
-            <canvas id="wheel" width="{wheel_size}" height="{wheel_size}"></canvas>
-            <div class="center-circle">🎯</div>
-        </div>
-        <div class="winner-display" id="winnerDisplay">🎉 PEMENANG: <span id="winnerText"></span></div>
-        <script>
-            const segments = [{','.join(segments_js)}];
-            const canvas = document.getElementById('wheel');
-            const ctx = canvas.getContext('2d');
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = canvas.width / 2 - 10;
-            let currentRotation = 0;
+        <div class="container">
+            <div class="pool-info">
+                <p>Mengundi dari <span class="total">{total_pool}</span> peserta</p>
+                <p>Semua nomor memiliki kesempatan yang sama</p>
+            </div>
             
-            function drawWheel(rotation) {{
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(rotation * Math.PI / 180);
-                
-                const segmentAngle = (2 * Math.PI) / segments.length;
-                
-                segments.forEach((segment, index) => {{
-                    ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.arc(0, 0, radius, index * segmentAngle, (index + 1) * segmentAngle);
-                    ctx.closePath();
-                    ctx.fillStyle = segment.color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    ctx.save();
-                    ctx.rotate(index * segmentAngle + segmentAngle / 2);
-                    ctx.textAlign = 'right';
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 12px Arial';
-                    ctx.fillText(segment.label, radius - 15, 5);
-                    ctx.restore();
-                }});
-                
-                ctx.restore();
+            <div class="number-scroll" id="numberScroll"></div>
+            
+            <div class="number-display">
+                <div class="spinning-number" id="spinNumber">----</div>
+                <div class="status-text" id="statusText">Mengacak nomor...</div>
+            </div>
+            
+            <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+            
+            <div class="winner-reveal" id="winnerReveal">
+                <h2>🎉 PEMENANG TERPILIH!</h2>
+                <div class="winner-num" id="winnerNum">{winner}</div>
+            </div>
+        </div>
+        
+        <script>
+            const allNums = {all_nums_js};
+            const winner = "{winner}";
+            const totalPool = {total_pool};
+            const spinNumber = document.getElementById('spinNumber');
+            const statusText = document.getElementById('statusText');
+            const progressBar = document.getElementById('progressBar');
+            const winnerReveal = document.getElementById('winnerReveal');
+            const numberScroll = document.getElementById('numberScroll');
+            
+            // Show sample of all numbers being randomized
+            const sampleSize = Math.min(20, totalPool);
+            for (let i = 0; i < sampleSize; i++) {{
+                const span = document.createElement('span');
+                span.className = 'scroll-num';
+                span.id = 'scrollNum' + i;
+                span.textContent = allNums[Math.floor(Math.random() * totalPool)];
+                numberScroll.appendChild(span);
             }}
             
-            drawWheel(0);
-            
-            const targetRotation = {target_rotation};
             const duration = 5000;
             const startTime = Date.now();
+            let lastHighlight = -1;
+            
+            function getRandomNum() {{
+                return allNums[Math.floor(Math.random() * totalPool)];
+            }}
             
             function animate() {{
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                const easeOut = 1 - Math.pow(1 - progress, 4);
-                currentRotation = easeOut * targetRotation;
-                drawWheel(currentRotation);
+                progressBar.style.width = (progress * 100) + '%';
                 
-                if (progress < 1) {{
-                    requestAnimationFrame(animate);
+                // Update spinning number
+                if (progress < 0.9) {{
+                    spinNumber.textContent = getRandomNum();
+                    statusText.textContent = 'Mengacak ' + totalPool + ' nomor...';
+                    
+                    // Highlight random scroll numbers
+                    const newHighlight = Math.floor(Math.random() * sampleSize);
+                    if (lastHighlight >= 0) {{
+                        document.getElementById('scrollNum' + lastHighlight).classList.remove('active');
+                        document.getElementById('scrollNum' + lastHighlight).textContent = getRandomNum();
+                    }}
+                    document.getElementById('scrollNum' + newHighlight).classList.add('active');
+                    lastHighlight = newHighlight;
+                    
+                    // Slow down as we approach the end
+                    const delay = progress < 0.7 ? 30 : 50 + (progress - 0.7) * 500;
+                    setTimeout(animate, delay);
+                }} else if (progress < 1) {{
+                    // Final slowdown
+                    spinNumber.textContent = getRandomNum();
+                    statusText.textContent = 'Hampir selesai...';
+                    setTimeout(animate, 150);
                 }} else {{
-                    document.getElementById('winnerDisplay').style.display = 'block';
-                    document.getElementById('winnerText').textContent = '{winner}';
+                    // Reveal winner
+                    spinNumber.textContent = winner;
+                    spinNumber.style.color = '#FFD700';
+                    statusText.textContent = '✅ Selesai!';
+                    winnerReveal.style.display = 'block';
                 }}
             }}
             
-            setTimeout(animate, 500);
+            setTimeout(animate, 300);
         </script>
     </body>
     </html>
@@ -2108,7 +2164,7 @@ elif current_page == "wheel_page":
                     winner_idx = secrets.randbelow(len(remaining_numbers))
                     winner = remaining_numbers[winner_idx]
                     
-                    wheel_html = create_spinning_wheel_html(remaining_numbers[:20], winner, 320)
+                    wheel_html = create_spinning_wheel_html(remaining_numbers, winner, 320)
                     components.html(wheel_html, height=450)
                     
                     wheel_winners.append(winner)
