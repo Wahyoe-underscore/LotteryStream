@@ -2561,44 +2561,44 @@ elif current_page == "wheel_page":
             # Result placeholder for showing winner after spin
             result_placeholder = st.empty()
             
-            # Get voided status for current prize
+            # Get voided status
             voided_winners = st.session_state.get("voided_wheel_winners", {})
             
             # Spin button
             spin_clicked = st.button("🎡 PUTAR UNDIAN!", key=f"spin_wheel_{current_idx}", use_container_width=True, type="primary")
             
-            # Show HANGUS and ULANG buttons if there's already a winner for current prize
-            if current_idx < len(wheel_winners):
-                current_winner = wheel_winners[current_idx]
-                is_current_voided = current_idx in voided_winners
+            # ALWAYS show HANGUS and ULANG buttons when there are winners
+            if len(wheel_winners) > 0:
+                last_idx = len(wheel_winners) - 1
+                last_winner = wheel_winners[last_idx]
                 
                 hangus_col, ulang_col = st.columns(2)
                 with hangus_col:
-                    if st.button("❌ HANGUS", key=f"hangus_current_{current_idx}", use_container_width=True, type="secondary"):
-                        if current_idx not in voided_winners:
-                            voided_winners[current_idx] = {"original": current_winner, "prize": wheel_prizes[current_idx], "replacements": []}
+                    if st.button("❌ HANGUS", key=f"hangus_{last_idx}_{len(wheel_winners)}", use_container_width=True, type="secondary"):
+                        if last_idx not in voided_winners:
+                            voided_winners[last_idx] = {"original": last_winner, "prize": wheel_prizes[last_idx], "replacements": []}
                         st.session_state["voided_wheel_winners"] = voided_winners
                         st.rerun()
                 
                 with ulang_col:
-                    if st.button("🔄 ULANG", key=f"ulang_current_{current_idx}", use_container_width=True, type="primary"):
+                    if st.button("🔄 ULANG", key=f"ulang_{last_idx}_{len(wheel_winners)}", use_container_width=True, type="primary"):
                         remaining_numbers = remaining_pool["Nomor Undian"].tolist()
                         if len(remaining_numbers) > 0:
                             new_winner_idx = secrets.randbelow(len(remaining_numbers))
                             new_winner = remaining_numbers[new_winner_idx]
                             
-                            # Replace the current winner
-                            old_winner = wheel_winners[current_idx]
-                            wheel_winners[current_idx] = new_winner
+                            # Replace the last winner
+                            old_winner = wheel_winners[last_idx]
+                            wheel_winners[last_idx] = new_winner
                             st.session_state["wheel_winners"] = wheel_winners
                             
                             # Track replacement history
-                            if current_idx not in voided_winners:
-                                voided_winners[current_idx] = {"original": old_winner, "prize": wheel_prizes[current_idx], "replacements": []}
-                            voided_winners[current_idx]["replacements"].append(new_winner)
+                            if last_idx not in voided_winners:
+                                voided_winners[last_idx] = {"original": old_winner, "prize": wheel_prizes[last_idx], "replacements": []}
+                            voided_winners[last_idx]["replacements"].append(new_winner)
                             st.session_state["voided_wheel_winners"] = voided_winners
                             
-                            # Remove new winner from pool (old one stays removed)
+                            # Remove new winner from pool
                             new_pool = remaining_pool[remaining_pool["Nomor Undian"] != new_winner]
                             st.session_state["remaining_pool"] = new_pool
                             
