@@ -3,208 +3,9 @@
   "shuffle_done": false,
   "wheel_done": false,
   "evoucher_results": null,
-  "shuffle_results": {
-    "shuffle_batch_0": {
-      "winners": [
-        "02952",
-        "01650",
-        "03064",
-        "03628",
-        "02216",
-        "00390",
-        "00016",
-        "03808",
-        "04270",
-        "04063",
-        "01141",
-        "03280",
-        "03359",
-        "04178",
-        "01737",
-        "01182",
-        "03971",
-        "04330",
-        "04350",
-        "03406",
-        "02123",
-        "02000",
-        "01863",
-        "04310",
-        "01535",
-        "03644",
-        "02565",
-        "04872",
-        "01939",
-        "02142"
-      ],
-      "prize_assignments": [
-        {
-          "winner": "02952",
-          "prize": "Sepeda Lipat (SJ-50MB-XB)"
-        },
-        {
-          "winner": "01650",
-          "prize": "Sepeda Lipat (SJ-50MB-XB)"
-        },
-        {
-          "winner": "03064",
-          "prize": "Smart Watch Xiaomi (EO-35ST)"
-        },
-        {
-          "winner": "03628",
-          "prize": "Smart Watch Xiaomi (EO-35ST)"
-        },
-        {
-          "winner": "02216",
-          "prize": "Speaker (CBOX-B658UBO)"
-        },
-        {
-          "winner": "00390",
-          "prize": "Speaker (CBOX-B658UBO)"
-        },
-        {
-          "winner": "00016",
-          "prize": "Speaker (CBOX-B658UBO)"
-        },
-        {
-          "winner": "03808",
-          "prize": "Oven 18L (EO-18BL)"
-        },
-        {
-          "winner": "04270",
-          "prize": "Oven 18L (EO-18BL)"
-        },
-        {
-          "winner": "04063",
-          "prize": "Oven 18L (EO-18BL)"
-        },
-        {
-          "winner": "01141",
-          "prize": "Blender (EM-151G-GY)"
-        },
-        {
-          "winner": "03280",
-          "prize": "Blender (EM-151G-GY)"
-        },
-        {
-          "winner": "03359",
-          "prize": "Blender (EM-151G-GY)"
-        },
-        {
-          "winner": "04178",
-          "prize": "Blender (EM-151G-GY)"
-        },
-        {
-          "winner": "01737",
-          "prize": "Rice Cooker (KS-N18MG-PK)"
-        },
-        {
-          "winner": "01182",
-          "prize": "Rice Cooker (KS-N18MG-PK)"
-        },
-        {
-          "winner": "03971",
-          "prize": "Rice Cooker (KS-N18MG-PK)"
-        },
-        {
-          "winner": "04330",
-          "prize": "Coffee Maker (HM-80L(W))"
-        },
-        {
-          "winner": "04350",
-          "prize": "Coffee Maker (HM-80L(W))"
-        },
-        {
-          "winner": "03406",
-          "prize": "Coffee Maker (HM-80L(W))"
-        },
-        {
-          "winner": "02123",
-          "prize": "Pop Up Toaster (KZ-2S02-BK)"
-        },
-        {
-          "winner": "02000",
-          "prize": "Pop Up Toaster (KZ-2S02-BK)"
-        },
-        {
-          "winner": "01863",
-          "prize": "Pop Up Toaster (KZ-2S02-BK)"
-        },
-        {
-          "winner": "04310",
-          "prize": "Pop Up Toaster (KZ-2S02-BK)"
-        },
-        {
-          "winner": "01535",
-          "prize": "Hand Juicer (EM-P01-BK)"
-        },
-        {
-          "winner": "03644",
-          "prize": "Hand Juicer (EM-P01-BK)"
-        },
-        {
-          "winner": "02565",
-          "prize": "Hand Juicer (EM-P01-BK)"
-        },
-        {
-          "winner": "04872",
-          "prize": "Toaster (KZS-70L(W))"
-        },
-        {
-          "winner": "01939",
-          "prize": "Toaster (KZS-70L(W))"
-        },
-        {
-          "winner": "02142",
-          "prize": "Toaster (KZS-70L(W))"
-        }
-      ],
-      "prize_config": [
-        {
-          "Nama Hadiah": "Sepeda Lipat (SJ-50MB-XB)",
-          "Jumlah": 2
-        },
-        {
-          "Nama Hadiah": "Smart Watch Xiaomi (EO-35ST)",
-          "Jumlah": 2
-        },
-        {
-          "Nama Hadiah": "Speaker (CBOX-B658UBO)",
-          "Jumlah": 3
-        },
-        {
-          "Nama Hadiah": "Oven 18L (EO-18BL)",
-          "Jumlah": 3
-        },
-        {
-          "Nama Hadiah": "Blender (EM-151G-GY)",
-          "Jumlah": 4
-        },
-        {
-          "Nama Hadiah": "Rice Cooker (KS-N18MG-PK)",
-          "Jumlah": 3
-        },
-        {
-          "Nama Hadiah": "Coffee Maker (HM-80L(W))",
-          "Jumlah": 3
-        },
-        {
-          "Nama Hadiah": "Pop Up Toaster (KZ-2S02-BK)",
-          "Jumlah": 4
-        },
-        {
-          "Nama Hadiah": "Hand Juicer (EM-P01-BK)",
-          "Jumlah": 3
-        },
-        {
-          "Nama Hadiah": "Toaster (KZS-70L(W))",
-          "Jumlah": 3
-        }
-      ]
-    }
-  },
+  "shuffle_results": {},
   "wheel_winners": [
-    "04701"
+    "02715"
   ],
   "wheel_prizes": [
     "HP Samsung A07"
@@ -378,6 +179,14 @@
       "Nomor Undian": "00015",
       "Nama": "Tatan Atianto",
       "No HP": "Manager Fab Support Engineer",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "00016",
+      "Nama": "Yan Andromeda",
+      "No HP": "Manager, Engineering",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -1210,6 +1019,14 @@
       "Nomor Undian": "00386",
       "Nama": "JONNER PURBA",
       "No HP": "085880624683",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "00390",
+      "Nama": "SAHRIR SUSANTO",
+      "No HP": "085367402504",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -2903,6 +2720,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "01141",
+      "Nama": "MUCHLIS",
+      "No HP": "085765122908",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "01145",
       "Nama": "APRI YADIH",
       "No HP": "082170470019",
@@ -2986,6 +2811,14 @@
       "Nomor Undian": "01177",
       "Nama": "HAFI",
       "No HP": "081372704465",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "01182",
+      "Nama": "ARIFIN MAKMUR P GULTOM",
+      "No HP": "081364704431",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -3759,6 +3592,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "01535",
+      "Nama": "DASRIL",
+      "No HP": "08117003901",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "01537",
       "Nama": "ZONI HENDRI",
       "No HP": "081261911422",
@@ -3991,6 +3832,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "01650",
+      "Nama": "ADE IRAWAN PUTRA",
+      "No HP": "089527003237",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "01655",
       "Nama": "MADERIKO SAMOSIR",
       "No HP": "085274432200",
@@ -4202,6 +4051,14 @@
       "Nomor Undian": "01732",
       "Nama": "SUPARNO",
       "No HP": "081378684648",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "01737",
+      "Nama": "KARSAH JAELANI",
+      "No HP": "081364604636",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -4479,6 +4336,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "01863",
+      "Nama": "FARLIN NAULI PANE",
+      "No HP": "085668212066",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "01867",
       "Nama": "ZAKI FAHRUREZA",
       "No HP": "087773397795",
@@ -4623,6 +4488,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "01939",
+      "Nama": "FRANA WIJAYA",
+      "No HP": "08999435307",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "01942",
       "Nama": "SUMADI BIN SARBI",
       "No HP": "081270170561",
@@ -4754,6 +4627,14 @@
       "Nomor Undian": "01995",
       "Nama": "SUMITRO D P SIMANUNGKALIT",
       "No HP": "082296937074",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "02000",
+      "Nama": "KHAIRIUL ANWAR BIN HARAHAP",
+      "No HP": "081372487996",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -5039,6 +4920,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "02123",
+      "Nama": "ROMLI SINAMBELA",
+      "No HP": "082389487880",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "02125",
       "Nama": "RIO PURWANTO",
       "No HP": "081275671239",
@@ -5066,6 +4955,14 @@
       "Nomor Undian": "02139",
       "Nama": "RIYAN SIGIT PURNOMO",
       "No HP": "081266439300",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "02142",
+      "Nama": "SUTEN SAKTI HARAHAP",
+      "No HP": "081364464581",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -5266,6 +5163,14 @@
       "Nomor Undian": "02214",
       "Nama": "EKO CAHYO SETIAWAN",
       "No HP": "081268278856",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "02216",
+      "Nama": "HAIRUL HARAHAP",
+      "No HP": "081375253133",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -6095,6 +6000,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "02565",
+      "Nama": "LEDY DIANA ARITONANG",
+      "No HP": "081261977792",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "02570",
       "Nama": "SURYA MAY ISKANDAR",
       "No HP": "081909384398",
@@ -6482,14 +6395,6 @@
       "Nomor Undian": "02711",
       "Nama": "DONIY BIN EDDY",
       "No HP": "081266478610",
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "02715",
-      "Nama": "HARDIWAN SAPUTRA",
-      "No HP": "081372853636",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -7007,6 +6912,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "02952",
+      "Nama": "FIRMANSYAH",
+      "No HP": "087842031652",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "02954",
       "Nama": "THOMY ASMARA",
       "No HP": "082383131527",
@@ -7258,6 +7171,14 @@
       "Nomor Undian": "03059",
       "Nama": "AGUS SRI WIDODO",
       "No HP": "081770611883",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "03064",
+      "Nama": "ANDRI NOVIANDI",
+      "No HP": "085263886668",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -8143,6 +8064,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03280",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03281",
       "Nama": NaN,
       "No HP": NaN,
@@ -8767,6 +8696,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03359",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03360",
       "Nama": NaN,
       "No HP": NaN,
@@ -9128,6 +9065,14 @@
     },
     {
       "Nomor Undian": "03405",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "03406",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -10903,6 +10848,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03628",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03629",
       "Nama": NaN,
       "No HP": NaN,
@@ -11016,6 +10969,14 @@
     },
     {
       "Nomor Undian": "03643",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "03644",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -12327,6 +12288,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03808",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03809",
       "Nama": NaN,
       "No HP": NaN,
@@ -13623,6 +13592,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03971",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03972",
       "Nama": NaN,
       "No HP": NaN,
@@ -14344,6 +14321,14 @@
     },
     {
       "Nomor Undian": "04062",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "04063",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -15263,6 +15248,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "04178",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "04179",
       "Nama": NaN,
       "No HP": NaN,
@@ -15991,6 +15984,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "04270",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "04271",
       "Nama": NaN,
       "No HP": NaN,
@@ -16303,6 +16304,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "04310",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "04311",
       "Nama": NaN,
       "No HP": NaN,
@@ -16455,6 +16464,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "04330",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "04331",
       "Nama": NaN,
       "No HP": NaN,
@@ -16600,6 +16617,14 @@
     },
     {
       "Nomor Undian": "04349",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "04350",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -19407,6 +19432,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "04701",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "04702",
       "Nama": NaN,
       "No HP": NaN,
@@ -20760,6 +20793,14 @@
     },
     {
       "Nomor Undian": "04871",
+      "Nama": NaN,
+      "No HP": NaN,
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "04872",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -61794,5 +61835,5 @@
     }
   ],
   "data_source_hash": "",
-  "saved_at": "2025-12-03 23:35:47"
+  "saved_at": "2025-12-04 00:23:41"
 }

@@ -1764,6 +1764,7 @@ if current_page == "home":
             
             remaining_pool = st.session_state.get("remaining_pool", eligible_df)
             quick_winners = st.session_state.get("quick_draw_winners", [])
+            participant_data = st.session_state.get("participant_data")
             
             name_lookup = {}
             phone_lookup = {}
