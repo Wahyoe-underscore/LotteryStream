@@ -2561,8 +2561,49 @@ elif current_page == "wheel_page":
             # Result placeholder for showing winner after spin
             result_placeholder = st.empty()
             
+            # Get voided status for current prize
+            voided_winners = st.session_state.get("voided_wheel_winners", {})
+            
             # Spin button
             spin_clicked = st.button("🎡 PUTAR UNDIAN!", key=f"spin_wheel_{current_idx}", use_container_width=True, type="primary")
+            
+            # Show HANGUS and ULANG buttons if there's already a winner for current prize
+            if current_idx < len(wheel_winners):
+                current_winner = wheel_winners[current_idx]
+                is_current_voided = current_idx in voided_winners
+                
+                hangus_col, ulang_col = st.columns(2)
+                with hangus_col:
+                    if st.button("❌ HANGUS", key=f"hangus_current_{current_idx}", use_container_width=True, type="secondary"):
+                        if current_idx not in voided_winners:
+                            voided_winners[current_idx] = {"original": current_winner, "prize": wheel_prizes[current_idx], "replacements": []}
+                        st.session_state["voided_wheel_winners"] = voided_winners
+                        st.rerun()
+                
+                with ulang_col:
+                    if st.button("🔄 ULANG", key=f"ulang_current_{current_idx}", use_container_width=True, type="primary"):
+                        remaining_numbers = remaining_pool["Nomor Undian"].tolist()
+                        if len(remaining_numbers) > 0:
+                            new_winner_idx = secrets.randbelow(len(remaining_numbers))
+                            new_winner = remaining_numbers[new_winner_idx]
+                            
+                            # Replace the current winner
+                            old_winner = wheel_winners[current_idx]
+                            wheel_winners[current_idx] = new_winner
+                            st.session_state["wheel_winners"] = wheel_winners
+                            
+                            # Track replacement history
+                            if current_idx not in voided_winners:
+                                voided_winners[current_idx] = {"original": old_winner, "prize": wheel_prizes[current_idx], "replacements": []}
+                            voided_winners[current_idx]["replacements"].append(new_winner)
+                            st.session_state["voided_wheel_winners"] = voided_winners
+                            
+                            # Remove new winner from pool (old one stays removed)
+                            new_pool = remaining_pool[remaining_pool["Nomor Undian"] != new_winner]
+                            st.session_state["remaining_pool"] = new_pool
+                            
+                            save_lottery_results()
+                            st.rerun()
             
             if spin_clicked:
                 remaining_numbers = remaining_pool["Nomor Undian"].tolist()
@@ -2630,8 +2671,10 @@ elif current_page == "wheel_page":
                 
                 # Show last winner if exists (when not currently spinning)
                 if len(wheel_winners) > 0:
-                    last_winner = wheel_winners[-1]
-                    last_prize = wheel_prizes[-1]
+                    last_idx = len(wheel_winners) - 1
+                    last_winner = wheel_winners[last_idx]
+                    last_prize = wheel_prizes[last_idx]
+                    is_voided = last_idx in voided_winners
                     participant_data = st.session_state.get("participant_data")
                     nama = "-"
                     hp = "-"
@@ -2643,10 +2686,13 @@ elif current_page == "wheel_page":
                             nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
                             hp = format_phone(winner_row.iloc[0].get("No HP", ""))
                     
+                    voided_label = " ❌ HANGUS" if is_voided else ""
+                    bg_color = "#f44336" if is_voided else "#4CAF50"
+                    
                     with result_placeholder.container():
                         st.markdown(f"""
-                        <div style="background:#4CAF50;color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
-                            <div style="font-size:0.9rem;">Pemenang Terakhir</div>
+                        <div style="background:{bg_color};color:white;padding:15px;border-radius:12px;text-align:center;margin-top:10px;">
+                            <div style="font-size:0.9rem;">Pemenang #{last_idx+1}{voided_label}</div>
                             <div style="font-size:2rem;font-weight:900;margin:5px 0;">{last_winner}</div>
                             <div style="font-size:0.9rem;">{nama}</div>
                             <div style="font-size:0.8rem;opacity:0.9;">{hp}</div>
@@ -2671,9 +2717,9 @@ elif current_page == "wheel_page":
         # Track voided winners
         voided_winners = st.session_state.get("voided_wheel_winners", {})
         
-        # Winner cards - 2 columns for better button visibility
+        # Winner cards in compact grid - 5 columns
         st.markdown("#### Pemenang Grand Prize:")
-        
+        cols = st.columns(5)
         for i, (w, p) in enumerate(zip(wheel_winners, wheel_prizes)):
             w_str = str(w).strip()
             nama_raw = name_lookup.get(w_str, "")
@@ -2682,79 +2728,27 @@ elif current_page == "wheel_page":
             
             is_voided = i in voided_winners
             
-            # Each winner gets its own row with 2 columns: info + button
-            card_col, btn_col = st.columns([3, 1])
-            
-            with card_col:
+            with cols[i % 5]:
                 if is_voided:
-                    replacement = voided_winners.get(i, {}).get("replacement")
-                    if replacement:
-                        rep_str = str(replacement).strip()
-                        rep_nama_raw = name_lookup.get(rep_str, "")
-                        rep_nama = str(rep_nama_raw) if pd.notna(rep_nama_raw) and str(rep_nama_raw).lower() != "nan" else "-"
-                        rep_hp = format_phone(phone_lookup.get(rep_str, ""))
-                        st.markdown(f"""
-                        <div style="display:flex;gap:10px;margin-bottom:8px;">
-                            <div style="background:#ffebee;border:2px solid #f44336;border-radius:10px;padding:10px;text-align:center;flex:1;opacity:0.6;">
-                                <div style="font-size:0.7rem;color:#f44336;font-weight:bold;">#{i+1} ❌ HANGUS</div>
-                                <div style="font-size:1rem;font-weight:800;color:#999;text-decoration:line-through;">{w}</div>
-                                <div style="font-size:0.7rem;color:#999;">{nama} | {hp}</div>
-                            </div>
-                            <div style="background:#e8f5e9;border:2px solid #4CAF50;border-radius:10px;padding:10px;text-align:center;flex:1;">
-                                <div style="font-size:0.7rem;color:#4CAF50;font-weight:bold;">✓ PENGGANTI</div>
-                                <div style="font-size:1rem;font-weight:800;color:#333;">{replacement}</div>
-                                <div style="font-size:0.7rem;color:#666;">{rep_nama} | {rep_hp}</div>
-                                <div style="font-size:0.65rem;color:#4CAF50;margin-top:3px;">🎁 {p}</div>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                        <div style="background:#ffebee;border:2px solid #f44336;border-radius:10px;padding:10px;text-align:center;margin-bottom:8px;">
-                            <div style="font-size:0.75rem;color:#f44336;font-weight:bold;">#{i+1} ❌ HANGUS - Menunggu Undi Ulang</div>
-                            <div style="font-size:1.2rem;font-weight:800;color:#999;text-decoration:line-through;">{w}</div>
-                            <div style="font-size:0.8rem;color:#999;">{nama} | {hp}</div>
-                            <div style="font-size:0.7rem;color:#f44336;margin-top:3px;">🎁 {p}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
                     st.markdown(f"""
-                    <div style="background:#fff;border:2px solid #E91E63;border-radius:10px;padding:10px;text-align:center;margin-bottom:8px;">
-                        <div style="font-size:0.75rem;color:#E91E63;font-weight:bold;">#{i+1}</div>
-                        <div style="font-size:1.2rem;font-weight:800;color:#333;">{w}</div>
-                        <div style="font-size:0.8rem;color:#666;">{nama} | {hp}</div>
-                        <div style="font-size:0.7rem;color:#E91E63;margin-top:3px;">🎁 {p}</div>
+                    <div style="background:#ffebee;border:2px solid #f44336;border-radius:10px;padding:8px;text-align:center;margin-bottom:5px;">
+                        <div style="font-size:0.7rem;color:#f44336;font-weight:bold;">#{i+1} ❌ HANGUS</div>
+                        <div style="font-size:1rem;font-weight:800;color:#999;text-decoration:line-through;">{w}</div>
+                        <div style="font-size:0.65rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{nama}</div>
+                        <div style="font-size:0.6rem;color:#999;">{hp}</div>
+                        <div style="font-size:0.55rem;color:#f44336;margin-top:3px;">{p}</div>
                     </div>
                     """, unsafe_allow_html=True)
-            
-            with btn_col:
-                if is_voided:
-                    replacement = voided_winners.get(i, {}).get("replacement")
-                    if not replacement:
-                        # Button to redraw for this prize
-                        if st.button(f"🔄 Undi Ulang #{i+1}", key=f"redraw_{i}", use_container_width=True, type="primary"):
-                            remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                            if len(remaining_numbers) > 0:
-                                new_winner_idx = secrets.randbelow(len(remaining_numbers))
-                                new_winner = remaining_numbers[new_winner_idx]
-                                
-                                voided_winners[i]["replacement"] = new_winner
-                                st.session_state["voided_wheel_winners"] = voided_winners
-                                
-                                # Remove from pool
-                                new_pool = remaining_pool[remaining_pool["Nomor Undian"] != new_winner]
-                                st.session_state["remaining_pool"] = new_pool
-                                
-                                save_lottery_results()
-                                st.rerun()
-                    else:
-                        st.markdown("<div style='color:#4CAF50;font-size:0.8rem;text-align:center;padding:10px;'>✅ Selesai</div>", unsafe_allow_html=True)
                 else:
-                    # Hangus button
-                    if st.button(f"❌ Hangus #{i+1}", key=f"void_{i}", use_container_width=True, type="secondary"):
-                        voided_winners[i] = {"original": w, "prize": p, "replacement": None}
-                        st.session_state["voided_wheel_winners"] = voided_winners
-                        st.rerun()
+                    st.markdown(f"""
+                    <div style="background:#fff;border:2px solid #E91E63;border-radius:10px;padding:8px;text-align:center;margin-bottom:5px;">
+                        <div style="font-size:0.7rem;color:#E91E63;font-weight:bold;">#{i+1}</div>
+                        <div style="font-size:1rem;font-weight:800;color:#333;">{w}</div>
+                        <div style="font-size:0.65rem;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{nama}</div>
+                        <div style="font-size:0.6rem;color:#888;">{hp}</div>
+                        <div style="font-size:0.55rem;color:#E91E63;margin-top:3px;">{p}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
         
         # Download buttons
         col1, col2 = st.columns(2)
