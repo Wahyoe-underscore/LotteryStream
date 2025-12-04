@@ -655,15 +655,6 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
                 margin-top: 10px;
                 text-align: center;
             }}
-            .pool-badge {{
-                background: linear-gradient(135deg, #E91E63, #9C27B0);
-                color: white;
-                padding: 6px 15px;
-                border-radius: 15px;
-                font-size: 0.85rem;
-                margin-bottom: 8px;
-                display: inline-block;
-            }}
             .status {{
                 font-size: 1rem;
                 color: #666;
@@ -672,8 +663,6 @@ def create_spinning_wheel_html(all_participants, winner, wheel_size=280):
         </style>
     </head>
     <body>
-        <div class="pool-badge">Mengundi dari <strong>{total_pool}</strong> peserta</div>
-        
         <div class="wheel-container">
             <div class="pointer"></div>
             <canvas id="wheel" width="{wheel_size}" height="{wheel_size}"></canvas>
