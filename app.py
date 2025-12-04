@@ -2769,20 +2769,6 @@ elif current_page == "wheel_page":
             pptx_data = generate_wheel_pptx(wheel_winners, wheel_prizes, name_lookup, phone_lookup)
             st.download_button("📽️ Download PPT Wheel", pptx_data, "wheel_winners.pptx", use_container_width=True)
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        with st.expander(f"📋 Nomor yang Belum Diundi ({len(remaining_pool)} peserta)", expanded=False):
-            if len(remaining_pool) > 0:
-                remaining_numbers = remaining_pool["Nomor Undian"].tolist()
-                cols = st.columns(15)
-                for idx, num in enumerate(remaining_numbers[:150]):
-                    with cols[idx % 15]:
-                        st.markdown(f"<div style='background:#333;color:white;padding:0.3rem;border-radius:5px;text-align:center;margin:2px;font-size:0.8rem;'>{num}</div>", unsafe_allow_html=True)
-                if len(remaining_numbers) > 150:
-                    st.info(f"... dan {len(remaining_numbers) - 150} nomor lainnya")
-            else:
-                st.info("Semua nomor sudah diundi")
-        
         # Cadangan section (after 10 main prizes)
         if st.session_state.get("wheel_done", False) and len(remaining_pool) > 0:
             st.markdown("---")
@@ -3313,10 +3299,25 @@ elif current_page == "wheel_page":
                 ppt_buffer = BytesIO()
                 prs.save(ppt_buffer)
                 st.download_button("📽️ PPT LENGKAP", ppt_buffer.getvalue(), "MoveGroove_Lengkap.pptx", use_container_width=True)
-        
-        if st.button("🏠 KEMBALI KE MENU UTAMA", key="wheel_done_btn", use_container_width=True):
-            st.session_state["current_page"] = "home"
-            st.rerun()
+    
+    # Remaining pool at the very bottom
+    st.markdown("---")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    with st.expander(f"📋 Nomor yang Belum Diundi ({len(remaining_pool)} peserta)", expanded=False):
+        if len(remaining_pool) > 0:
+            remaining_numbers = remaining_pool["Nomor Undian"].tolist()
+            rem_cols = st.columns(15)
+            for idx, num in enumerate(remaining_numbers[:150]):
+                with rem_cols[idx % 15]:
+                    st.markdown(f"<div style='background:#333;color:white;padding:0.3rem;border-radius:5px;text-align:center;margin:2px;font-size:0.8rem;'>{num}</div>", unsafe_allow_html=True)
+            if len(remaining_numbers) > 150:
+                st.info(f"... dan {len(remaining_numbers) - 150} nomor lainnya")
+        else:
+            st.info("Semua nomor sudah diundi")
+    
+    if st.button("🏠 KEMBALI KE MENU UTAMA", key="wheel_done_btn", use_container_width=True):
+        st.session_state["current_page"] = "home"
+        st.rerun()
 
 elif current_page == "wheel_results":
     wheel_winners = st.session_state.get("wheel_winners", [])
