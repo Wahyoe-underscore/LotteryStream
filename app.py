@@ -1623,7 +1623,7 @@ if current_page == "home":
             total_excluded = total_all - total_eligible
             remaining_pool = st.session_state.get("remaining_pool", eligible_df)
             
-            st.success(f"✅ Data: {total_all} peserta ({total_eligible} eligible, {total_excluded} VIP/F) | Sisa: {len(remaining_pool)}")
+            st.success(f"✅ Data berhasil dimuat")
             
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<p style='text-align:center; color:white; font-size:1.8rem; font-weight:bold;'>🎯 PILIH JENIS UNDIAN</p>", unsafe_allow_html=True)
@@ -1664,8 +1664,7 @@ if current_page == "home":
                     <p style="color: #FF9800; font-size: 1.8rem; font-weight: bold; margin: 0;">🎲 Shuffle</p>
                     <p style="color: white; font-size: 1.1rem; margin: 0.5rem 0;">{status_text}</p>
                     <p style="color: #aaa; font-size: 0.9rem; margin: 0.5rem 0;">
-                    Lucky Draw 3 Sesi<br>
-                    Sisa: {len(remaining_pool)} peserta
+                    Lucky Draw 3 Sesi
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1682,8 +1681,7 @@ if current_page == "home":
                     <p style="color: #E91E63; font-size: 1.8rem; font-weight: bold; margin: 0;">🎡 Spinning Wheel</p>
                     <p style="color: white; font-size: 1.1rem; margin: 0.5rem 0;">{status_text}</p>
                     <p style="color: #aaa; font-size: 0.9rem; margin: 0.5rem 0;">
-                    Grand Prize satu per satu<br>
-                    Sisa: {len(remaining_pool)} peserta
+                    Grand Prize satu per satu
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1829,7 +1827,6 @@ if current_page == "home":
                     <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
                         <div style="font-size:8rem;margin-bottom:15px;">🎲</div>
                         <div style="color:#888;font-size:1rem;">Klik tombol untuk mengundi</div>
-                        <div style="color:#9C27B0;font-size:1.2rem;font-weight:bold;margin-top:10px;">{len(remaining_pool)} peserta tersedia</div>
                     </div>
                     """, unsafe_allow_html=True)
             elif not st.session_state.get("home_quick_spin_active"):
@@ -2072,7 +2069,7 @@ elif current_page == "evoucher_page":
         st.markdown("<br>", unsafe_allow_html=True)
         remaining_pool = st.session_state.get("remaining_pool", pd.DataFrame())
         
-        with st.expander(f"📋 Nomor yang Belum Diundi ({len(remaining_pool)} peserta)", expanded=False):
+        with st.expander(f"📋 Nomor yang Belum Diundi", expanded=False):
             if len(remaining_pool) > 0:
                 remaining_numbers = remaining_pool["Nomor Undian"].tolist()
                 cols = st.columns(15)
@@ -2386,7 +2383,7 @@ elif current_page == "shuffle_page":
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("---")
     
-    with st.expander(f"📋 Nomor yang Belum Diundi ({len(remaining_pool)} peserta)", expanded=False):
+    with st.expander(f"📋 Nomor yang Belum Diundi", expanded=False):
         if len(remaining_pool) > 0:
             remaining_numbers = remaining_pool["Nomor Undian"].tolist()
             cols = st.columns(15)
@@ -2866,7 +2863,6 @@ elif current_page == "wheel_page":
                             <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
                                 <div style="font-size:8rem;margin-bottom:15px;">🎯</div>
                                 <div style="color:#888;font-size:1rem;">Undian Cadangan</div>
-                                <div style="color:#FF9800;font-size:1.5rem;font-weight:bold;margin-top:10px;">{len(remaining_pool)} peserta</div>
                             </div>
                             """, unsafe_allow_html=True)
                         
@@ -3057,7 +3053,6 @@ elif current_page == "wheel_page":
                         <div style="background:linear-gradient(145deg,#1a1a2e,#16213e);border-radius:20px;padding:30px;text-align:center;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
                             <div style="font-size:8rem;margin-bottom:15px;">🎲</div>
                             <div style="color:#888;font-size:1rem;">Undian Cepat</div>
-                            <div style="color:#9C27B0;font-size:1.5rem;font-weight:bold;margin-top:10px;">{len(remaining_pool)} peserta</div>
                         </div>
                         """, unsafe_allow_html=True)
                     
@@ -3303,7 +3298,7 @@ elif current_page == "wheel_page":
     # Remaining pool at the very bottom
     st.markdown("---")
     st.markdown("<br><br>", unsafe_allow_html=True)
-    with st.expander(f"📋 Nomor yang Belum Diundi ({len(remaining_pool)} peserta)", expanded=False):
+    with st.expander(f"📋 Nomor yang Belum Diundi", expanded=False):
         if len(remaining_pool) > 0:
             remaining_numbers = remaining_pool["Nomor Undian"].tolist()
             rem_cols = st.columns(15)

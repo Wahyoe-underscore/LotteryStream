@@ -5,7 +5,7 @@
   "evoucher_results": null,
   "shuffle_results": {},
   "wheel_winners": [
-    "02555"
+    "04193"
   ],
   "wheel_prizes": [
     "HP Samsung A07"
@@ -5971,6 +5971,14 @@
       "Nomor Undian": "02551",
       "Nama": "RUSDIANTO",
       "No HP": "081310642581",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "02555",
+      "Nama": "MARCHABAN CHOLOL ISMAIL",
+      "No HP": "082389325508",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -15361,14 +15369,6 @@
     },
     {
       "Nomor Undian": "04192",
-      "Nama": NaN,
-      "No HP": NaN,
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "04193",
       "Nama": NaN,
       "No HP": NaN,
       "Unnamed: 3": NaN,
@@ -61835,5 +61835,5 @@
     }
   ],
   "data_source_hash": "",
-  "saved_at": "2025-12-04 00:34:59"
+  "saved_at": "2025-12-04 00:39:14"
 }
