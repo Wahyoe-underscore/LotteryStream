@@ -4,18 +4,8 @@
   "wheel_done": false,
   "evoucher_results": null,
   "shuffle_results": {},
-  "wheel_winners": [
-    "03563",
-    "03296",
-    "03505",
-    "02660"
-  ],
-  "wheel_prizes": [
-    "HP Samsung A07",
-    "HP Samsung A07",
-    "Kulkas 1 Pintu",
-    "Kulkas 1 Pintu"
-  ],
+  "wheel_winners": [],
+  "wheel_prizes": [],
   "wheel_config": [
     {
       "No": 1,
@@ -201,14 +191,6 @@
       "Nomor Undian": "00017",
       "Nama": "dr Fuad ",
       "No HP": "Medical Specialist",
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "00018",
-      "Nama": "Siti Rani",
-      "No HP": "Manager Rraining Craff",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -6230,6 +6212,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "02660",
+      "Nama": "ROMI IRDAL",
+      "No HP": "082282657725",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "02663",
       "Nama": "AGUS NANTO",
       "No HP": "081372155920",
@@ -7694,6 +7684,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03296",
+      "Nama": "RESKY HARNOCI",
+      "No HP": "081274404140",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03299",
       "Nama": "BUDY",
       "No HP": "082173891361",
@@ -8206,6 +8204,14 @@
       "Eligible": true
     },
     {
+      "Nomor Undian": "03505",
+      "Nama": "ASRI NURFAIZA",
+      "No HP": "082174508544",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
       "Nomor Undian": "03509",
       "Nama": "MELIA KUSUMA PUTRI",
       "No HP": "081374868401",
@@ -8217,14 +8223,6 @@
       "Nomor Undian": "03510",
       "Nama": "THALIA SYAFIRA",
       "No HP": "082279709491",
-      "Unnamed: 3": NaN,
-      "NOmor WA": NaN,
-      "Eligible": true
-    },
-    {
-      "Nomor Undian": "03511",
-      "Nama": "NINGGAR ANGGARWATI",
-      "No HP": "082122728275",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -8353,6 +8351,14 @@
       "Nomor Undian": "03560",
       "Nama": "SUGENG WAHYUDI",
       "No HP": "08117001059",
+      "Unnamed: 3": NaN,
+      "NOmor WA": NaN,
+      "Eligible": true
+    },
+    {
+      "Nomor Undian": "03563",
+      "Nama": "APRIL ",
+      "No HP": "081219745677",
       "Unnamed: 3": NaN,
       "NOmor WA": NaN,
       "Eligible": true
@@ -50393,5 +50399,5 @@
     }
   ],
   "data_source_hash": "",
-  "saved_at": "2025-12-05 19:10:14"
+  "saved_at": "2025-12-05 19:15:08"
 }
