@@ -1271,28 +1271,18 @@ def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=No
         )
         background.line.fill.background()
         
-        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
-        tf = title_box.text_frame
-        p = tf.paragraphs[0]
-        p.alignment = PP_ALIGN.CENTER
-        run = p.add_run()
-        run.text = f"{title} #{idx + 1}"
-        run.font.size = Pt(36)
-        run.font.bold = True
-        run.font.color.rgb = RGBColor(255, 255, 255)
-        
         winner_str = str(winner).strip()
         nama_raw = name_lookup.get(winner_str, "")
         nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
         hp = format_phone(phone_lookup.get(winner_str, ""))
         
-        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.8), Inches(12.33), Inches(1.5))
+        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(12.33), Inches(2))
         tf = nomor_box.text_frame
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = winner_str
-        run.font.size = Pt(140)
+        run.font.size = Pt(160)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
         
@@ -1302,7 +1292,7 @@ def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=No
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = nama
-        run.font.size = Pt(60)
+        run.font.size = Pt(72)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
         
@@ -1312,7 +1302,7 @@ def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=No
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = hp
-        run.font.size = Pt(48)
+        run.font.size = Pt(56)
         run.font.color.rgb = RGBColor(230, 230, 230)
     
     pptx_buffer = BytesIO()
