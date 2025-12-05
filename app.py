@@ -1243,7 +1243,7 @@ def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_looku
     return pptx_buffer.getvalue()
 
 def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=None, phone_lookup=None):
-    """Generate PPT with 1 winner per slide - large centered display
+    """Generate PPT with 1 winner per slide - large centered display, fit to page
     color_tuple: (r, g, b) tuple for background gradient
     """
     prs = Presentation()
@@ -1271,13 +1271,13 @@ def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=No
         )
         background.line.fill.background()
         
-        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(12.33), Inches(0.8))
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
         tf = title_box.text_frame
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = f"{title} #{idx + 1}"
-        run.font.size = Pt(28)
+        run.font.size = Pt(36)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
         
@@ -1286,33 +1286,33 @@ def generate_single_winner_pptx(winners_list, title, color_tuple, name_lookup=No
         nama = str(nama_raw) if pd.notna(nama_raw) and str(nama_raw).lower() != "nan" else "-"
         hp = format_phone(phone_lookup.get(winner_str, ""))
         
-        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(2.2), Inches(12.33), Inches(1.5))
+        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.8), Inches(12.33), Inches(1.5))
         tf = nomor_box.text_frame
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = winner_str
-        run.font.size = Pt(120)
+        run.font.size = Pt(140)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
         
-        nama_box = slide.shapes.add_textbox(Inches(0.5), Inches(4.0), Inches(12.33), Inches(1.0))
+        nama_box = slide.shapes.add_textbox(Inches(0.5), Inches(4.0), Inches(12.33), Inches(1.2))
         tf = nama_box.text_frame
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = nama
-        run.font.size = Pt(48)
+        run.font.size = Pt(60)
         run.font.bold = True
         run.font.color.rgb = RGBColor(255, 255, 255)
         
-        hp_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.2), Inches(12.33), Inches(0.8))
+        hp_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(12.33), Inches(1))
         tf = hp_box.text_frame
         p = tf.paragraphs[0]
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         run.text = hp
-        run.font.size = Pt(36)
+        run.font.size = Pt(48)
         run.font.color.rgb = RGBColor(230, 230, 230)
     
     pptx_buffer = BytesIO()
