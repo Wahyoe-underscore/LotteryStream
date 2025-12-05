@@ -1812,14 +1812,6 @@ if current_page == "home":
                 quick_placeholder = st.empty()
             
             with quick_col2:
-                st.markdown(f"""
-                <div style="background:linear-gradient(135deg,#607D8B,#455A64);border-radius:15px;padding:20px;text-align:center;margin-bottom:15px;">
-                    <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Sisa Peserta</div>
-                    <div style="color:white;font-size:2.5rem;font-weight:bold;margin:8px 0;">{len(remaining_pool)}</div>
-                    <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;">Total Undian Cepat: {len(quick_winners)}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
                 quick_result_placeholder = st.empty()
                 
                 if len(remaining_pool) > 0:
@@ -2190,7 +2182,7 @@ elif current_page == "shuffle_page":
         st.markdown("<h2 style='text-align:center; color:#FF9800; margin:0;'>🎲 SHUFFLE</h2>", unsafe_allow_html=True)
     with col_status:
         done_count = len([k for k in shuffle_results.keys() if k.startswith("shuffle_batch")])
-        st.markdown(f"<p style='text-align:right; color:#333; margin-top:10px;'>Sesi: <strong style='color:#FF9800;'>{done_count}/3</strong> | Sisa: <strong>{len(remaining_pool)}</strong></p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:right; color:#333; margin-top:10px;'>Sesi: <strong style='color:#FF9800;'>{done_count}/3</strong></p>", unsafe_allow_html=True)
     
     shuffle_batches = [
         {"name": "Sesi 1", "count": 30},
