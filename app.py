@@ -306,9 +306,14 @@ def secure_shuffle(items):
         items[i], items[j] = items[j], items[i]
     return items
 
-def is_eligible_for_prize(name, phone):
+def is_eligible_for_prize(name, phone, nomor_undian=""):
     name_str = str(name).strip().upper() if pd.notna(name) else ""
     phone_str = str(phone).strip().upper() if pd.notna(phone) else ""
+    nomor_str = str(nomor_undian).strip().upper() if pd.notna(nomor_undian) else ""
+    
+    # Exclude if Nomor Undian contains "D" (fully or partially)
+    if "D" in nomor_str:
+        return False
     
     # Exclude if name contains VIP
     if "VIP" in name_str:
@@ -1608,7 +1613,7 @@ if current_page == "home":
             df = df.dropna(subset=["Nomor Undian"])
             df = df[df["Nomor Undian"].str.len() > 0]
             
-            df["Eligible"] = df.apply(lambda x: is_eligible_for_prize(x.get("Nama", ""), x.get("No HP", "")), axis=1)
+            df["Eligible"] = df.apply(lambda x: is_eligible_for_prize(x.get("Nama", ""), x.get("No HP", ""), x.get("Nomor Undian", "")), axis=1)
             
             st.session_state["participant_data"] = df
             eligible_df = df[df["Eligible"] == True]
