@@ -1160,6 +1160,7 @@ def generate_shuffle_pptx_v2(prize_assignments, name_lookup=None, phone_lookup=N
     return pptx_buffer.getvalue()
 
 def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_lookup=None):
+    """Generate PPT with 1 prize per slide - large centered display for Wheel winners"""
     prs = Presentation()
     prs.slide_width = Inches(13.33)
     prs.slide_height = Inches(7.5)
@@ -1170,42 +1171,71 @@ def generate_wheel_pptx(winners_list, prizes_list, name_lookup=None, phone_looku
         phone_lookup = {}
     
     slide_layout = prs.slide_layouts[6]
-    slide = prs.slides.add_slide(slide_layout)
-    
-    background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
-    background.fill.gradient()
-    background.fill.gradient_stops[0].color.rgb = RGBColor(233, 30, 99)
-    background.fill.gradient_stops[1].color.rgb = RGBColor(156, 39, 176)
-    background.line.fill.background()
-    
-    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(1))
-    tf = title_box.text_frame
-    p = tf.paragraphs[0]
-    p.alignment = PP_ALIGN.CENTER
-    run = p.add_run()
-    run.text = "🎡 PEMENANG SPINNING WHEEL"
-    run.font.size = Pt(36)
-    run.font.bold = True
-    run.font.color.rgb = RGBColor(255, 255, 255)
-    
-    start_y = Inches(1.5)
     
     for idx, (winner, prize) in enumerate(zip(winners_list, prizes_list)):
+        slide = prs.slides.add_slide(slide_layout)
+        
+        background = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+        background.fill.gradient()
+        background.fill.gradient_stops[0].color.rgb = RGBColor(233, 30, 99)
+        background.fill.gradient_stops[1].color.rgb = RGBColor(156, 39, 176)
+        background.line.fill.background()
+        
+        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(12.33), Inches(0.8))
+        tf = title_box.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        run.text = f"🎡 GRAND PRIZE #{idx+1}"
+        run.font.size = Pt(36)
+        run.font.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)
+        
+        prize_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(12.33), Inches(0.8))
+        tf_prize = prize_box.text_frame
+        p_prize = tf_prize.paragraphs[0]
+        p_prize.alignment = PP_ALIGN.CENTER
+        run_prize = p_prize.add_run()
+        run_prize.text = prize
+        run_prize.font.size = Pt(28)
+        run_prize.font.bold = True
+        run_prize.font.color.rgb = RGBColor(255, 215, 0)
+        
+        nomor_box = slide.shapes.add_textbox(Inches(0.5), Inches(2.3), Inches(12.33), Inches(1.5))
+        tf_nomor = nomor_box.text_frame
+        p_nomor = tf_nomor.paragraphs[0]
+        p_nomor.alignment = PP_ALIGN.CENTER
+        run_nomor = p_nomor.add_run()
+        run_nomor.text = str(winner)
+        run_nomor.font.size = Pt(120)
+        run_nomor.font.bold = True
+        run_nomor.font.color.rgb = RGBColor(255, 255, 255)
+        
         nama_raw = name_lookup.get(winner, "")
         nama = str(nama_raw) if pd.notna(nama_raw) else "-"
         if nama.lower() == "nan":
             nama = "-"
+        
+        nama_box = slide.shapes.add_textbox(Inches(0.5), Inches(4.2), Inches(12.33), Inches(1))
+        tf_nama = nama_box.text_frame
+        p_nama = tf_nama.paragraphs[0]
+        p_nama.alignment = PP_ALIGN.CENTER
+        run_nama = p_nama.add_run()
+        run_nama.text = nama
+        run_nama.font.size = Pt(60)
+        run_nama.font.bold = True
+        run_nama.font.color.rgb = RGBColor(255, 255, 255)
+        
         hp = format_phone(phone_lookup.get(winner, ""))
         
-        text_box = slide.shapes.add_textbox(Inches(0.5), start_y + Inches(idx * 0.55), Inches(12.33), Inches(0.5))
-        tf = text_box.text_frame
-        p = tf.paragraphs[0]
-        p.alignment = PP_ALIGN.CENTER
-        run = p.add_run()
-        run.text = f"#{idx+1}: {winner} - {nama} ({hp}) | {prize}"
-        run.font.size = Pt(22)
-        run.font.bold = True
-        run.font.color.rgb = RGBColor(255, 255, 255)
+        hp_box = slide.shapes.add_textbox(Inches(0.5), Inches(5.5), Inches(12.33), Inches(1))
+        tf_hp = hp_box.text_frame
+        p_hp = tf_hp.paragraphs[0]
+        p_hp.alignment = PP_ALIGN.CENTER
+        run_hp = p_hp.add_run()
+        run_hp.text = hp
+        run_hp.font.size = Pt(48)
+        run_hp.font.color.rgb = RGBColor(255, 200, 220)
     
     pptx_buffer = BytesIO()
     prs.save(pptx_buffer)
