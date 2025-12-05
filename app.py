@@ -311,6 +311,16 @@ def is_eligible_for_prize(name, phone, nomor_undian=""):
     phone_str = str(phone).strip().upper() if pd.notna(phone) else ""
     nomor_str = str(nomor_undian).strip().upper() if pd.notna(nomor_undian) else ""
     
+    # Exclude if name_str is "nan" (string version of NaN)
+    if name_str.lower() == "nan":
+        name_str = ""
+    if phone_str.lower() == "nan":
+        phone_str = ""
+    
+    # Exclude if both Nama and No HP are empty
+    if name_str == "" and phone_str == "":
+        return False
+    
     # Exclude if Nomor Undian contains "D" (fully or partially)
     if "D" in nomor_str:
         return False
