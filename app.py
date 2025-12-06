@@ -325,16 +325,24 @@ def is_eligible_for_prize(name, phone, nomor_undian=""):
     if "D" in nomor_str:
         return False
     
-    # Exclude if name contains VIP
+    # Exclude if Nama is exactly "F" or "D" or "VIP" (case insensitive)
+    if name_str in ["F", "D", "VIP"]:
+        return False
+    
+    # Exclude if Nama contains "VIP" anywhere
     if "VIP" in name_str:
         return False
     
-    # Exclude if name is exactly "F" or contains F as a word
+    # Exclude if Nama contains "F" as standalone or pattern
     if name_str == "F" or name_str.startswith("F ") or name_str.endswith(" F") or " F " in name_str:
         return False
     
-    # Exclude if phone is "F", empty when name is "F", or starts with "F"
-    if phone_str == "F" or phone_str.startswith("F"):
+    # Exclude if No HP is exactly "F" or "D" or "VIP"
+    if phone_str in ["F", "D", "VIP"]:
+        return False
+    
+    # Exclude if No HP starts with "F" or "D" or "VIP"
+    if phone_str.startswith("F") or phone_str.startswith("VIP"):
         return False
     
     return True
