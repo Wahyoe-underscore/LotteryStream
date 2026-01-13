@@ -1,0 +1,57 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lottery backup files (contain sensitive participant data)
+lottery_backups/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Credentials and secrets
+*.pem
+*.key
+credentials.json
+token.json
+
+# Replit specific
+.replit
+replit.nix
+.upm/
+.cache/
+poetry.lock
+
+# Generated files
+*.xlsx
+*.pptx
+
+# Environment variables
+.env.local
+.env.production
